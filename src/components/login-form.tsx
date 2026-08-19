@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,13 +13,36 @@ import { cn } from "@/lib/utils";
 // Contas de demonstração do seed (`src/lib/seed-data.ts`, docs/contas-demo.md).
 // O painel de acesso rápido só aparece quando `demo` é verdadeiro — a página
 // decide isso a partir de DEMO_LOGIN.
-const PERFIS = [
+type Conta = {
+  nome: string;
+  papel: string;
+  email: string;
+  /** Marca a conta que consegue apresentar emenda (precisa de Autor vinculado). */
+  apresenta?: boolean;
+};
+
+const PERFIS: { grupo: string; contas: Conta[] }[] = [
+  {
+    grupo: "Acesso master",
+    contas: [
+      {
+        nome: "Administrador do Sistema",
+        papel: "atravessa os dois Poderes",
+        email: "super@municipio.gov.br",
+      },
+    ],
+  },
   {
     grupo: "Câmara",
     contas: [
       { nome: "Mesa Diretora", papel: "vê tudo + configurações", email: "mesa@camara.gov.br" },
       { nome: "Analista Técnico", papel: "tramita, sem configurações", email: "analista@camara.gov.br" },
-      { nome: "Vereador Exemplo", papel: "gabinete: a própria cota", email: "vereador@camara.gov.br" },
+      {
+        nome: "Vereador Exemplo",
+        papel: "gabinete: a própria cota",
+        email: "vereador@camara.gov.br",
+        apresenta: true,
+      },
       { nome: "Consulta Legislativo", papel: "somente leitura", email: "leg.consulta@camara.gov.br" },
     ],
   },
@@ -30,13 +54,7 @@ const PERFIS = [
       { nome: "Consulta Executivo", papel: "somente leitura", email: "exec.consulta@municipio.gov.br" },
     ],
   },
-  {
-    grupo: "Sistema",
-    contas: [
-      { nome: "Administrador do Sistema", papel: "todos os perfis", email: "super@municipio.gov.br" },
-    ],
-  },
-] as const;
+];
 
 const SENHA_DEMO = "mudar@123";
 
@@ -52,10 +70,16 @@ export function LoginForm({ demo = false }: { demo?: boolean }) {
 
   // O acesso rápido preenche o formulário e envia — é o mesmo caminho do
   // usuário, pelo provider de credenciais, sem atalho de autenticação.
+  //
+  // O `flushSync` não é decoração: sem ele o `requestSubmit` dispara antes do
+  // React escrever os valores no DOM, os campos ainda estão vazios, o
+  // `required` do HTML barra o envio em silêncio e o clique não faz nada.
   function entrarComo(emailDaConta: string) {
-    setEmail(emailDaConta);
-    setSenha(SENHA_DEMO);
-    requestAnimationFrame(() => form.current?.requestSubmit());
+    flushSync(() => {
+      setEmail(emailDaConta);
+      setSenha(SENHA_DEMO);
+    });
+    form.current?.requestSubmit();
   }
 
   return (
@@ -139,7 +163,7 @@ export function LoginForm({ demo = false }: { demo?: boolean }) {
                         className="flex w-full items-center gap-2.5 rounded-[10px] bg-card px-2.5 py-2 text-left transition-colors hover:bg-accent disabled:opacity-50"
                       >
                         <Avatar360 nome={c.nome} tamanho="sm" />
-                        <span className="min-w-0">
+                        <span className="min-w-0 flex-1">
                           <span className="block truncate text-[12.5px] font-bold">
                             {c.nome}
                           </span>
@@ -147,6 +171,11 @@ export function LoginForm({ demo = false }: { demo?: boolean }) {
                             {c.papel}
                           </span>
                         </span>
+                        {c.apresenta ? (
+                          <span className="shrink-0 rounded-full bg-[var(--surf-ok)] px-2 py-0.5 text-[9.5px] font-bold text-[var(--on-ok)]">
+                            apresenta emenda
+                          </span>
+                        ) : null}
                       </button>
                     ))}
                   </div>

@@ -28,8 +28,15 @@ if (!url) {
   console.error("Defina DATABASE_URL/DIRECT_URL no .env antes de rodar.");
   process.exit(1);
 }
-if (/neon\.tech|vercel/.test(url)) {
-  console.error("Recusando rodar: a connection string parece ser de produção.");
+// Guard: por padrão recusa banco remoto, para ninguém semear produção sem
+// querer. Para popular a demonstração hospedada (Vercel/Neon) de propósito:
+//   PERMITIR_BANCO_REMOTO=1 npm run db:deploy
+if (/neon\.tech|vercel/.test(url) && process.env.PERMITIR_BANCO_REMOTO !== "1") {
+  console.error(
+    "Recusando rodar: a connection string parece ser de um banco remoto.\n" +
+    "Se a intenção é semear a demonstração hospedada, repita com " +
+    "PERMITIR_BANCO_REMOTO=1.",
+  );
   process.exit(1);
 }
 

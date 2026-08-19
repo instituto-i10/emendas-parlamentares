@@ -12,6 +12,8 @@ precisar. Montado em 19/08/2026.
 | Time Vercel | Instituto i10 — `ti-7875s-projects` |
 | Projeto Vercel | `emendas-parlamentares` (`prj_TgiSC0vRiyHRlAHig09PtptfG4dj`) |
 | URL estável | https://emendas-parlamentares-ti-7875s-projects.vercel.app |
+| Projeto Neon | `emendas-parlamentares` — `muddy-wave-93001699`, org `org-cold-pine-91972298` |
+| Região | **São Paulo** — Neon `aws-sa-east-1`, Vercel `gru1` |
 
 > ⚠️ **`emendas-parlamentares.vercel.app` (sem sufixo) NÃO é nosso.** É o deploy
 > do Emerson, na conta dele. Dá para abrir e responde 200 — mas mostra
@@ -56,24 +58,25 @@ precisar. Montado em 19/08/2026.
 | `AUTH_SECRET` (production, preview, development) | ✅ |
 | Vercel Authentication desligada (link público) | ✅ |
 | Build passando na Vercel | ✅ |
-| **Banco Neon** | ⏳ falta criar |
-| **Base 2027 carregada** | ⏳ depende do banco |
+| Banco Neon criado (São Paulo, PG 17) | ✅ |
+| Migrações aplicadas (24 tabelas) | ✅ |
+| Base 2027 + 44 emendas carregadas | ✅ |
 | Branch de produção no painel da Vercel | ⏳ ainda `main` — ver abaixo |
 
 Sem banco o app **não quebra**: degrada para estado vazio ("Exercício —",
 R$ 0,00), pelo `safe()` em `src/lib/queries.ts`.
 
-## O que falta
+## Como foi feito (e como refazer)
 
-### 1. Criar o banco no Neon i10
+### 1. O banco no Neon i10 — feito
 
-No console do Neon (conta do Instituto i10) → **New Project**. Região sugerida:
-`us-east-2` (mesma do `iad1` da Vercel, definido no `vercel.json`).
+Feito em 19/08/2026: projeto `emendas-parlamentares` (`muddy-wave-93001699`),
+PostgreSQL 17, região `aws-sa-east-1`.
 
-Copiar as duas connection strings do projeto:
-
-- **Direct** — o host **sem** `-pooler`
-- **Pooled** — o host **com** `-pooler`
+**Por que São Paulo:** os outros três projetos Neon do i10 já estão lá, e o
+público da demonstração é brasileiro. Por isso a região das funções da Vercel
+também foi trocada de `iad1` para `gru1` no `vercel.json` — banco e execução no
+mesmo continente do usuário.
 
 ### 2. Definir as variáveis
 

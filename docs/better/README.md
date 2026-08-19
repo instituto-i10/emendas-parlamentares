@@ -30,6 +30,7 @@ primária sobre as exigências do STF, do MP-SP e do TCE-SP.
 | 06 | [Ambiente local](06-ambiente-local.md) | Três modos de rodar, os datasets (demonstração e volume real) e os testes E2E |
 | 07 | [Lacunas e riscos](07-lacunas-e-riscos.md) | Gaps regulatórios mapeados pelo time do protótipo mais dezenove dívidas técnicas |
 | 08 | [Dados reais: Mogi Guaçu](08-dados-reais-mogi-guacu.md) | PPA 2026-2029 e LDO 2027 recebidos do autor, **extraídos por OCR, validados por checksum e já carregados** (`npm run db:2027`) — 1.163 dotações, o que é real e o que é simulado, e o calendário real do projeto |
+| 09 | [Deploy da demonstração](09-deploy.md) | Vercel + Neon na conta do i10: coordenadas, as armadilhas já encontradas e como repor a base |
 
 ## Se você só tem cinco minutos
 

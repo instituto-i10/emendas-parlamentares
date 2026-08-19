@@ -33,6 +33,17 @@ type Base = { id: string; numero: string; tipo: string; ano: number };
 const controle =
   "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50";
 
+// Deriva um id estável do rótulo, para associar <label> e <select>. Sem isso o
+// campo não é anunciado por leitor de tela nem alcançável por `getByLabel`.
+const idDoRotulo = (label: string) =>
+  "campo-" +
+  label
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
 function Selecao({
   label,
   value,
@@ -48,10 +59,12 @@ function Selecao({
   disabled?: boolean;
   placeholder?: string;
 }) {
+  const id = idDoRotulo(label);
   return (
     <div className="space-y-1.5">
-      <Label>{label}</Label>
+      <Label htmlFor={id}>{label}</Label>
       <select
+        id={id}
         className={controle}
         value={value}
         disabled={disabled}
@@ -260,12 +273,12 @@ export function NovaEmendaForm({
             </div>
             {/* Natureza e Fonte — SOMENTE LEITURA a partir da dotação */}
             <div className="space-y-1.5">
-              <Label>Natureza da despesa (leitura)</Label>
-              <Input readOnly value={dotacaoSel ? `${dotacaoSel.naturezaCodigo} — ${dotacaoSel.naturezaNome}` : ""} placeholder="—" />
+              <Label htmlFor="natureza-leitura">Natureza da despesa (leitura)</Label>
+              <Input id="natureza-leitura" readOnly value={dotacaoSel ? `${dotacaoSel.naturezaCodigo} — ${dotacaoSel.naturezaNome}` : ""} placeholder="—" />
             </div>
             <div className="space-y-1.5">
-              <Label>Fonte de recurso (leitura)</Label>
-              <Input readOnly value={dotacaoSel ? `${dotacaoSel.fonteCodigo} — ${dotacaoSel.fonteNome}` : ""} placeholder="—" />
+              <Label htmlFor="fonte-leitura">Fonte de recurso (leitura)</Label>
+              <Input id="fonte-leitura" readOnly value={dotacaoSel ? `${dotacaoSel.fonteCodigo} — ${dotacaoSel.fonteNome}` : ""} placeholder="—" />
             </div>
           </CardContent>
         </Card>
@@ -277,8 +290,8 @@ export function NovaEmendaForm({
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="space-y-1.5">
-              <Label>Tipo</Label>
-              <select className={controle} value={tipo} onChange={(e) => { setTipo(e.target.value); sujar(); }}>
+              <Label htmlFor="tipo">Tipo</Label>
+              <select id="tipo" className={controle} value={tipo} onChange={(e) => { setTipo(e.target.value); sujar(); }}>
                 {opcoes(ROTULO_TIPO_EMENDA).map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}

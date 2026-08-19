@@ -24,7 +24,6 @@ export default async function ExecucaoPage() {
     <div className="space-y-8">
       <PageHeader
         titulo="Execução e acompanhamento"
-        descricao={`Situação das emendas e consumo do teto por autor${ano ? ` — ${ano}` : ""}.`}
         crumbs={[
           { titulo: "Hub", href: "/hub" },
           { titulo: "Acompanhamento", href: "/executivo/acompanhamento" },

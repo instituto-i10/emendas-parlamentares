@@ -18,13 +18,13 @@ export default async function HubPage({
     <div className="mx-auto max-w-5xl">
       <PageHeader
         titulo="Ferramentas"
-        descricao={`Olá, ${user.nome} — módulos operacionais do seu perfil (formulários, importação, configurações).`}
+        descricao={`Olá, ${user.nome}.`}
       />
 
       {erro === "acesso-negado" ? (
         <div
           role="alert"
-          className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm text-destructive"
+          className="mb-4 rounded-lg bg-[#fdecec] px-4 py-3.5 text-[13px] font-medium text-destructive"
         >
           Acesso negado: seu perfil não tem permissão para o módulo solicitado.
         </div>

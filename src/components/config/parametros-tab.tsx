@@ -109,7 +109,7 @@ export function ParametrosTab({
           descricao="Cadastre regras como teto por autor ou aderência à LDO."
         />
       ) : (
-        <div className="rounded-lg border">
+        <div className="rounded-xl bg-card p-4 shadow-card">
           <Table>
             <TableHeader>
               <TableRow>

@@ -91,7 +91,7 @@ export function BeneficiariosTab({
           descricao="Cadastre manualmente ou derive automaticamente do objeto das emendas."
         />
       ) : (
-        <div className="rounded-lg border">
+        <div className="rounded-xl bg-card p-4 shadow-card">
           <Table>
             <TableHeader>
               <TableRow>

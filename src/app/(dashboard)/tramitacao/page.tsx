@@ -1,25 +1,41 @@
+import Link from "next/link";
+import {
+  ArrowRight,
+  CheckCircle2,
+  FileInput,
+  FilePlus2,
+  Gavel,
+  Landmark,
+  ScanSearch,
+  type LucideIcon,
+} from "lucide-react";
 import { getAnoAtivo } from "@/lib/exercicio";
-import { getDados360, brlCompacto } from "@/lib/queries-360";
+import { getDados360, brl, brlCompacto } from "@/lib/queries-360";
 import { getInstrumentoBaseAberto } from "@/lib/queries-orcamento";
-import { ROTULO_TIPO_INSTRUMENTO } from "@/lib/rotulos";
+import { ROTULO_STATUS_EMENDA, ROTULO_TIPO_INSTRUMENTO } from "@/lib/rotulos";
 import { SecTitle } from "@/components/e360/sec-title";
-import { KpiCard } from "@/components/e360/kpi-card";
-import { Card360, CardSrc } from "@/components/e360/card360";
-import { Flow360, type EtapaFluxo } from "@/components/e360/flow360";
+import { Card360, Eyebrow } from "@/components/e360/card360";
+import { Stepper, type Etapa } from "@/components/e360/stepper";
+import { Tag360, tomDoStatus } from "@/components/e360/tag360";
+import { Avatar360 } from "@/components/e360/avatar";
+import { cn } from "@/lib/utils";
 
 export default async function TramitacaoPage() {
   const ano = await getAnoAtivo();
-  const [{ consolidado: c, porStatus }, base] = await Promise.all([
+  const [{ consolidado: c, porStatus, emendas }, base] = await Promise.all([
     getDados360(ano),
     getInstrumentoBaseAberto(ano),
   ]);
 
   const qtd = (s: string) => porStatus.find((x) => x.status === s)?.qtd ?? 0;
+  const valor = (s: string) => porStatus.find((x) => x.status === s)?.valor ?? 0;
   const rascunhos = qtd("RASCUNHO") + qtd("EM_VALIDACAO");
   const invalidas = qtd("INVALIDA");
   const validas = qtd("VALIDA");
   const submetidas = qtd("SUBMETIDA") + qtd("EM_TRAMITACAO");
-  const decididas = qtd("APROVADA") + qtd("REJEITADA");
+  const aprovadas = qtd("APROVADA");
+  const rejeitadas = qtd("REJEITADA");
+  const decididas = aprovadas + rejeitadas;
 
   // Etapa atual do processo, derivada do que existe no banco.
   const etapaAtual =
@@ -33,123 +49,277 @@ export default async function TramitacaoPage() {
             ? "apresentacao"
             : "abertura";
 
-  const ordem = ["abertura", "apresentacao", "conferencia", "parecer", "consolidacao"];
-  const estado = (etapa: string): EtapaFluxo["estado"] => {
+  const ordem = [
+    "recebimento",
+    "abertura",
+    "apresentacao",
+    "conferencia",
+    "parecer",
+    "consolidacao",
+  ];
+  const estado = (etapa: string): Etapa["estado"] => {
     const i = ordem.indexOf(etapa);
     const atual = ordem.indexOf(etapaAtual);
     return i < atual ? "done" : i === atual ? "now" : "next";
   };
 
-  const antes: EtapaFluxo[] = [
+  const etapas: Etapa[] = [
     {
-      titulo: "Recebimento do projeto de lei",
-      subtitulo: base
-        ? `${ROTULO_TIPO_INSTRUMENTO[base.tipo]} ${base.numero} · base das emendas`
-        : "aguardando projeto de lei base",
+      id: "recebimento",
+      titulo: "Projeto de lei",
+      icon: Landmark,
       estado: base ? "done" : "next",
+      contador: base
+        ? `${ROTULO_TIPO_INSTRUMENTO[base.tipo] ?? base.tipo} ${base.numero}`
+        : "sem base",
       href: "/executivo/planejamento/instrumentos",
     },
     {
-      titulo: "Abertura do período de emendas",
-      subtitulo: base ? "projeto de lei em tramitação — emendas abertas" : "—",
+      id: "abertura",
+      titulo: "Período aberto",
+      icon: FileInput,
       estado: base ? "done" : "next",
+      contador: base ? "em tramitação" : "—",
     },
     {
-      titulo: "Apresentação das emendas",
-      subtitulo: `${c.qtd} emendas · ${c.autoresComEmenda} autores · ${brlCompacto(c.valor)}`,
-      estado: c.qtd > 0 ? (etapaAtual === "apresentacao" ? "now" : "done") : "next",
+      id: "apresentacao",
+      titulo: "Apresentação",
+      icon: FilePlus2,
+      estado: c.qtd > 0 ? estado("apresentacao") : "next",
+      contador: `${c.qtd} emendas`,
+      nota: brlCompacto(c.valor),
       href: "/emendas",
     },
     {
-      titulo: "Conferência formal (motor de validação)",
-      subtitulo: `${validas} válidas · ${invalidas} inválidas · ${rascunhos} em elaboração`,
+      id: "conferencia",
+      titulo: "Conferência formal",
+      icon: ScanSearch,
       estado: estado("conferencia"),
+      contador: `${invalidas} p/ sanear`,
+      nota: `${validas} válidas`,
       href: "/analise",
     },
-  ];
-
-  const depois: EtapaFluxo[] = [
     {
-      titulo: "Análise técnica e parecer",
-      subtitulo: `${submetidas} submetidas aguardando parecer`,
+      id: "parecer",
+      titulo: "Análise e parecer",
+      icon: Gavel,
       estado: estado("parecer"),
+      contador: `${submetidas} na fila`,
       href: "/analise",
     },
     {
-      titulo: "Deliberação e lei aprovada",
-      subtitulo: `${decididas} emendas com decisão (aprovadas/rejeitadas)`,
+      id: "consolidacao",
+      titulo: "Consolidação",
+      icon: CheckCircle2,
       estado: estado("consolidacao"),
+      contador: `${decididas} decididas`,
+      nota: `${aprovadas} aprovadas`,
       href: "/legislativo/tramitacao/acatadas",
     },
+  ];
+
+  // Filas operacionais: cada card é uma pilha de trabalho com destino.
+  const filas: {
+    id: string;
+    titulo: string;
+    icon: LucideIcon;
+    qtd: number;
+    valor: number;
+    tom: "bad" | "warn" | "info" | "ok";
+    acao: string;
+    href: string;
+    status: string[];
+  }[] = [
     {
-      titulo: "Consolidação e acompanhamento",
-      subtitulo: "comparação PL × lei aprovada e execução",
-      estado: estado("consolidacao"),
-      href: "/executivo/acompanhamento",
+      id: "sanear",
+      titulo: "Devolver para saneamento",
+      icon: ScanSearch,
+      qtd: invalidas,
+      valor: valor("INVALIDA"),
+      tom: "bad",
+      acao: "Abrir análise técnica",
+      href: "/analise",
+      status: ["INVALIDA"],
+    },
+    {
+      id: "parecer",
+      titulo: "Aguardando parecer",
+      icon: Gavel,
+      qtd: submetidas,
+      valor: valor("SUBMETIDA") + valor("EM_TRAMITACAO"),
+      tom: "warn",
+      acao: "Dar parecer",
+      href: "/analise",
+      status: ["SUBMETIDA", "EM_TRAMITACAO"],
+    },
+    {
+      id: "elaboracao",
+      titulo: "Em elaboração pelo gabinete",
+      icon: FilePlus2,
+      qtd: rascunhos,
+      valor: valor("RASCUNHO") + valor("EM_VALIDACAO"),
+      tom: "info",
+      acao: "Ver emendas",
+      href: "/legislativo/emendas/todas",
+      status: ["RASCUNHO", "EM_VALIDACAO"],
+    },
+    {
+      id: "decididas",
+      titulo: "Com decisão da comissão",
+      icon: CheckCircle2,
+      qtd: decididas,
+      valor: valor("APROVADA") + valor("REJEITADA"),
+      tom: "ok",
+      acao: "Ver acatadas",
+      href: "/legislativo/tramitacao/acatadas",
+      status: ["APROVADA", "REJEITADA"],
     },
   ];
 
+  // O que está parado na etapa corrente — a lista que o relator abre primeiro.
+  const filaAtual = filas.find((f) => f.qtd > 0 && f.tom !== "ok") ?? filas[0];
+  const naFila = emendas
+    .filter((e) => filaAtual.status.includes(e.status))
+    .slice(0, 6);
+
   return (
-    <div>
+    <div className="flex flex-col gap-4">
       <SecTitle
-        titulo={`Tramitação das emendas${base ? ` ao ${ROTULO_TIPO_INSTRUMENTO[base.tipo]} ${base.numero}` : ""}`}
-        nota={`o caminho da emenda, do recebimento do projeto à consolidação · exercício ${ano ?? "—"} · clique em cada etapa`}
+        titulo={`Tramitação${base ? ` — ${ROTULO_TIPO_INSTRUMENTO[base.tipo] ?? base.tipo} ${base.numero}` : ""}`}
+        nota={`exercício ${ano ?? "—"}`}
       />
 
-      <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          eyebrow="Emendas apresentadas"
-          numero={String(c.qtd)}
-          rotulo={`por ${c.autoresComEmenda} autor(es) · ${brlCompacto(c.valor)}`}
-          href="/emendas"
-        />
-        <KpiCard
-          eyebrow="Conferência formal"
-          numero={invalidas === 0 && c.qtd > 0 ? "OK" : `${invalidas} p/ sanear`}
-          rotulo={`${validas} válidas pelo motor · ${invalidas} inválidas`}
-          delta={
-            invalidas > 0
-              ? { tom: "warn", texto: "devolver p/ saneamento" }
-              : { tom: "up", texto: "sem pendências" }
-          }
-          href="/analise"
-        />
-        <KpiCard
-          eyebrow="Aguardando parecer"
-          numero={String(submetidas)}
-          rotulo="submetidas à análise técnica"
-          href="/analise"
-        />
-        <KpiCard
-          eyebrow="Etapa atual"
-          numero={
-            {
-              abertura: "Abertura",
-              apresentacao: "Apresentação",
-              conferencia: "Conferência",
-              parecer: "Análise técnica",
-              consolidacao: "Consolidação",
-            }[etapaAtual]!
-          }
-          rotulo="derivada da situação real das emendas"
-        />
+      {/* ---------------------------------------------------------- esteira */}
+      <Card360>
+        <Stepper etapas={etapas} />
+      </Card360>
+
+      {/* ------------------------------------------------------------ filas */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {filas.map((f) => (
+          <Link key={f.id} href={f.href} className="group rounded-xl">
+            <div
+              className={cn(
+                "flex h-full flex-col rounded-xl bg-card p-5 shadow-card transition-all",
+                "group-hover:-translate-y-0.5 group-hover:shadow-card-hover"
+              )}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span
+                  className={cn(
+                    "grid size-9 place-items-center rounded-[11px]",
+                    f.tom === "bad" && "bg-[var(--surf-bad)] text-[var(--on-bad)]",
+                    f.tom === "warn" &&
+                      "bg-[var(--surf-warn)] text-[var(--on-warn)]",
+                    f.tom === "info" &&
+                      "bg-[var(--surf-info)] text-[var(--on-info)]",
+                    f.tom === "ok" && "bg-[var(--surf-ok)] text-[var(--on-ok)]"
+                  )}
+                >
+                  <f.icon className="size-[18px]" aria-hidden />
+                </span>
+                {f.qtd > 0 ? <Tag360 tom={f.tom}>{f.qtd}</Tag360> : null}
+              </div>
+              <div className="kpi-num mt-4" style={{ fontSize: 24 }}>
+                {f.qtd}
+              </div>
+              <div className="text-[12.5px] font-bold leading-snug">
+                {f.titulo}
+              </div>
+              <div className="mt-1 text-[11.5px] font-medium text-muted-foreground">
+                {brlCompacto(f.valor)}
+              </div>
+              <span className="mt-3 inline-flex items-center gap-1 text-[11.5px] font-bold text-accent-foreground">
+                {f.acao}
+                <ArrowRight className="size-3.5" aria-hidden />
+              </span>
+            </div>
+          </Link>
+        ))}
       </div>
 
-      <Card360>
-        <Flow360
-          antes={antes}
-          depois={depois}
-          decisao={{
-            titulo: "Conformidade OK?",
-            devolucao: "Devolver p/ saneamento",
-            devolucaoHref: "/analise",
-          }}
-        />
-        <CardSrc direita="situação calculada a partir dos status reais das emendas">
-          fluxo regimental: apresentação → conferência → análise → deliberação →
-          consolidação
-        </CardSrc>
-      </Card360>
+      {/* -------------------------------------------------- fila do momento */}
+      <div className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
+        <Card360>
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
+            <div>
+              <Eyebrow className="mb-0.5">Fila do momento</Eyebrow>
+              <h3 className="text-[15.5px] font-bold tracking-[-.015em]">
+                {filaAtual.titulo}
+              </h3>
+            </div>
+            <Link
+              href={filaAtual.href}
+              className="text-[11.5px] font-semibold text-accent-foreground hover:underline"
+            >
+              abrir a fila →
+            </Link>
+          </div>
+
+          {naFila.length === 0 ? (
+            <p className="rounded-lg bg-secondary px-4 py-6 text-center text-[12.5px] font-medium text-muted-foreground">
+              Nada parado nesta etapa.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {naFila.map((e) => (
+                <Link
+                  key={e.id}
+                  href={`/legislativo/emendas/${e.id}`}
+                  className="flex items-center gap-3 rounded-lg bg-secondary px-3.5 py-3 transition-colors hover:bg-accent"
+                >
+                  <Avatar360 nome={e.autorNome} tamanho="sm" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[12.5px] font-bold">
+                      {e.numero} — {e.objeto}
+                    </span>
+                    <span className="block truncate text-[11px] font-medium text-muted-foreground">
+                      {e.autorNome} · {e.orgaoNome}
+                    </span>
+                  </span>
+                  <span className="hidden shrink-0 text-[12px] font-semibold tabular-nums sm:block">
+                    {brl(e.valor)}
+                  </span>
+                  <Tag360 tom={tomDoStatus(e.status)}>
+                    {ROTULO_STATUS_EMENDA[e.status] ?? e.status}
+                  </Tag360>
+                </Link>
+              ))}
+            </div>
+          )}
+        </Card360>
+
+        {/* ramos do processo que não são a linha principal */}
+        <Card360>
+          <Eyebrow>Desvios do fluxo</Eyebrow>
+          <div className="flex flex-col gap-2">
+            <div className="rounded-lg bg-[var(--surf-bad)] px-4 py-3.5">
+              <div className="text-[12.5px] font-bold text-[var(--on-bad)]">
+                Não conforma → volta ao autor
+              </div>
+              <div className="mt-0.5 text-[11.5px] font-medium text-[var(--on-bad)]/80">
+                {invalidas} emenda(s) para saneamento e revalidação
+              </div>
+            </div>
+            <div className="rounded-lg bg-secondary px-4 py-3.5">
+              <div className="text-[12.5px] font-bold">
+                Parecer contrário → rejeitada
+              </div>
+              <div className="mt-0.5 text-[11.5px] font-medium text-muted-foreground">
+                {rejeitadas} emenda(s) rejeitadas pela comissão
+              </div>
+            </div>
+            <div className="rounded-lg bg-[var(--surf-ok)] px-4 py-3.5">
+              <div className="text-[12.5px] font-bold text-[var(--on-ok)]">
+                Aprovada → lei orçamentária
+              </div>
+              <div className="mt-0.5 text-[11.5px] font-medium text-[var(--on-ok)]/80">
+                {aprovadas} emenda(s) seguem para consolidação
+              </div>
+            </div>
+          </div>
+        </Card360>
+      </div>
     </div>
   );
 }

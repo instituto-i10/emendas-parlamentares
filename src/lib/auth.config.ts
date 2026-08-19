@@ -14,8 +14,10 @@ export const authConfig = {
       if (process.env.NODE_ENV !== "production") return true;
       const { pathname } = request.nextUrl;
       // /publica/* é o portal do cidadão: consulta sem login (transparência
-      // ativa — STF/TCE), incluindo a lista de emendas e o manual.
+      // ativa — STF/TCE), incluindo a lista de emendas e o manual. A raiz
+      // também é pública — é ela que leva o visitante ao portal.
       if (
+        pathname === "/" ||
         pathname === "/login" ||
         pathname === "/publica" ||
         pathname.startsWith("/publica/") ||

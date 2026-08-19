@@ -20,7 +20,6 @@ export default async function InstrumentosPage() {
     <div>
       <PageHeader
         titulo="Instrumentos"
-        descricao="Projetos de lei e leis aprovadas do exercício. Conduza o ciclo de vida e abra o PL para emendas (Em tramitação)."
         crumbs={[
           { titulo: "Hub", href: "/hub" },
           { titulo: "Planejamento & Orçamento", href: "/executivo/planejamento" },
@@ -33,7 +32,7 @@ export default async function InstrumentosPage() {
           descricao="Cadastre o projeto de lei em Configurações → Instrumentos."
         />
       ) : (
-        <div className="rounded-lg border">
+        <div className="rounded-xl bg-card p-4 shadow-card">
           <Table>
             <TableHeader>
               <TableRow>

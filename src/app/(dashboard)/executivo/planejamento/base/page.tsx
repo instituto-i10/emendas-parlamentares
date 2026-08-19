@@ -22,7 +22,6 @@ export default async function BasePage() {
     <div>
       <PageHeader
         titulo="Base de dotações"
-        descricao="Base estruturada por projeto de lei. Gere/atualize a base em Configurações → Instrumentos (importar planilha)."
         crumbs={[
           { titulo: "Hub", href: "/hub" },
           { titulo: "Planejamento & Orçamento", href: "/executivo/planejamento" },
@@ -35,7 +34,7 @@ export default async function BasePage() {
           descricao="Cadastre o PL em Configurações → Instrumentos e gere a base."
         />
       ) : (
-        <div className="rounded-lg border">
+        <div className="rounded-xl bg-card p-4 shadow-card">
           <Table>
             <TableHeader>
               <TableRow>

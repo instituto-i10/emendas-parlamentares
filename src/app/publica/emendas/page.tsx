@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { LogoEmendas360 } from "@/components/logo-emendas360";
 import { SecTitle } from "@/components/e360/sec-title";
-import { Card360, CardSrc } from "@/components/e360/card360";
+import { Card360 } from "@/components/e360/card360";
 import { Tag360, tomDoStatus } from "@/components/e360/tag360";
 import { Banner } from "@/components/e360/banner";
 import {
   listarEmendasPublicas,
   opcoesFiltrosPublicos,
-  POR_PAGINA,
 } from "@/lib/queries-publicas";
 import { ROTULO_STATUS_EMENDA } from "@/lib/rotulos";
 import { brl } from "@/lib/queries-360";
@@ -49,25 +48,25 @@ export default async function PortalEmendasPage({
   };
 
   const controle =
-    "h-9 rounded-lg border-[1.5px] border-border bg-card px-3 text-sm outline-none focus:border-brand-cyan";
+    "h-9 rounded-[10px] bg-secondary px-3 text-[13px] font-medium outline-none focus:ring-2 focus:ring-ring/40";
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="grad-dark text-white shadow-[0_2px_14px_rgba(6,24,64,.35)]">
-        <div className="mx-auto flex h-14 max-w-[1320px] items-center gap-3 px-5">
+      <header className="grad-dark text-white">
+        <div className="flex h-14 items-center gap-3 px-5 lg:px-7">
           <Link href="/publica">
             <LogoEmendas360 />
           </Link>
           <Link
             href="/login"
-            className="ml-auto rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-[#d6e2f7] hover:bg-white/20"
+            className="ml-auto rounded-[10px] bg-white/10 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-white/20"
           >
             Entrar
           </Link>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[1320px] flex-1 px-5 pb-16 pt-6">
+      <main className="w-full flex-1 px-5 pb-14 pt-6 lg:px-7">
         <Banner tom="ok" emoji="🔎">
           <b>Consulta pública de emendas</b> — todas as emendas parlamentares,
           com autor, valor, beneficiário e situação. Busque e filtre à vontade.
@@ -75,7 +74,7 @@ export default async function PortalEmendasPage({
 
         <SecTitle
           titulo="Emendas parlamentares — consulta pública"
-          nota={`${total} emenda(s) encontrada(s) · transparência ativa (art. 163-A da CF)`}
+          nota={`${total} emenda(s) encontrada(s)`}
         />
 
         {/* Filtros — GET simples: funciona sem JavaScript */}
@@ -107,7 +106,7 @@ export default async function PortalEmendasPage({
           </select>
           <button
             type="submit"
-            className="grad-main h-9 rounded-lg px-4 text-[13px] font-bold text-white hover:brightness-110"
+            className="h-9 rounded-[10px] bg-primary px-4 text-[12.5px] font-bold text-white transition-colors hover:bg-[var(--primary-600)]"
           >
             Filtrar
           </button>
@@ -172,30 +171,29 @@ export default async function PortalEmendasPage({
               </tbody>
             </table>
           </div>
-          <CardSrc
-            direita={
-              paginas > 1 ? (
-                <span className="flex gap-3">
-                  {pagina > 1 ? (
-                    <Link className="font-bold text-brand-cyan hover:underline" href={qs({ pagina: pagina - 1 })}>
-                      ← anterior
-                    </Link>
-                  ) : null}
-                  <span>
-                    página {pagina} de {paginas}
-                  </span>
-                  {pagina < paginas ? (
-                    <Link className="font-bold text-brand-cyan hover:underline" href={qs({ pagina: pagina + 1 })}>
-                      próxima →
-                    </Link>
-                  ) : null}
-                </span>
-              ) : undefined
-            }
-          >
-            {POR_PAGINA} por página · dados do banco em tempo real · clique no
-            número para o detalhe completo
-          </CardSrc>
+          {paginas > 1 ? (
+            <div className="mt-3 flex items-center justify-end gap-3 text-[11.5px] font-semibold text-muted-foreground">
+              {pagina > 1 ? (
+                <Link
+                  className="text-accent-foreground hover:underline"
+                  href={qs({ pagina: pagina - 1 })}
+                >
+                  ← anterior
+                </Link>
+              ) : null}
+              <span>
+                página {pagina} de {paginas}
+              </span>
+              {pagina < paginas ? (
+                <Link
+                  className="text-accent-foreground hover:underline"
+                  href={qs({ pagina: pagina + 1 })}
+                >
+                  próxima →
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
         </Card360>
 
         <p className="mt-4 text-[13px] text-muted-foreground">

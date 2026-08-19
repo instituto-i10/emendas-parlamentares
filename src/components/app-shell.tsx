@@ -1,26 +1,31 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
-import { Eye } from "lucide-react";
 import type { Poder, Role } from "@/generated/prisma/enums";
 import { vistasVisiveis } from "@/config/vistas360";
-import { NavTabs360 } from "./nav-tabs-360";
+import { ROTULO_ROLE } from "@/lib/rotulos";
+import { SideNav } from "./side-nav";
 import { ExercicioSelector } from "./exercicio-selector";
-import { PerfilSwitcher } from "./perfil-switcher";
-import { LogoEmendas360 } from "./logo-emendas360";
+import { AssistenteWidget } from "./assistente/widget";
 
 type ExercicioOpcao = { id: string; ano: number; status: string };
 
-// Casca no padrão do mockup "Emendas 360": topbar escura (marca, exercício,
-// visão pública, perfil) + abas horizontais por papel. Sem sidebar.
+// Casca da aplicação: menu lateral navy à esquerda (marca, vistas do papel
+// agrupadas por natureza do trabalho, conta) e, à direita, uma topbar enxuta
+// com o contexto de exercício. O assistente vive flutuando sobre tudo.
 export function AppShell({
   user,
   exercicios,
   anoAtivo,
+  contadores,
+  contexto,
   children,
 }: {
   user: { nome: string; poder: Poder | null; role: Role };
   exercicios: ExercicioOpcao[];
   anoAtivo: number | null;
+  /** Pendências por vista, exibidas como contador no menu. */
+  contadores?: Record<string, number>;
+  /** Instrumento base do exercício, mostrado como contexto na topbar. */
+  contexto?: string;
   children: ReactNode;
 }) {
   const vistas = vistasVisiveis(user.role).map(({ id, titulo, href }) => ({
@@ -30,55 +35,42 @@ export function AppShell({
   }));
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="grad-dark sticky top-0 z-40 text-white shadow-[0_2px_14px_rgba(6,24,64,.35)]">
-        <div className="mx-auto flex h-14 max-w-[1320px] flex-wrap items-center gap-3 px-5">
-          <Link href="/painel" className="shrink-0">
-            <LogoEmendas360 />
-          </Link>
-          <div className="hidden border-l border-white/25 pl-4 text-sm font-bold leading-tight md:block">
-            Emendas parlamentares
-            <small className="block text-[10px] font-medium uppercase tracking-[1.4px] text-[#8fe8ff]">
-              {anoAtivo ? `Exercício ${anoAtivo}` : "sem exercício ativo"}
-            </small>
+    <div className="flex min-h-screen">
+      <SideNav
+        vistas={vistas}
+        contadores={contadores}
+        usuario={{ nome: user.nome, papel: ROTULO_ROLE[user.role] ?? user.role }}
+      />
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur-xl backdrop-saturate-150">
+          <div className="flex h-16 items-center gap-3 px-5 lg:px-7">
+            {contexto ? (
+              <span className="hidden items-center gap-2 text-[12.5px] font-semibold text-muted-foreground md:flex">
+                <span className="size-1.5 rounded-full bg-brand-mint" aria-hidden />
+                {contexto}
+              </span>
+            ) : null}
+            <div className="ml-auto flex items-center gap-2">
+              <ExercicioSelector exercicios={exercicios} anoAtivo={anoAtivo} />
+            </div>
           </div>
-          <div className="ml-auto flex items-center gap-2">
-            <ExercicioSelector exercicios={exercicios} anoAtivo={anoAtivo} />
-            <Link
-              href="/publica"
-              title="O que o cidadão vê"
-              className="flex h-9 items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 text-xs font-semibold text-[#d6e2f7] hover:bg-white/20"
-            >
-              <Eye className="size-4" aria-hidden />
-              <span className="hidden sm:inline">Visão pública</span>
-            </Link>
-            <PerfilSwitcher
-              nome={user.nome}
-              role={user.role}
-              poder={user.poder}
-            />
+        </header>
+
+        <main className="w-full flex-1 px-5 pb-12 pt-6 lg:px-7">{children}</main>
+
+        <footer className="px-5 lg:px-7">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t py-5 pb-24 text-[11.5px] font-medium text-muted-foreground lg:pr-20">
+            <span>
+              <b className="font-extrabold text-primary">Emendas360</b> ·
+              orçamento impositivo
+            </span>
+            <span>A decisão de mérito e a assinatura são do parlamentar.</span>
           </div>
-        </div>
-      </header>
+        </footer>
+      </div>
 
-      <NavTabs360 vistas={vistas} />
-
-      <main className="mx-auto w-full max-w-[1320px] flex-1 px-5 pb-16 pt-6">
-        {children}
-      </main>
-
-      <footer className="border-t bg-card">
-        <div className="mx-auto flex max-w-[1320px] flex-wrap justify-between gap-3 px-5 py-5 text-xs text-muted-foreground">
-          <span>
-            <b className="text-primary">Emendas360</b> — gestão de emendas
-            parlamentares · orçamento impositivo
-          </span>
-          <span>
-            A plataforma confere requisitos formais e organiza; a decisão de
-            mérito e a assinatura são do parlamentar e da comissão.
-          </span>
-        </div>
-      </footer>
+      <AssistenteWidget />
     </div>
   );
 }

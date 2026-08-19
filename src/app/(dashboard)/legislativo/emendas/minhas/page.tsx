@@ -13,7 +13,6 @@ export default async function MinhasEmendasPage() {
     <div>
       <PageHeader
         titulo="Minhas emendas"
-        descricao={`Emendas de sua autoria${ano ? ` no exercício ${ano}` : ""}.`}
         crumbs={[
           { titulo: "Hub", href: "/hub" },
           { titulo: "Emendas", href: "/legislativo/emendas" },

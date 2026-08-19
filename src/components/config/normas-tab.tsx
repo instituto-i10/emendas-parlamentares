@@ -69,7 +69,7 @@ export function NormasTab({ normas }: { normas: Norma[] }) {
           descricao="Cadastre a LOM e o Regimento Interno da Câmara."
         />
       ) : (
-        <div className="rounded-lg border">
+        <div className="rounded-xl bg-card p-4 shadow-card">
           <Table>
             <TableHeader>
               <TableRow>

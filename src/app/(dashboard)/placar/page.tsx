@@ -3,7 +3,7 @@ import { getDados360, brl, brlCompacto } from "@/lib/queries-360";
 import { ROTULO_TIPO_EMENDA } from "@/lib/rotulos";
 import { SecTitle } from "@/components/e360/sec-title";
 import { KpiCard } from "@/components/e360/kpi-card";
-import { Card360, CardSrc, Eyebrow } from "@/components/e360/card360";
+import { Card360, Eyebrow } from "@/components/e360/card360";
 import { MiniBar } from "@/components/e360/minibar";
 import { PrintButton } from "@/components/emendas/print-button";
 
@@ -24,7 +24,6 @@ export default async function PlacarPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <SecTitle
           titulo={`Resumo Consolidado — exercício ${ano ?? "—"}`}
-          nota="o quadro que a comissão apresenta à Mesa e à população · valores reais do banco"
         />
         <div className="mt-7">
           <PrintButton />
@@ -68,7 +67,6 @@ export default async function PlacarPage() {
 
       <SecTitle
         titulo="Como o recurso se distribui"
-        nota="por tipo de emenda, por destino e entre os autores"
       />
       <div className="grid gap-4 lg:grid-cols-2">
         <Card360>
@@ -81,7 +79,6 @@ export default async function PlacarPage() {
               valor={`${brl(t.valor)} · ${t.qtd} itens`}
             />
           ))}
-          <CardSrc>classificação pelo tipo registrado na emenda</CardSrc>
         </Card360>
         <Card360>
           <Eyebrow>Maiores destinos por valor</Eyebrow>
@@ -94,7 +91,6 @@ export default async function PlacarPage() {
               valor={brl(d.valor)}
             />
           ))}
-          <CardSrc>agregado dos {c.qtd} itens por órgão da dotação</CardSrc>
         </Card360>
       </div>
 
@@ -125,15 +121,30 @@ export default async function PlacarPage() {
             />
           );
         })}
-        <CardSrc
-          direita={
-            c.pisoSaudeAutor != null
-              ? `marca ▎= reserva da saúde (${brl(c.pisoSaudeAutor)}) · âmbar = demais áreas acima do limite`
-              : undefined
-          }
-        >
-          porção colorida = valor em saúde do autor · usar a cota é faculdade
-        </CardSrc>
+        {/* A marca e a cor da barra só significam algo com a legenda. */}
+        {c.pisoSaudeAutor != null || c.limiteDemaisAutor != null ? (
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 border-t pt-3 text-[11px] font-medium text-muted-foreground">
+            {c.pisoSaudeAutor != null ? (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-3 w-0.5 bg-foreground" aria-hidden />
+                reserva da saúde ({brl(c.pisoSaudeAutor)})
+              </span>
+            ) : null}
+            {c.limiteDemaisAutor != null ? (
+              <span className="inline-flex items-center gap-1.5">
+                <span
+                  className="h-2 w-4 rounded-full bg-brand-amber"
+                  aria-hidden
+                />
+                demais áreas acima do limite de {brl(c.limiteDemaisAutor)}
+              </span>
+            ) : null}
+            <span className="inline-flex items-center gap-1.5">
+              <span className="grad-hi h-2 w-4 rounded-full" aria-hidden />
+              parcela em saúde
+            </span>
+          </div>
+        ) : null}
       </Card360>
     </div>
   );

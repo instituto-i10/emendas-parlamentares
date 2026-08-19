@@ -16,7 +16,7 @@ export function MesclarDuplicados({ grupos }: { grupos: Grupo[] }) {
   return (
     <div className="rounded-lg border border-brand-amber/40 bg-brand-amber/5 p-4">
       <div className="mb-3 flex items-center gap-2">
-        <Merge className="size-4 text-[#b97a0b]" aria-hidden />
+        <Merge className="size-4 text-brand-amber" aria-hidden />
         <b className="text-sm">
           {grupos.length} grupo(s) de possíveis duplicados
         </b>
@@ -58,13 +58,13 @@ function GrupoLinha({ grupo }: { grupo: Grupo }) {
 
   if (feito)
     return (
-      <div className="rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground">
+      <div className="rounded-lg bg-secondary px-3 py-2.5 text-[12.5px] font-medium text-muted-foreground">
         ✓ Mesclado em <b className="text-foreground">{grupo.membros.find((m) => m.id === canonicalId)?.nome}</b>.
       </div>
     );
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border bg-card px-3 py-2.5">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-secondary px-3 py-2.5">
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         {grupo.membros.map((m) => (
           <label

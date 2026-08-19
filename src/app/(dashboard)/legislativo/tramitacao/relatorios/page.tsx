@@ -25,7 +25,6 @@ export default async function RelatoriosPage() {
     <div>
       <PageHeader
         titulo="Relatórios"
-        descricao={`Consolidado de emendas por programa${ano ? ` — ${ano}` : ""}.`}
         crumbs={[
           { titulo: "Hub", href: "/hub" },
           { titulo: "Tramitação & Acompanhamento", href: "/legislativo/tramitacao" },
@@ -42,7 +41,7 @@ export default async function RelatoriosPage() {
       {porPrograma.length === 0 ? (
         <EmptyState titulo="Sem dados" descricao="Nenhuma emenda no exercício." />
       ) : (
-        <div className="rounded-lg border">
+        <div className="rounded-xl bg-card p-4 shadow-card">
           <Table>
             <TableHeader>
               <TableRow>

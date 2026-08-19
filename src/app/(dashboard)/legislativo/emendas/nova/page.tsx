@@ -38,7 +38,6 @@ export default async function NovaEmendaPage() {
     <div>
       <PageHeader
         titulo="Nova emenda"
-        descricao="Seleção assistida da dotação — nenhuma classificação é digitada."
         crumbs={crumbs}
       />
       {base ? (
@@ -49,7 +48,7 @@ export default async function NovaEmendaPage() {
       ) : (
         <EmptyState
           titulo="Nenhum projeto de lei aberto para emendas"
-          descricao="Peça ao Executivo para deixar um PROJETO_LEI (Em tramitação) aberto no exercício ativo."
+          descricao="É preciso um projeto de lei em tramitação no exercício ativo."
         />
       )}
     </div>

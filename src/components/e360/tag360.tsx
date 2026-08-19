@@ -1,12 +1,15 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+// Badges no padrão da referência de UI: pílula, peso 700, fundo lavado do
+// próprio matiz. Azul para o que está conforme, laranja para atenção,
+// vermelho para o que barra, cinza para o que ainda não começou.
 const TONS = {
-  ok: "bg-brand-mint/15 text-brand-green",
-  warn: "bg-brand-amber/15 text-[#b97a0b]",
-  bad: "bg-destructive/10 text-destructive",
-  info: "bg-accent text-accent-foreground",
-  roxo: "bg-brand-purple/12 text-brand-purple",
+  ok: "bg-[var(--surf-ok)] text-[var(--on-ok)]",
+  warn: "bg-[var(--surf-warn)] text-[var(--on-warn)]",
+  bad: "bg-[var(--surf-bad)] text-[var(--on-bad)]",
+  info: "bg-[var(--surf-info)] text-[var(--on-info)]",
+  roxo: "bg-[var(--surf-roxo)] text-[var(--on-roxo)]",
   pend: "bg-secondary text-muted-foreground",
 } as const;
 
@@ -25,7 +28,7 @@ export function Tag360({
   return (
     <span
       className={cn(
-        "inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-bold",
+        "inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[10.5px] font-bold leading-none",
         TONS[tom],
         className
       )}

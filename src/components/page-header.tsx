@@ -20,7 +20,7 @@ export function PageHeader({
       {crumbs && crumbs.length > 0 ? (
         <nav
           aria-label="Trilha de navegação"
-          className="mb-1 flex flex-wrap items-center gap-1 text-sm text-muted-foreground"
+          className="mb-1.5 flex flex-wrap items-center gap-1 text-[12px] font-semibold text-muted-foreground"
         >
           {crumbs.map((c, i) => (
             <span key={`${c.titulo}-${i}`} className="flex items-center gap-1">
@@ -41,11 +41,15 @@ export function PageHeader({
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-extrabold tracking-tight">{titulo}</h1>
+            <h1 className="text-[26px] font-extrabold tracking-[-.03em]">
+              {titulo}
+            </h1>
             <span className="sec-bar" aria-hidden />
           </div>
           {descricao ? (
-            <p className="text-sm text-muted-foreground">{descricao}</p>
+            <p className="text-[13px] font-medium text-muted-foreground">
+              {descricao}
+            </p>
           ) : null}
         </div>
         {acao ? <div className="shrink-0">{acao}</div> : null}

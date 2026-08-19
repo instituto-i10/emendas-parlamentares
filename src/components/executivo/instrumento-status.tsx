@@ -7,7 +7,7 @@ import { definirStatusInstrumento } from "@/lib/actions/instrumentos";
 import { ROTULO_STATUS_INSTRUMENTO, opcoes } from "@/lib/rotulos";
 
 const controle =
-  "h-8 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50";
+  "h-9 rounded-[10px] border border-input bg-card px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50";
 
 // Controle do ciclo de vida do instrumento (inclui abrir para emendas =
 // EM_TRAMITACAO).

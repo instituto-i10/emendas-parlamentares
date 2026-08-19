@@ -28,12 +28,12 @@ export default async function PitchPage() {
             ? `${brlCompacto(c.valor)} em emendas, ${c.qtd} indicações, ${c.autoresComEmenda} autores — e uma comissão que precisa conferir tudo antes do Plenário.`
             : "Da planilha ao Plenário, sem perder o controle — cota, teto e reserva de saúde conferidos automaticamente."}
         </h3>
-        <p className="mt-3 max-w-[760px] text-base text-[#c9d6f0]">
+        <p className="mt-3 max-w-[760px] text-base text-white/70">
           Não é conceito: são os dados reais do exercício. Cota, teto, reserva
           de saúde e destinos conferidos automaticamente — e o que não conforma
           sai destacado para saneamento antes da consolidação.
         </p>
-        <p className="mt-4 border-l-[3px] border-brand-mint pl-4 font-serif text-xl italic text-[#eaf1ff]">
+        <p className="mt-4 border-l-[3px] border-brand-mint pl-4 font-serif text-xl italic text-white">
           “A planilha vira painel: a comissão confere em minutos o que levava
           dias, e o relator assina com segurança.”
         </p>
@@ -66,13 +66,13 @@ export default async function PitchPage() {
         />
       </div>
 
-      <SecTitle titulo="A demo em 6 passos" nota="clique em cada passo para abrir a tela" />
+      <SecTitle titulo="A demo em 6 passos" />
       <div className="flex flex-col gap-2.5">
         {PASSOS.map(([n, t, s, href]) => (
           <Link
             key={n}
             href={href}
-            className="grid grid-cols-[52px_1fr_auto] items-center gap-4 rounded-[13px] border bg-card px-5 py-4 transition-colors hover:border-brand-cyan"
+            className="grid grid-cols-[52px_1fr_auto] items-center gap-4 rounded-lg bg-card px-5 py-4 shadow-card transition-shadow hover:shadow-card-hover"
           >
             <span className="grad-hi flex size-10 items-center justify-center rounded-full text-[17px] font-black text-brand-deep">
               {n}
@@ -96,7 +96,7 @@ export default async function PitchPage() {
           O mesmo painel serve à comissão, ao gabinete, ao Executivo e ao
           cidadão — e acompanha a emenda da indicação à execução.
         </h3>
-        <p className="mt-3 text-[#c9d6f0]">
+        <p className="mt-3 text-white/70">
           Conferir → sanear → consolidar → executar. O trabalho da comissão,
           instrumentalizado.
         </p>

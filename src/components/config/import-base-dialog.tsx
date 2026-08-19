@@ -53,7 +53,7 @@ export function ImportBaseDialog({ instrumentoId }: { instrumentoId: string }) {
               type="file"
               accept=".csv,.xlsx,.xls"
               required
-              className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground"
+              className="block w-full text-sm file:mr-3 file:rounded-[10px] file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground"
             />
             <p className="text-xs text-muted-foreground">
               Colunas: orgao_codigo, orgao_nome, unidade_codigo, …, valor_inicial.
@@ -66,8 +66,8 @@ export function ImportBaseDialog({ instrumentoId }: { instrumentoId: string }) {
               role="status"
               className={
                 state.ok
-                  ? "rounded-md border border-green-600/40 bg-green-600/10 px-3 py-2 text-sm text-green-700 dark:text-green-400"
-                  : "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                  ? "rounded-lg bg-[var(--blue-100)] px-3 py-2.5 text-[13px] font-medium text-[#2f6f97]"
+                  : "rounded-lg bg-[#fdecec] px-3 py-2.5 text-[13px] font-medium text-destructive"
               }
             >
               <p>{state.mensagem}</p>

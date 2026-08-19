@@ -5,7 +5,7 @@ import { getAnoAtivo } from "@/lib/exercicio";
 import { getParametros360 } from "@/lib/queries-360";
 import { SecTitle } from "@/components/e360/sec-title";
 import { KpiCard } from "@/components/e360/kpi-card";
-import { Card360, CardSrc, Eyebrow } from "@/components/e360/card360";
+import { Card360, Eyebrow } from "@/components/e360/card360";
 import { Farol, type FarolItemDado } from "@/components/e360/farol";
 import { Banner } from "@/components/e360/banner";
 
@@ -121,7 +121,6 @@ export default async function ConformidadePage() {
 
       <SecTitle
         titulo="Conformidade institucional — checklist TCE"
-        nota={`exercício ${ano ?? "—"} · adequação da Câmara ao regime impositivo`}
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -148,10 +147,6 @@ export default async function ConformidadePage() {
       <Card360 className="mt-4">
         <Eyebrow>O farol institucional</Eyebrow>
         <Farol itens={itens} />
-        <CardSrc direita="base: Comunicado GP 43/2025 · SDG 28/2025 · ADPF 854/STF">
-          cada item deriva do estado real do sistema (normas, parâmetros,
-          beneficiários e portal público)
-        </CardSrc>
       </Card360>
 
       <p className="mt-4 text-[13px] text-muted-foreground">

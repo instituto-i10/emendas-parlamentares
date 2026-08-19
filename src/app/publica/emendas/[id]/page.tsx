@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LogoEmendas360 } from "@/components/logo-emendas360";
 import { SecTitle } from "@/components/e360/sec-title";
-import { Card360, CardSrc, Eyebrow } from "@/components/e360/card360";
+import { Card360, Eyebrow } from "@/components/e360/card360";
 import { Tag360, tomDoStatus } from "@/components/e360/tag360";
 import { getEmendaPublica } from "@/lib/queries-publicas";
 import {
@@ -56,14 +56,14 @@ export default async function EmendaPublicaPage({
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="grad-dark text-white shadow-[0_2px_14px_rgba(6,24,64,.35)]">
-        <div className="mx-auto flex h-14 max-w-[1320px] items-center gap-3 px-5">
+      <header className="grad-dark text-white">
+        <div className="flex h-14 items-center gap-3 px-5 lg:px-7">
           <Link href="/publica">
             <LogoEmendas360 />
           </Link>
           <Link
             href="/publica/emendas"
-            className="ml-auto rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-[#d6e2f7] hover:bg-white/20"
+            className="ml-auto rounded-[10px] bg-white/10 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-white/20"
           >
             ← Todas as emendas
           </Link>
@@ -73,7 +73,6 @@ export default async function EmendaPublicaPage({
       <main className="mx-auto w-full max-w-[900px] flex-1 px-5 pb-16 pt-6">
         <SecTitle
           titulo={`Emenda nº ${e.numero}/${e.exercicio.ano}`}
-          nota="consulta pública · transparência ativa"
         />
         <div className="mb-4 flex flex-wrap gap-2">
           <Tag360 tom={tomDoStatus(e.status)}>
@@ -103,7 +102,6 @@ export default async function EmendaPublicaPage({
               </tbody>
             </table>
           </div>
-          <CardSrc>dados do sistema em tempo real · sem informações pessoais</CardSrc>
         </Card360>
 
         <Card360 className="mt-4">

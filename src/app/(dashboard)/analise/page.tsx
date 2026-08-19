@@ -6,7 +6,7 @@ import { getDados360, brl } from "@/lib/queries-360";
 import { ROTULO_STATUS_EMENDA } from "@/lib/rotulos";
 import { SecTitle } from "@/components/e360/sec-title";
 import { KpiCard } from "@/components/e360/kpi-card";
-import { Card360, CardSrc, Eyebrow } from "@/components/e360/card360";
+import { Card360, Eyebrow } from "@/components/e360/card360";
 import { Banner } from "@/components/e360/banner";
 import { Tag360, tomDoStatus } from "@/components/e360/tag360";
 import { TramitacaoActions } from "@/components/emendas/tramitacao-actions";
@@ -45,7 +45,6 @@ export default async function AnalisePage() {
 
       <SecTitle
         titulo="Conferência & Análise Técnica"
-        nota="o motor valida → o que não conforma volta p/ saneamento → o relator emite o parecer · antes da deliberação"
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -119,15 +118,11 @@ export default async function AnalisePage() {
               ))}
             </div>
           )}
-          <CardSrc>
-            trilha: motor conferiu → relator revisou → decidiu (tudo vai à
-            auditoria) · saneamento: o autor edita e revalida a emenda
-          </CardSrc>
         </Card360>
 
         <Card360>
           <Eyebrow>Prévia — parecer da conferência formal · exercício {ano ?? "—"}</Eyebrow>
-          <div className="rounded-[10px] border bg-[#fdfdfb] p-6 font-serif text-[13.5px] leading-relaxed text-[#1d2b4f] dark:bg-card">
+          <div className="rounded-lg bg-secondary p-6 font-serif text-[13.5px] leading-relaxed text-foreground">
             <p>
               <b>
                 PARECER DA CONFERÊNCIA FORMAL — EMENDAS AO ORÇAMENTO · EXERCÍCIO{" "}
@@ -181,17 +176,15 @@ export default async function AnalisePage() {
               condicionada ao saneamento das ressalvas antes da consolidação.
             </p>
             <br />
-            <p className="text-[11.5px] text-muted-foreground">
-              Requisitos formais conferidos automaticamente a partir das emendas
-              e parâmetros registrados ·{" "}
-              <b>juízo e assinatura: relator da comissão.</b>
+            <p className="text-[11.5px] font-medium text-muted-foreground">
+              <b>Juízo e assinatura: relator da comissão.</b>
             </p>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             <PrintButton />
             <Link
               href="/legislativo/tramitacao/relatorios"
-              className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold text-primary hover:border-brand-cyan"
+              className="inline-flex h-8 items-center rounded-[10px] bg-secondary px-3 text-xs font-semibold text-secondary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             >
               ⬇ Relatórios e exportação
             </Link>

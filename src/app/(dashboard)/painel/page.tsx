@@ -4,13 +4,20 @@ import { Role } from "@/generated/prisma/enums";
 import { getCurrentUser } from "@/lib/session";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { getDados360, brl, brlCompacto } from "@/lib/queries-360";
-import { ROTULO_STATUS_EMENDA } from "@/lib/rotulos";
+import { ClipboardCheck, Landmark, ScanSearch, Wallet } from "lucide-react";
 import { SecTitle } from "@/components/e360/sec-title";
-import { KpiCard } from "@/components/e360/kpi-card";
-import { Card360, CardSrc, Eyebrow } from "@/components/e360/card360";
+import { Hero } from "@/components/e360/hero";
+import { KpiTile } from "@/components/e360/kpi-tile";
+import { Card360, Eyebrow } from "@/components/e360/card360";
+import {
+  Barras,
+  Donut,
+  DonutLegenda,
+  Gauge,
+  Legenda,
+  Ring,
+} from "@/components/e360/graficos";
 import { Farol, type FarolItemDado } from "@/components/e360/farol";
-import { MiniBar } from "@/components/e360/minibar";
-import { Banner } from "@/components/e360/banner";
 import { Tag360 } from "@/components/e360/tag360";
 import { EmptyState } from "@/components/empty-state";
 
@@ -29,17 +36,14 @@ export default async function PainelPage() {
   if (!ano || emendas.length === 0) {
     return (
       <div>
-        <SecTitle
-          titulo={tituloPainel}
-          nota={ano ? `exercício ${ano}` : "nenhum exercício ativo"}
-        />
+        <SecTitle titulo={tituloPainel} />
         <EmptyState
+          icon={ClipboardCheck}
           titulo="Sem emendas no exercício"
-          descricao="Quando as emendas forem apresentadas sobre o projeto de lei base, o painel consolida cota, teto, reserva de saúde e destinos automaticamente."
           acao={
             <Link
               href="/legislativo/emendas/nova"
-              className="text-sm font-bold text-brand-cyan hover:underline"
+              className="text-sm font-bold text-accent-foreground hover:underline"
             >
               Apresentar emenda →
             </Link>
@@ -69,9 +73,9 @@ export default async function PainelPage() {
   if (reservaInvadidaGlobal) {
     farol.push({
       tom: "a",
-      titulo: "Reserva da saúde invadida — demais áreas acima do limite",
-      texto: `demais áreas somam ${brlCompacto(c.valorDemais)} × limite ${brlCompacto(c.limiteDemaisGlobal!)} (reserva de ${params.reservaSaudePct}% só pode ir p/ saúde).`,
-      fix: "O que fazer: reclassificar ou reduzir emendas de outras áreas.",
+      titulo: "Reserva da saúde invadida",
+      texto: `demais áreas ${brlCompacto(c.valorDemais)} × limite ${brlCompacto(c.limiteDemaisGlobal!)}`,
+      fix: "Reclassificar ou reduzir emendas de outras áreas",
       href: "/emendas?aba=conformidade",
     });
   }
@@ -82,7 +86,7 @@ export default async function PainelPage() {
       texto:
         invadiramReserva.map((a) => a.nome).slice(0, 4).join(", ") +
         (invadiramReserva.length > 4 ? "…" : ""),
-      fix: `Limite p/ demais áreas por autor: ${brl(c.limiteDemaisAutor!)}.`,
+      fix: `Limite por autor: ${brl(c.limiteDemaisAutor!)}`,
       href: "/emendas",
     });
   }
@@ -90,8 +94,8 @@ export default async function PainelPage() {
     farol.push({
       tom: "a",
       titulo: `${invalidas.qtd} emenda(s) inválida(s) para saneamento`,
-      texto: `${brlCompacto(invalidas.valor)} — reprovadas pelo motor de validação.`,
-      fix: "O que fazer: devolver ao autor para correção e revalidar.",
+      texto: `${brlCompacto(invalidas.valor)} reprovadas pelo motor`,
+      fix: "Devolver ao autor para correção",
       href: "/analise",
     });
   }
@@ -99,8 +103,8 @@ export default async function PainelPage() {
     farol.push({
       tom: "a",
       titulo: `${submetidas.qtd} emenda(s) aguardando parecer`,
-      texto: `${brlCompacto(submetidas.valor)} submetidas à tramitação.`,
-      fix: "O que fazer: emitir parecer (aprovar/rejeitar) na análise técnica.",
+      texto: `${brlCompacto(submetidas.valor)} submetidas`,
+      fix: "Emitir parecer na análise técnica",
       href: "/analise",
     });
   }
@@ -109,15 +113,15 @@ export default async function PainelPage() {
       acimaDaCota.length === 0
         ? {
             tom: "g",
-            titulo: `Cota individual respeitada — ${c.autoresComEmenda}/${c.totalAutores} autores`,
-            texto: `nenhum autor ultrapassa a cota de ${brl(params.cotaPorAutor)}.`,
+            titulo: "Cota individual respeitada",
+            texto: `${c.autoresComEmenda}/${c.totalAutores} autores dentro de ${brlCompacto(params.cotaPorAutor)}`,
             href: "/emendas",
           }
         : {
             tom: "r",
             titulo: `${acimaDaCota.length} autor(es) acima da cota individual`,
             texto: acimaDaCota.map((a) => a.nome).join(", "),
-            fix: `Cota: ${brl(params.cotaPorAutor)} por autor.`,
+            fix: `Cota: ${brl(params.cotaPorAutor)} por autor`,
             href: "/emendas",
           }
     );
@@ -128,13 +132,13 @@ export default async function PainelPage() {
         ? {
             tom: "g",
             titulo: "Teto global respeitado",
-            texto: `soma das ${c.qtd} emendas = ${brlCompacto(c.valor)} · teto ${brlCompacto(c.tetoGlobal)}.`,
+            texto: `${brlCompacto(c.valor)} de ${brlCompacto(c.tetoGlobal)}`,
             href: "/placar",
           }
         : {
             tom: "r",
             titulo: "Teto global ultrapassado",
-            texto: `soma ${brlCompacto(c.valor)} × teto ${brlCompacto(c.tetoGlobal)}.`,
+            texto: `${brlCompacto(c.valor)} × teto ${brlCompacto(c.tetoGlobal)}`,
             href: "/placar",
           }
     );
@@ -143,307 +147,223 @@ export default async function PainelPage() {
     farol.push({
       tom: "g",
       titulo: "Reserva da saúde preservada",
-      texto: `demais áreas ${brlCompacto(c.valorDemais)} ≤ limite ${brlCompacto(c.limiteDemaisGlobal!)} · ${brlCompacto(c.pisoSaudeGlobal)} seguem reservados à saúde.`,
+      texto: `${brlCompacto(c.pisoSaudeGlobal)} reservados à saúde`,
       href: "/placar",
     });
   }
 
-  const pctSaude = c.valor > 0 ? Math.round((c.valorSaude / c.valor) * 100) : 0;
   const emAnalise = (invalidas?.qtd ?? 0) + (submetidas?.qtd ?? 0);
+  const pctTeto =
+    c.tetoGlobal != null && c.tetoGlobal > 0
+      ? Math.round((c.valor / c.tetoGlobal) * 100)
+      : 0;
+
+  const fatiasArea = [
+    { rotulo: "Saúde", valor: c.valorSaude, cor: "#00b4d8" },
+    { rotulo: "Demais áreas", valor: c.valorDemais, cor: "#0a2463" },
+  ];
+
+  const colunasDestino = porDestino.slice(0, 6).map((d) => ({
+    rotulo: d.nome.split(" ").slice(0, 2).join(" "),
+    segmentos: [
+      { valor: d.valorSaude, cor: "#00b4d8" },
+      { valor: Math.max(0, d.valor - d.valorSaude), cor: "#c3cee4" },
+    ],
+  }));
+
+  // De onde sai o teto: RCL × percentual impositivo. São parâmetros do
+  // exercício e o painel é o único lugar da interface que os mostra.
+  const baseDoCalculo = [
+    params.rcl != null
+      ? { rotulo: "RCL (base de cálculo)", valor: brlCompacto(params.rcl) }
+      : null,
+    params.percentualImpositivo != null
+      ? {
+          rotulo: "Percentual impositivo",
+          valor: `${params.percentualImpositivo.toLocaleString("pt-BR")}%`,
+        }
+      : null,
+    params.reservaSaudePct != null
+      ? {
+          rotulo: "Reserva da saúde",
+          valor: `${params.reservaSaudePct}% da cota`,
+        }
+      : null,
+  ].filter((x) => x !== null);
+
+  const fechar = [
+    invalidas
+      ? {
+          n: "1",
+          t: `Sanear ${invalidas.qtd} emenda(s)`,
+          s: "reprovadas pelo motor",
+          href: "/analise",
+        }
+      : null,
+    submetidas
+      ? {
+          n: "2",
+          t: `Dar parecer em ${submetidas.qtd} emenda(s)`,
+          s: "aguardando decisão",
+          href: "/analise",
+        }
+      : null,
+    {
+      n: "3",
+      t: "Conferir os destinos mais indicados",
+      s: porDestino.slice(0, 3).map((d) => d.nome).join(", "),
+      href: "/emendas?aba=destino",
+    },
+  ].filter(Boolean);
 
   return (
-    <div>
-      {reservaInvadidaGlobal ? (
-        <Banner
-          tom="warn"
-          emoji="⚠️"
-          href="/emendas?aba=conformidade"
-          tag={<Tag360 tom="warn">conferir classificação</Tag360>}
-        >
-          <b>
-            Reserva da saúde invadida em{" "}
-            {brlCompacto(c.valorDemais - c.limiteDemaisGlobal!)}
-          </b>{" "}
-          · demais áreas acima do limite de {brlCompacto(c.limiteDemaisGlobal!)}{" "}
-          · <u>ver e conferir →</u>
-        </Banner>
-      ) : null}
-      <Banner
-        tom="roxo"
-        emoji="🚀"
-        href="/tramitacao"
-        tag={
-          <Tag360 tom="roxo">
-            {brlCompacto(c.valor)}
-            {c.tetoGlobal
-              ? ` · ${Math.round((c.valor / c.tetoGlobal) * 100)}% do teto`
-              : ""}
-          </Tag360>
+    <div className="flex flex-col gap-4">
+      {/* Abertura no padrão `.hero` da referência: saudação + tiles */}
+      <Hero
+        data={`Exercício ${ano}`}
+        titulo={tituloPainel}
+        sub={
+          <Link
+            href="/tramitacao"
+            className="underline decoration-white/40 underline-offset-4 transition-colors hover:decoration-white"
+          >
+            {c.qtd} emendas apresentadas por {c.autoresComEmenda} autor(es) →
+          </Link>
         }
       >
-        <b>
-          {c.qtd} emendas apresentadas por {c.autoresComEmenda} autor(es)
-        </b>{" "}
-        · <u>ver a tramitação →</u>
-      </Banner>
-
-      <SecTitle
-        titulo={tituloPainel}
-        nota={`emendas do exercício ${ano} · consolidado a partir das emendas registradas`}
-      />
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {params.rcl != null ? (
-          <KpiCard
-            eyebrow="RCL (base)"
-            numero={brlCompacto(params.rcl)}
-            rotulo="receita corrente líquida · parâmetro"
-            delta={{ tom: "neutral", texto: "base do cálculo impositivo" }}
-          />
-        ) : (
-          <KpiCard
-            eyebrow="Exercício"
-            numero={String(ano)}
-            rotulo="contexto ativo da plataforma"
-            delta={{ tom: "neutral", texto: "troque na topbar" }}
-          />
-        )}
-        <KpiCard
-          eyebrow={
-            params.percentualImpositivo != null
-              ? `Teto impositivo (${params.percentualImpositivo}%)`
-              : "Teto global"
-          }
-          numero={c.tetoGlobal != null ? brlCompacto(c.tetoGlobal) : "—"}
-          rotulo={
-            c.tetoGlobal != null
-              ? `${brl(c.tetoGlobal)} · cota × ${c.totalAutores} autores`
-              : "defina TETO_VALOR_AUTOR nas configurações"
-          }
-          delta={
-            c.tetoGlobal != null
-              ? { tom: "up", texto: "soma das cotas individuais" }
-              : undefined
-          }
+        <KpiTile
+          icon={Landmark}
+          valor={c.tetoGlobal != null ? brlCompacto(c.tetoGlobal) : "—"}
+          rotulo="Teto impositivo"
           href="/placar"
         />
-        <KpiCard
-          eyebrow="Cota por autor"
-          numero={
+        <KpiTile
+          icon={Wallet}
+          tom="cyan"
+          valor={
             params.cotaPorAutor != null ? brlCompacto(params.cotaPorAutor) : "—"
           }
-          rotulo={
-            params.cotaPorAutor != null
-              ? `${brl(params.cotaPorAutor)} · ${c.totalAutores} autores`
-              : "parâmetro TETO_VALOR_AUTOR"
-          }
-          delta={
-            c.pisoSaudeAutor != null
-              ? {
-                  tom: "neutral",
-                  texto: `${brlCompacto(c.pisoSaudeAutor)} mínimos em saúde`,
-                }
-              : undefined
-          }
+          rotulo="Cota por autor"
         />
-        <KpiCard
-          eyebrow="Emendas apresentadas"
-          numero={String(c.qtd)}
-          rotulo={`itens · Saúde ${c.qtdSaude} · Demais ${c.qtdDemais}`}
-          delta={{ tom: "up", texto: `${c.autoresComEmenda} autores` }}
-          href="/emendas"
-        />
-        <KpiCard
-          eyebrow="Reserva da saúde"
-          numero={
-            c.pisoSaudeGlobal != null ? brlCompacto(c.pisoSaudeGlobal) : `${pctSaude}%`
-          }
-          rotulo={
-            c.pisoSaudeGlobal != null
-              ? `${params.reservaSaudePct}% do teto só p/ saúde · em saúde: ${brlCompacto(c.valorSaude)}`
-              : `${brlCompacto(c.valorSaude)} em saúde (função ${params.funcaoSaudeCodigo})`
-          }
-          delta={
-            c.limiteDemaisGlobal != null
-              ? reservaInvadidaGlobal
-                ? { tom: "warn", texto: "reserva invadida" }
-                : { tom: "up", texto: "reserva preservada" }
-              : undefined
-          }
-          href="/emendas?aba=conformidade"
-        />
-        <KpiCard
-          variante="hi"
-          eyebrow="💰 Em análise"
-          numero={String(emAnalise)}
-          rotulo="emendas para sanear ou dar parecer"
-          delta={{ tom: "neutral", texto: "Abrir análise técnica →" }}
+        <KpiTile
+          icon={ScanSearch}
+          tom={emAnalise > 0 ? "amber" : "mint"}
+          valor={String(emAnalise)}
+          rotulo="Em análise"
           href="/analise"
         />
-      </div>
+      </Hero>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[2fr_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
         <Card360>
-          <Eyebrow>Favorável × Atenção</Eyebrow>
-          <h3 className="mb-3 text-[17px] font-bold">
-            O farol da conferência — {c.qtd} emendas · {c.autoresComEmenda}{" "}
-            autores · {brlCompacto(c.valor)}
-          </h3>
+          <div className="mb-3 flex items-baseline justify-between gap-3">
+            <h3 className="text-[15.5px] font-bold tracking-[-.015em]">
+              Farol da conferência
+            </h3>
+            <span className="text-[11.5px] font-semibold text-muted-foreground">
+              {c.qtd} emendas · {brlCompacto(c.valor)}
+            </span>
+          </div>
           <Farol itens={farol} />
-          <CardSrc direita={`exercício ${ano} · dados do banco em tempo real`}>
-            checagens calculadas sobre as emendas registradas e os parâmetros de
-            validação
-          </CardSrc>
         </Card360>
 
         <div className="flex flex-col gap-4">
-          <Card360 variante="dark">
-            <Eyebrow escuro>✨ O que precisa fechar</Eyebrow>
-            <div className="flex flex-col gap-2">
-              {[
-                invalidas
-                  ? {
-                      n: "1",
-                      t: `Sanear ${invalidas.qtd} emenda(s) inválida(s)`,
-                      s: "reprovadas pelo motor — devolver ao autor",
-                      href: "/analise",
-                    }
-                  : null,
-                submetidas
-                  ? {
-                      n: "2",
-                      t: `Dar parecer em ${submetidas.qtd} emenda(s)`,
-                      s: "submetidas aguardando aprovação/rejeição",
-                      href: "/analise",
-                    }
-                  : null,
-                {
-                  n: "3",
-                  t: "Conferir os destinos mais indicados",
-                  s: porDestino
-                    .slice(0, 3)
-                    .map((d) => d.nome)
-                    .join(", "),
-                  href: "/emendas?aba=destino",
-                },
-              ]
-                .filter(Boolean)
-                .map((a) => (
-                  <Link
-                    key={a!.n}
-                    href={a!.href}
-                    className="flex items-center gap-3 rounded-lg bg-white/10 px-3 py-2.5 hover:bg-white/15"
-                  >
-                    <span className="grad-hi flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-extrabold text-brand-deep">
-                      {a!.n}
-                    </span>
-                    <span className="min-w-0">
-                      <b className="block text-[13px] text-white">{a!.t}</b>
-                      <span className="block truncate text-[11.5px] text-[#b9c7e4]">
-                        {a!.s}
-                      </span>
-                    </span>
-                  </Link>
+          <Card360>
+            <Eyebrow>Uso do teto</Eyebrow>
+            <Gauge
+              pct={pctTeto}
+              valor={`${pctTeto}%`}
+              rotulo="do teto impositivo"
+              sub={
+                c.tetoGlobal != null
+                  ? `${brlCompacto(c.valor)} de ${brlCompacto(c.tetoGlobal)}`
+                  : undefined
+              }
+              alerta={pctTeto > 100}
+            />
+            <dl className="mt-1 flex flex-col gap-2 border-t pt-3.5">
+              {baseDoCalculo.map(({ rotulo, valor }) => (
+                  <div key={rotulo} className="flex items-baseline justify-between gap-3">
+                    <dt className="text-[11.5px] font-medium text-muted-foreground">
+                      {rotulo}
+                    </dt>
+                    <dd className="text-[12.5px] font-bold tabular-nums">
+                      {valor}
+                    </dd>
+                  </div>
                 ))}
-            </div>
-            <Link
-              href="/assistente"
-              className="grad-hi mt-3 w-fit rounded-lg px-4 py-2 text-[13px] font-bold text-brand-deep hover:brightness-105"
-            >
-              Perguntar ao assistente →
-            </Link>
+            </dl>
           </Card360>
 
-          <KpiCard
-            eyebrow="Resumo consolidado"
-            numero={brlCompacto(c.valor)}
-            rotulo={`${c.qtd} emendas · Saúde ${pctSaude}% · ${c.autoresComEmenda} autores`}
-            fonte="é este resumo que fecha o parecer"
-            href="/placar"
-          />
+          <Card360 variante="dark">
+            <Eyebrow escuro>O que precisa fechar</Eyebrow>
+            <div className="flex flex-col gap-2">
+              {fechar.map((a) => (
+                <Link
+                  key={a!.n}
+                  href={a!.href}
+                  className="flex items-center gap-3 rounded-[10px] bg-white/10 px-3 py-2.5 transition-colors hover:bg-white/15"
+                >
+                  <span className="grad-hi flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-extrabold text-brand-deep">
+                    {a!.n}
+                  </span>
+                  <span className="min-w-0">
+                    <b className="block text-[13px] text-white">{a!.t}</b>
+                    <span className="block truncate text-[11.5px] text-white/60">
+                      {a!.s}
+                    </span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </Card360>
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
+        {/* rosca: composição saúde × demais áreas */}
         <Card360>
-          <Eyebrow>
-            Distribuição por área
-            {c.tetoGlobal != null ? ` — teto ${brl(c.tetoGlobal)}` : ""}
-          </Eyebrow>
-          <MiniBar
-            rotulo={`Saúde (função ${params.funcaoSaudeCodigo})`}
-            pct={c.tetoGlobal ? (c.valorSaude / c.tetoGlobal) * 100 : pctSaude}
-            valor={`${brl(c.valorSaude)} · ${c.qtdSaude} itens`}
-            marcaPct={
-              c.tetoGlobal && c.pisoSaudeGlobal != null
-                ? (c.pisoSaudeGlobal / c.tetoGlobal) * 100
-                : undefined
-            }
+          <Eyebrow>Distribuição por área</Eyebrow>
+          <Donut
+            fatias={fatiasArea}
+            centroValor={brlCompacto(c.valor)}
+            centroRotulo={`${c.qtd} emendas`}
           />
-          <MiniBar
-            rotulo="Demais áreas"
-            pct={
-              c.tetoGlobal ? (c.valorDemais / c.tetoGlobal) * 100 : 100 - pctSaude
-            }
-            valor={`${brl(c.valorDemais)} · ${c.qtdDemais} itens`}
-            marcaPct={
-              c.tetoGlobal && c.limiteDemaisGlobal != null
-                ? (c.limiteDemaisGlobal / c.tetoGlobal) * 100
-                : undefined
-            }
-            alerta={reservaInvadidaGlobal}
-          />
-          <CardSrc
-            direita={
-              c.pisoSaudeGlobal != null
-                ? "marca ▎= reserva da saúde / limite das demais áreas"
-                : undefined
-            }
-          >
-            área derivada da função da dotação · usar a cota é faculdade; o
-            limite é que não pode ser ultrapassado
-          </CardSrc>
+          <DonutLegenda fatias={fatiasArea} formatar={brlCompacto} />
         </Card360>
 
+        {/* barras empilhadas: destinos mais indicados */}
         <Card360>
-          <Eyebrow>Concentração de destinos — órgãos mais indicados</Eyebrow>
-          <p className="mb-2 text-xs text-muted-foreground">
-            Poucos órgãos concentram muitas emendas de vários autores. Conferir
-            a <b>capacidade de execução</b> antes da consolidação.
-          </p>
-          {porDestino.slice(0, 6).map((d) => (
-            <MiniBar
-              key={d.nome}
-              rotulo={d.nome}
-              larguraRotulo={210}
-              pct={porDestino[0].valor > 0 ? (d.valor / porDestino[0].valor) * 100 : 0}
-              valor={`${brlCompacto(d.valor)} · ${d.itens}x`}
-            />
-          ))}
-          <CardSrc direita={`exercício ${ano}`}>
-            {c.qtd} itens agregados por órgão da dotação
-          </CardSrc>
+          <div className="flex items-baseline justify-between gap-3">
+            <Eyebrow className="mb-0">Destinos mais indicados</Eyebrow>
+            <Link
+              href="/emendas?aba=destino"
+              className="text-[11.5px] font-semibold text-muted-foreground hover:text-accent-foreground"
+            >
+              ver todos →
+            </Link>
+          </div>
+          <Legenda
+            itens={[
+              { rotulo: "Saúde", cor: "#00b4d8" },
+              { rotulo: "Demais áreas", cor: "#c3cee4" },
+            ]}
+          />
+          <Barras colunas={colunasDestino} />
         </Card360>
       </div>
 
-      <SecTitle
-        titulo="Emendas por autor — cota, reserva da saúde e conformidade"
-        nota={
-          params.cotaPorAutor != null
-            ? `cota individual de ${brl(params.cotaPorAutor)} · clique na linha para abrir o detalhe`
-            : "clique na linha para abrir o detalhe"
-        }
-      />
+      <SecTitle titulo="Emendas por autor" />
       <Card360>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-[13px]">
+          <table className="w-full min-w-[680px] border-collapse text-[12.5px]">
             <thead>
               <tr>
-                {["Autor", "Itens", "Saúde", "Demais", "Total", "Situação"].map(
+                {["Autor", "Itens", "Saúde", "Demais", "Total", "Cota", "Situação"].map(
                   (h) => (
                     <th
                       key={h}
-                      className="border-b-2 border-border px-2.5 py-2 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+                      className="bg-secondary px-2.5 py-2.5 text-left text-[10.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground first:rounded-l-[9px] last:rounded-r-[9px]"
                     >
                       {h}
                     </th>
@@ -459,31 +379,43 @@ export default async function PainelPage() {
                 const cotaOk =
                   params.cotaPorAutor == null ||
                   a.valorTotal <= params.cotaPorAutor + 0.5;
+                const pctCota =
+                  params.cotaPorAutor != null && params.cotaPorAutor > 0
+                    ? (a.valorTotal / params.cotaPorAutor) * 100
+                    : 0;
                 return (
-                  <tr key={a.autorId} className="group">
-                    <td className="border-b border-border px-2.5 py-2 font-bold">
+                  <tr key={a.autorId}>
+                    <td className="border-b border-border px-2.5 py-2.5 font-bold">
                       <Link
                         href={`/vereador360?autor=${a.autorId}`}
-                        className="hover:text-brand-cyan hover:underline"
+                        className="hover:text-accent-foreground hover:underline"
                       >
                         {a.nome}
                       </Link>
                     </td>
-                    <td className="border-b border-border px-2.5 py-2">{a.itens}</td>
-                    <td className="border-b border-border px-2.5 py-2 tabular-nums">
+                    <td className="border-b border-border px-2.5 py-2.5 text-muted-foreground">
+                      {a.itens}
+                    </td>
+                    <td className="border-b border-border px-2.5 py-2.5 tabular-nums">
                       {brl(a.valorSaude)}
                     </td>
-                    <td className="border-b border-border px-2.5 py-2 tabular-nums">
+                    <td className="border-b border-border px-2.5 py-2.5 tabular-nums">
                       {brl(a.valorDemais)}
                     </td>
-                    <td className="border-b border-border px-2.5 py-2 font-semibold tabular-nums">
+                    <td className="border-b border-border px-2.5 py-2.5 font-semibold tabular-nums">
                       {brl(a.valorTotal)}
                     </td>
-                    <td className="border-b border-border px-2.5 py-2">
+                    <td className="border-b border-border px-2.5 py-1.5">
+                      <Ring
+                        pct={pctCota}
+                        tom={!cotaOk ? "bad" : !reservaOk ? "amber" : "cyan"}
+                      />
+                    </td>
+                    <td className="border-b border-border px-2.5 py-2.5">
                       {!cotaOk ? (
                         <Tag360 tom="bad">acima da cota</Tag360>
                       ) : !reservaOk ? (
-                        <Tag360 tom="warn">reserva da saúde invadida</Tag360>
+                        <Tag360 tom="warn">reserva invadida</Tag360>
                       ) : (
                         <Tag360 tom="ok">conforme</Tag360>
                       )}
@@ -494,18 +426,6 @@ export default async function PainelPage() {
             </tbody>
           </table>
         </div>
-        <CardSrc
-          direita={
-            c.limiteDemaisAutor != null
-              ? `limite p/ demais áreas por autor: ${brl(c.limiteDemaisAutor)} (reserva de ${brl(c.pisoSaudeAutor!)} só p/ saúde)`
-              : undefined
-          }
-        >
-          agregado por autor · situação:{" "}
-          {porStatus
-            .map((s) => `${ROTULO_STATUS_EMENDA[s.status] ?? s.status} ${s.qtd}`)
-            .join(" · ")}
-        </CardSrc>
       </Card360>
     </div>
   );

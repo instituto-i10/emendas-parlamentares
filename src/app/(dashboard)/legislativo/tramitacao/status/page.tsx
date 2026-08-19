@@ -27,7 +27,6 @@ export default async function StatusTramitacaoPage() {
     <div>
       <PageHeader
         titulo="Situação das emendas"
-        descricao="Emendas submetidas aguardando parecer."
         crumbs={[
           { titulo: "Hub", href: "/hub" },
           { titulo: "Tramitação & Acompanhamento", href: "/legislativo/tramitacao" },
@@ -40,7 +39,7 @@ export default async function StatusTramitacaoPage() {
           descricao="Não há emendas submetidas no exercício."
         />
       ) : (
-        <div className="rounded-lg border">
+        <div className="rounded-xl bg-card p-4 shadow-card">
           <Table>
             <TableHeader>
               <TableRow>

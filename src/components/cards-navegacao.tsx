@@ -28,10 +28,10 @@ export function GradeCards({ itens }: { itens: ItemCard[] }) {
             href={it.href}
             className="group rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Card className="h-full transition-all duration-150 group-hover:-translate-y-0.5 group-hover:shadow-[0_6px_18px_rgba(6,24,64,.12)] group-hover:ring-brand-cyan">
+            <Card className="h-full transition-all duration-150 group-hover:-translate-y-0.5 group-hover:shadow-card-hover">
               <CardHeader>
                 <div className="mb-1 flex items-center gap-3">
-                  <div className="grad-main rounded-lg p-2 text-white">
+                  <div className="grad-main rounded-[11px] p-2.5 text-white">
                     <Icon className="size-5" aria-hidden />
                   </div>
                   <CardTitle className="text-base font-bold">

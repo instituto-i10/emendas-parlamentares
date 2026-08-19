@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { LogoEmendas360 } from "@/components/logo-emendas360";
 import { SecTitle } from "@/components/e360/sec-title";
-import { Card360, CardSrc, Eyebrow } from "@/components/e360/card360";
+import { Card360, Eyebrow } from "@/components/e360/card360";
 import { Banner } from "@/components/e360/banner";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { getParametros360, brl } from "@/lib/queries-360";
@@ -108,14 +108,14 @@ export default async function ManualPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="grad-dark text-white shadow-[0_2px_14px_rgba(6,24,64,.35)] print:hidden">
-        <div className="mx-auto flex h-14 max-w-[1320px] items-center gap-3 px-5">
+      <header className="grad-dark text-white print:hidden">
+        <div className="flex h-14 items-center gap-3 px-5 lg:px-7">
           <Link href="/publica">
             <LogoEmendas360 />
           </Link>
           <Link
             href="/publica/emendas"
-            className="ml-auto rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-[#d6e2f7] hover:bg-white/20"
+            className="ml-auto rounded-[10px] bg-white/10 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-white/20"
           >
             Consultar emendas
           </Link>
@@ -126,7 +126,7 @@ export default async function ManualPage() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <SecTitle
             titulo="Manual de indicação e execução de emendas impositivas"
-            nota={`edição do exercício ${ano ?? "atual"} · limites calculados dos parâmetros vigentes`}
+            nota={`exercício ${ano ?? "atual"}`}
           />
           <div className="mt-7 print:hidden">
             <PrintButton />
@@ -161,10 +161,6 @@ export default async function ManualPage() {
             <b>controle</b> e totalmente <b>transparente</b> — objeto claro,
             execução rastreável e resultado verificável.
           </p>
-          <CardSrc escuro>
-            manual orientativo instituído em atenção ao Comunicado SDG 28/2025 do
-            TCE-SP · disponível publicamente nesta página
-          </CardSrc>
         </Card360>
       </main>
     </div>

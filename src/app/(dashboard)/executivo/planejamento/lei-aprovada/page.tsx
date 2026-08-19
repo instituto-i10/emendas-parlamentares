@@ -22,7 +22,6 @@ export default async function LeiAprovadaPage() {
     <div>
       <PageHeader
         titulo="Lei aprovada"
-        descricao="Leis aprovadas vinculadas ao projeto de lei de origem. Suba novas leis em Configurações → Instrumentos."
         crumbs={[
           { titulo: "Hub", href: "/hub" },
           { titulo: "Planejamento & Orçamento", href: "/executivo/planejamento" },
@@ -35,7 +34,7 @@ export default async function LeiAprovadaPage() {
           descricao="Após a sanção, suba a lei aprovada vinculada ao PL de origem."
         />
       ) : (
-        <div className="rounded-lg border">
+        <div className="rounded-xl bg-card p-4 shadow-card">
           <Table>
             <TableHeader>
               <TableRow>

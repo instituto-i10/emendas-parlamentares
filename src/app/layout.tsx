@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Inter, Source_Serif_4 } from "next/font/google";
+import { Geist_Mono, Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 
-const inter = Inter({
-  variable: "--font-inter",
+// Tipografia da referência de UI (ui-test/hrmate-reference): geométrica
+// humanista, com pesos altos disponíveis para os números dos KPIs.
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 const sourceSerif = Source_Serif_4({
@@ -33,7 +36,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${inter.variable} ${sourceSerif.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${jakarta.variable} ${sourceSerif.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <TooltipProvider delayDuration={200}>{children}</TooltipProvider>

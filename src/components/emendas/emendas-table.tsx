@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Tag360, tomDoStatus } from "@/components/e360/tag360";
 import { EmptyState } from "@/components/empty-state";
 import { ROTULO_STATUS_EMENDA, ROTULO_TIPO_EMENDA } from "@/lib/rotulos";
 
@@ -21,13 +21,6 @@ export type EmendaLinha = {
   programa: string;
   acao: string;
 };
-
-function variante(status: string): "default" | "secondary" | "destructive" | "outline" {
-  if (status === "APROVADA" || status === "VALIDA") return "default";
-  if (status === "REJEITADA" || status === "INVALIDA") return "destructive";
-  if (status === "RASCUNHO") return "outline";
-  return "secondary";
-}
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -48,7 +41,7 @@ export function EmendasTable({
   }
 
   return (
-    <div className="rounded-lg border">
+    <div className="rounded-xl bg-card p-4 shadow-card">
       <Table>
         <TableHeader>
           <TableRow>
@@ -75,9 +68,9 @@ export function EmendasTable({
               <TableCell className="text-right tabular-nums">{brl(e.valor)}</TableCell>
               <TableCell>{ROTULO_TIPO_EMENDA[e.tipo] ?? e.tipo}</TableCell>
               <TableCell>
-                <Badge variant={variante(e.status)}>
+                <Tag360 tom={tomDoStatus(e.status)}>
                   {ROTULO_STATUS_EMENDA[e.status] ?? e.status}
-                </Badge>
+                </Tag360>
               </TableCell>
             </TableRow>
           ))}

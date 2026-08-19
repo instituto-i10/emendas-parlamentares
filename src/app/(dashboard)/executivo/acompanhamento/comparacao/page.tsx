@@ -31,7 +31,6 @@ export default async function ComparacaoPage({
     <div>
       <PageHeader
         titulo="PL × Lei aprovada"
-        descricao="Comparativo de valores e emendas incorporadas na lei aprovada."
         crumbs={[
           { titulo: "Hub", href: "/hub" },
           { titulo: "Acompanhamento", href: "/executivo/acompanhamento" },
@@ -53,7 +52,7 @@ export default async function ComparacaoPage({
                 key={c.id}
                 href={`?lei=${c.id}`}
                 className={cn(
-                  "block rounded-md border px-3 py-2 text-sm transition-colors hover:bg-accent",
+                  "block rounded-[10px] bg-secondary px-3 py-2.5 text-[12.5px] font-semibold transition-colors hover:bg-accent hover:text-accent-foreground",
                   lei === c.id && "border-primary bg-accent"
                 )}
               >
@@ -67,7 +66,7 @@ export default async function ComparacaoPage({
 
           <div className="lg:col-span-2">
             {!detalhe ? (
-              <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+              <div className="rounded-xl bg-secondary p-6 text-center text-[12.5px] font-medium text-muted-foreground">
                 Selecione uma lei aprovada para ver o comparativo.
               </div>
             ) : (
@@ -102,7 +101,7 @@ export default async function ComparacaoPage({
                       Nenhuma emenda acatada registrada.
                     </p>
                   ) : (
-                    <div className="rounded-lg border">
+                    <div className="rounded-xl bg-card p-4 shadow-card">
                       <Table>
                         <TableHeader>
                           <TableRow>

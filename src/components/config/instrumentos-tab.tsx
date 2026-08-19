@@ -126,7 +126,7 @@ export function InstrumentosTab({
           descricao="Suba o projeto de lei do PPA/LDO/LOA do exercício."
         />
       ) : (
-        <div className="rounded-lg border">
+        <div className="rounded-xl bg-card p-4 shadow-card">
           <Table>
             <TableHeader>
               <TableRow>

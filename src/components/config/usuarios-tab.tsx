@@ -65,7 +65,7 @@ export function UsuariosTab({ usuarios }: { usuarios: Usuario[] }) {
           descricao="Cadastre os usuários de cada Poder e seus papéis."
         />
       ) : (
-        <div className="rounded-lg border">
+        <div className="rounded-xl bg-card p-4 shadow-card">
           <Table>
             <TableHeader>
               <TableRow>

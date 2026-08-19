@@ -63,7 +63,6 @@ export default async function ConfigPage() {
     <div className="mx-auto max-w-6xl">
       <PageHeader
         titulo="Configurações"
-        descricao="Parâmetros de validação, repositório normativo, instrumentos e usuários."
         crumbs={[{ titulo: "Hub", href: "/hub" }, { titulo: "Configurações" }]}
       />
 

@@ -32,10 +32,14 @@ function Item({ item }: { item: FarolItemDado }) {
         {SINAL[item.tom]}
       </span>
       <div className="min-w-0">
-        <b className="block text-[13.5px] leading-snug">{item.titulo}</b>
-        <span className="text-xs text-muted-foreground">{item.texto}</span>
+        <b className="block text-[13px] font-bold leading-snug tracking-[-.015em]">
+          {item.titulo}
+        </b>
+        <span className="text-[11.5px] font-medium text-muted-foreground">
+          {item.texto}
+        </span>
         {item.fix ? (
-          <span className="mt-0.5 block text-[11.5px] font-semibold text-accent-foreground">
+          <span className="mt-0.5 block text-[11.5px] font-bold text-accent-foreground">
             {item.fix}
           </span>
         ) : null}
@@ -43,11 +47,13 @@ function Item({ item }: { item: FarolItemDado }) {
     </>
   );
 
+  // Linha de lista no padrão da referência: bloco cinza-claro, canto 14px,
+  // sem borda — igual às linhas de tarefa do mock.
   const classes =
-    "flex items-start gap-3 rounded-[10px] border bg-background/60 px-3.5 py-3 transition-colors";
+    "flex items-start gap-3 rounded-lg bg-secondary px-3.5 py-3.5 transition-colors";
   if (item.href) {
     return (
-      <Link href={item.href} className={cn(classes, "hover:border-brand-cyan")}>
+      <Link href={item.href} className={cn(classes, "hover:bg-accent")}>
         {conteudo}
       </Link>
     );

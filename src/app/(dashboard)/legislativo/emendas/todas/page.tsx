@@ -14,7 +14,6 @@ export default async function TodasEmendasPage() {
     <div>
       <PageHeader
         titulo="Todas as emendas"
-        descricao={`Emendas do exercício${ano ? ` ${ano}` : ""}.`}
         crumbs={[
           { titulo: "Hub", href: "/hub" },
           { titulo: "Emendas", href: "/legislativo/emendas" },

@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { prisma } from "./prisma";
 import { safe } from "./queries";
 
@@ -315,7 +316,9 @@ export function consolidar(
 }
 
 // Pacote completo para as vistas (uma chamada por página).
-export async function getDados360(ano: number | null) {
+// `cache` por requisição: a casca (contadores do menu) e a página pedem o
+// mesmo consolidado, e sem isso seriam duas rodadas de query por navegação.
+export const getDados360 = cache(async function getDados360(ano: number | null) {
   const [params, emendas, autoresCadastrados] = await Promise.all([
     getParametros360(ano),
     getEmendas360(ano),
@@ -335,7 +338,7 @@ export async function getDados360(ano: number | null) {
     porStatus: resumoPorStatus(emendas),
     porTipo: resumoPorTipo(emendas),
   };
-}
+});
 
 export type Dados360 = Awaited<ReturnType<typeof getDados360>>;
 

@@ -48,7 +48,7 @@ export function AuditoriaTab({ logs }: { logs: LogLinha[] }) {
       {filtrados.length === 0 ? (
         <EmptyState titulo="Sem registros" descricao="Nenhuma entrada de auditoria para o filtro." />
       ) : (
-        <div className="rounded-lg border">
+        <div className="rounded-xl bg-card p-4 shadow-card">
           <Table>
             <TableHeader>
               <TableRow>

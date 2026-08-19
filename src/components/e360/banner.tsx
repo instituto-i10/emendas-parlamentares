@@ -2,11 +2,12 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+// Superfícies lavadas, sem borda — o tom já basta para separar do fundo.
 const TONS = {
-  warn: "border-brand-amber/40 bg-brand-amber/10 text-[#8a5b06]",
-  ok: "border-brand-green/30 bg-brand-mint/10 text-[#0b6e4c]",
-  roxo: "border-brand-purple/30 bg-brand-purple/10 text-[#4a3a8c]",
-  vermelho: "border-destructive/30 bg-destructive/5 text-[#a83236]",
+  warn: "bg-[var(--surf-warn)] text-[var(--on-warn)]",
+  ok: "bg-[var(--surf-ok)] text-[var(--on-ok)]",
+  roxo: "bg-[var(--surf-roxo)] text-[var(--on-roxo)]",
+  vermelho: "bg-[var(--surf-bad)] text-[var(--on-bad)]",
 } as const;
 
 // Faixa de aviso do topo das vistas (mockup .banner): emoji + texto + tag,
@@ -29,9 +30,9 @@ export function Banner({
   const corpo = (
     <div
       className={cn(
-        "mb-4 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-[13.5px]",
+        "mb-4 flex flex-wrap items-center gap-3 rounded-lg px-4 py-3.5 text-[13px] font-medium",
         TONS[tom],
-        href && "transition-shadow hover:shadow-[0_4px_14px_rgba(6,24,64,.08)]",
+        href && "transition-shadow hover:shadow-card",
         className
       )}
     >

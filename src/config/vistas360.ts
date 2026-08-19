@@ -1,8 +1,9 @@
 import { Role } from "@/generated/prisma/enums";
 
 // ============================================================================
-// Vistas do front-end "Emendas 360" (padrão do mockup): abas horizontais sob a
-// topbar, filtradas pelo papel do usuário. Cada persona do mockup vira um
+// Vistas do front-end "Emendas 360": itens do menu lateral, filtrados pelo
+// papel do usuário. O assistente saiu daqui — virou widget flutuante,
+// disponível em todas as telas. Cada persona do mockup vira um
 // conjunto de vistas: Comissão (LEG_ADMIN/TECNICO), Gabinete (LEG_AUTOR),
 // Executivo (EXEC_*), Cidadão (/publica) e Pitch (apresentação).
 // ============================================================================
@@ -59,12 +60,6 @@ export const VISTAS360: Vista360[] = [
     titulo: "Resumo Consolidado",
     href: "/placar",
     roles: [...LEG_COMISSAO, ...EXEC, Role.SUPER_ADMIN],
-  },
-  {
-    id: "assistente",
-    titulo: "Assistente",
-    href: "/assistente",
-    roles: TODOS,
   },
   {
     id: "conformidade",

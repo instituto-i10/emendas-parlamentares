@@ -4,47 +4,85 @@
 rotas, o design system existente e a análise da sobreposição entre as duas
 gerações de navegação.
 
+## Fluxo de entrada
+
+```
+/  ──▶  /publica (landing pública)  ──▶  /login  ──▶  /painel
+                    ▲                                    │
+                    └──────────── sair ──────────────────┘
+```
+
+A raiz é pública: quem abre o sistema cai no portal do cidadão e entra por ali.
+`auth.config.ts` libera `/`, `/login` e `/publica/*` sem sessão.
+
+Trocar de perfil é **deslogar e logar de novo** — o antigo `PerfilSwitcher`
+(troca de papel em dev) foi removido, e com ele o atalho "Visão pública" de
+dentro do sistema. A tela de login traz um painel de **acesso rápido** com as
+contas de demonstração: clicar preenche o formulário e envia pelo provider de
+credenciais (nada de atalho de autenticação). Some com `DEMO_LOGIN=false`.
+
 ## A casca (`AppShell`)
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│ ▓ TOPBAR escura (grad-dark, 56px, sticky)                          │
-│ [Logo Emendas360] │ Emendas parlamentares      [Exercício ▾]        │
-│                     EXERCÍCIO 2025             [👁 Visão pública]   │
-│                                                [Perfil ▾]           │
-├─────────────────────────────────────────────────────────────────────┤
-│ ABAS horizontais (sticky top-14, scroll-x, sublinhado gradiente)    │
-│ Painel │ Tramitação │ Emendas & Beneficiários │ Vereador 360 │ …    │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│   <main> max-width 1320px, padding 20px                            │
-│                                                                     │
-├─────────────────────────────────────────────────────────────────────┤
-│ FOOTER: "Emendas360 — gestão de emendas parlamentares"             │
-│ "A plataforma confere requisitos formais e organiza; a decisão de  │
-│  mérito e a assinatura são do parlamentar e da comissão."          │
-└─────────────────────────────────────────────────────────────────────┘
+┌────────────┬────────────────────────────────────────────────────────┐
+│ MENU       │ topbar (64px, sticky, blur) — contexto + exercício      │
+│ LATERAL    │                                                        │
+│ navy 248px ├────────────────────────────────────────────────────────┤
+│            │                                                        │
+│ [marca]    │  <main> largura total, respiro lateral 28px            │
+│ ACOMPANHAR │                                                        │
+│  Painel    │                                                        │
+│  Tramitação│                                                        │
+│  Resumo    │                                                        │
+│ OPERAR     │                                                        │
+│  Emendas   │                                                        │
+│  Análise ⑳ │                                          ┌──────────┐  │
+│  Vereador  │                                          │assistente│  │
+│ GOVERNANÇA ├──────────────────────────────────────────┴──────────┴──┤
+│ SISTEMA    │ FOOTER                                          ( ✦ )  │
+│ [avatar]   │                                                        │
+└────────────┴────────────────────────────────────────────────────────┘
 ```
 
-Arquivos: `src/components/app-shell.tsx`, `nav-tabs-360.tsx`,
-`exercicio-selector.tsx`, `perfil-switcher.tsx`, `logo-emendas360.tsx`.
+Arquivos: `src/components/app-shell.tsx`, `side-nav.tsx`,
+`exercicio-selector.tsx`, `assistente/widget.tsx`, `logo-emendas360.tsx`.
 
 Notas:
-- **Não há sidebar** — foi substituída pelas abas. Mas
-  `src/components/ui/sidebar.tsx` (702 linhas, o maior arquivo do projeto)
-  continua no repo, **sem uso**. Candidato a remoção.
+- O menu agrupa as vistas por **natureza do trabalho** (Acompanhar, Operar,
+  Governança, Sistema) e carrega **contadores de pendência** — hoje só em
+  Análise Técnica, que é a única fila que espera ação humana. O contador é
+  irmão do `<a>`, não filho: `e2e/personas.ts › abasVisiveis` lê o textContent
+  das âncoras da nav, e o número entraria no meio do rótulo.
+- O `<nav>` do menu é **o primeiro `<nav>` do documento** — é assim que os
+  testes de permissão descobrem as vistas visíveis por papel.
+- Abaixo de `xl` o menu colapsa numa régua de 72px só com ícones.
 - O **seletor de exercício é global** e muda o contexto de todos os dados.
-  Elemento de altíssimo impacto colocado num canto discreto da topbar.
-- O **PerfilSwitcher em dev troca de papel** — é ferramenta de demonstração,
-  não funcionalidade de produto.
-- A logo é **texto**, não arquivo: `logo-emendas360.tsx` avisa "trocar aqui
-  quando o arquivo oficial existir".
+- `src/components/ui/sidebar.tsx` (702 linhas) continua **sem uso** — o menu é
+  próprio e bem mais simples. Candidato a remoção.
+
+## O assistente
+
+Deixou de ser uma vista e virou **widget flutuante** (canto inferior direito),
+presente em toda a casca autenticada.
+
+- `src/lib/assistente.ts` monta um **bloco de fatos** em texto puro a partir de
+  `getDados360` — parâmetros, consolidado, situação, tipos, destinos e autores.
+- `src/lib/actions/assistente.ts` manda esse bloco + a pergunta para a OpenAI
+  (`OPENAI_API_KEY`, modelo em `OPENAI_MODEL`, padrão `gpt-4o-mini`), via
+  `fetch` — sem SDK novo no projeto.
+- **Sem chave, não quebra**: cai em `responderLocalmente`, que devolve o recorte
+  apurado correspondente à pergunta. Erro ou timeout da API caem no mesmo lugar,
+  com um aviso.
+- O modelo **nunca consulta o banco**: só enxerga o bloco de fatos. É o que
+  sustenta a promessa de "só afirma o que o dado sustenta" com um LLM no meio.
+  A instrução de sistema proíbe decidir mérito e exige a linha "Fonte:".
 
 ## Inventário de rotas
 
-### Camada 1 — Vistas "Emendas 360" (abas horizontais)
+### Camada 1 — Vistas "Emendas 360" (itens do menu lateral)
 
-Configuradas em `src/config/vistas360.ts`.
+Configuradas em `src/config/vistas360.ts`. O assistente saiu desta lista —
+virou widget flutuante.
 
 | Aba | Rota | Arq. (L) | O que mostra |
 | --- | --- | --- | --- |
@@ -54,7 +92,6 @@ Configuradas em `src/config/vistas360.ts`.
 | Vereador 360 | `/vereador360` | 262 | Visão do gabinete: cota utilizada, itens, saúde, demais áreas, lista dos itens da cota, farol do autor. |
 | Análise Técnica | `/analise` | 203 | Fila de conferência: emendas para saneamento e aguardando parecer; prévia do parecer. |
 | Resumo Consolidado | `/placar` | 140 | "Como o recurso se distribui": por tipo de emenda, maiores destinos. |
-| Assistente | `/assistente` | 117 | ⚠️ **Chat com respostas pré-calculadas no servidor** a partir de perguntas fixas. Não é IA. Pergunta livre responde explicando o escopo. |
 | Conformidade | `/conformidade` | 169 | Checklist espelhando o que o TCE-SP confere (LOM cadastrada? RI? manual? rastreabilidade?), derivado do estado real do banco. |
 | Ferramentas | `/hub` | 50 | Porta de entrada para a camada 2. |
 | Pitch | `/pitch` | 106 | "A demo em 6 passos" — tela de apresentação comercial. |
@@ -102,56 +139,88 @@ Usuários · Auditoria**.
 
 Tailwind v4 **CSS-first** (`@theme inline`) — não há `tailwind.config.ts`.
 
-**Cores de marca** (identidade "Mogi Guaçu", commit `4104697`):
+**Cores de marca** — a paleta original do projeto (identidade "Mogi Guaçu"),
+aplicada sobre a **estrutura visual** da referência `ui-test/hrmate-reference`.
 
 | Token | Hex | Uso |
 | --- | --- | --- |
-| `--brand-navy` | `#0a2463` | cor institucional, `primary`, texto |
+| `--brand-navy` | `#0a2463` | cor institucional, `primary`, menu lateral, texto |
 | `--brand-deep` | `#061840` | topo do gradiente escuro |
-| `--brand-cyan` | `#00b4d8` | destaque, `ring`, eyebrow, aba ativa |
+| `--brand-cyan` | `#00b4d8` | destaque, `ring`, eyebrow, item ativo |
 | `--brand-mint` | `#00e5a0` | fim dos gradientes de destaque |
 | `--brand-amber` | `#f5a524` | atenção / pendência |
 | `--brand-green` | `#00b278` | positivo |
 | `--brand-purple` | `#7c5cfc` | banner de destaque |
 
+**Pares superfície/texto dos estados** — o bloco lavado substituiu as bordas
+coloridas: `--surf-ok`/`--on-ok`, `--surf-info`/`--on-info`,
+`--surf-warn`/`--on-warn`, `--surf-bad`/`--on-bad`, `--surf-roxo`/`--on-roxo`.
+`Tag360`, `Banner` e os deltas de KPI consomem esses pares — mexer no estado
+visual de um status é mexer em duas variáveis, não em N classes.
+
 Semânticos: `--background #f4f7fb` (azulado claro), `--card #ffffff`,
-`--muted-foreground #5a6b8c`, `--destructive #e5484d`, `--radius 0.875rem`
-(14px, com escala derivada de `sm` a `4xl`).
+`--secondary`/`--muted #eff4fb`, `--border #e3e9f2`,
+`--muted-foreground #5a6b8c`, `--destructive #e5484d`, `--radius 0.8125rem`
+(card 18px, interno 13px, botão 10px, com escala derivada de `sm` a `4xl`).
 
-**Tema escuro existe** (`.dark`, paleta completa definida) mas **não há
-alternador na interface** — `next-themes` está instalado e não é usado. Ou se
-liga, ou se remove.
+**Elevação no lugar de borda:** cards não têm anel nem borda — o que os separa
+do fundo é `--elev-card`, exposto como utilitário `shadow-card` (e
+`shadow-card-hover`). É a mudança estrutural mais visível do redesign.
 
-**Tipografia:** Inter (sans + headings), Source Serif 4 (`--font-serif`,
-carregada mas praticamente não usada), Geist Mono (mono). Headings com
-`letter-spacing: -0.5px` e `line-height: 1.2`.
+**Tema escuro existe** (`.dark`, paleta completa) mas **não há alternador na
+interface** — `next-themes` está instalado e não é usado. Ou se liga, ou se
+remove.
+
+**Tipografia:** Plus Jakarta Sans (sans + headings, pesos 400–800),
+Source Serif 4 (`--font-serif`, usada nas peças de parecer), Geist Mono (mono).
+Headings com `letter-spacing: -0.02em` e `line-height: 1.2`.
 
 **Classes utilitárias próprias** (`@layer components`):
 
 | Classe | O que faz |
 | --- | --- |
-| `.grad-main` | `linear-gradient(135deg, navy, cyan)` — botões primários |
-| `.grad-hi` | `linear-gradient(90deg, cyan, mint)` — destaques |
-| `.grad-dark` | `linear-gradient(135deg, deep, navy)` — topbar |
-| `.eyebrow` | rótulo-antena: 11px, bold, `letter-spacing 1.8px`, uppercase, cyan |
-| `.kpi-num` | 26px, weight 800, `letter-spacing -1px` |
-| `.kpi-lbl` | 12.5px, weight 600, muted |
-| `.sec-bar` | barrinha 34×4px com gradiente ao lado dos títulos de seção |
+| `.grad-main` | `linear-gradient(135deg, navy, cyan)` — hero, cards de ênfase |
+| `.grad-hi` | `linear-gradient(90deg, cyan, mint)` — barras, `.sec-bar`, marcadores |
+| `.grad-dark` | `linear-gradient(135deg, deep, navy)` — painéis escuros, login, portal público |
+| `.surface-tint` | painel cyan lavado (`--hero-tint`) |
+| `.eyebrow` | rótulo-antena: 10.5px, bold, `letter-spacing 1.4px`, uppercase, cyan |
+| `.kpi-num` | 26px, weight 800, `letter-spacing -0.035em` |
+| `.kpi-lbl` | 12px, weight 500, muted |
+| `.sec-bar` | barrinha 26×3px com gradiente ao lado dos títulos de seção |
+| `.chip` | pílula de filtro: canto 10px, fundo cinza-azulado, 12.5px/600 |
 
-### Componentes `e360/` (11)
+> `.eyebrow` é usada como seletor pelos testes e2e (`painel.spec.ts`) — mudar o
+> estilo é livre, remover a classe não.
+
+### Componentes `e360/` (16)
 
 | Componente | Papel |
 | --- | --- |
-| `SecTitle` | título de seção: h2 + `.sec-bar` + nota |
-| `KpiCard` | card de indicador (eyebrow, número, rótulo, delta ↑/↓/⚠, href opcional) — variante `hi` |
-| `Card360` + `CardSrc` + `Eyebrow` | card base (raio 14, sombra leve); variantes `mesa` (âmbar), `dark`, `hi`. `CardSrc` é o rodapé "fonte do dado" |
-| `Farol` | lista de itens semáforo (`tom: g\|a\|r`) com título, texto, "o que fazer" e link |
-| `MiniBar` | barra horizontal com preenchimento em gradiente + tique de limite (`marcaPct`) |
-| `Banner` | faixa de aviso no topo (emoji + texto + tag + href) |
+| `SecTitle` | título de seção: h2 + `.sec-bar` + nota curta |
+| `Hero` | painel de abertura: saudação à esquerda, tiles à direita |
+| `KpiTile` | tile do hero: quadradinho de ícone, número forte, marca d'água |
+| `KpiCard` | card de indicador (eyebrow, número, rótulo, delta) — variantes `hi`/`dark` |
+| `Card360` + `Eyebrow` | card base (raio 18, sombra no lugar de borda) |
+| `Farol` | lista de itens semáforo com título, texto, ação e link |
+| `MiniBar` | barra horizontal cyan→mint + tique de limite |
+| `Donut` + `DonutLegenda` | rosca de composição com valor no centro |
+| `Gauge` | semicírculo 0–100 (uso do teto), âmbar quando estoura |
+| `Ring` | anel de progresso (uso da cota por autor) |
+| `Barras` + `Legenda` | barras empilhadas em CSS puro |
+| `Stepper` | esteira horizontal do processo (substituiu o `Flow360` vertical) |
+| `Avatar360` | disco de iniciais, cor determinística pelo nome |
+| `Banner` | faixa de aviso |
 | `Tag360` | pílula de status |
-| `Subtabs` | pílulas de sub-navegação **server-side** via `?aba=` |
-| `Flow360` | diagrama do fluxo de tramitação |
-| `ChatAssistente` | chat com Q&A pré-calculado |
+| `Subtabs` | chips de sub-navegação server-side via `?aba=` |
+
+**Ilustrações** (`ilustracoes.tsx`): `IlustracaoOrcamento` (hero da landing),
+`IlustracaoConferencia` (painel do login), `IlustracaoVazio` (estados vazios) e
+`ArteOndas`. Tudo SVG inline nas variáveis da identidade — sem imagem raster,
+sem dependência, e acompanha qualquer troca de paleta.
+
+Gráficos e ilustrações são **SVG e CSS puros, sem biblioteca** — mesma decisão
+da referência. Rosca e gauge têm proporção fixa; as barras acompanham a largura
+do card porque só a altura da área plotável é fixa.
 
 ### Componentes `ui/` — shadcn/ui (21)
 

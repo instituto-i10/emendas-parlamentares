@@ -6,16 +6,18 @@ export type Delta = {
   texto: string;
 };
 
+// Pílulas de variação no padrão do `.trend` da referência: fundo azul-claro
+// para o positivo, laranja para atenção, vermelho para queda, cinza neutro.
 const TOM_DELTA: Record<Delta["tom"], string> = {
-  up: "bg-brand-mint/15 text-brand-green",
-  down: "bg-destructive/10 text-destructive",
+  up: "bg-[var(--surf-ok)] text-[var(--on-ok)]",
+  down: "bg-[var(--surf-bad)] text-[var(--on-bad)]",
   neutral: "bg-secondary text-muted-foreground",
-  warn: "bg-brand-amber/15 text-[#b97a0b]",
+  warn: "bg-[var(--surf-warn)] text-[var(--on-warn)]",
 };
 
-// Card KPI do mockup: eyebrow + número forte + rótulo + delta.
-// `variante` hi/dark usa os gradientes da identidade; `href` torna o card
-// clicável com o rodapé "ver detalhe →".
+// Card KPI da referência: rótulo-antena, número forte e grande, rótulo cinza
+// e a pílula de variação. `variante` hi/dark usa as superfícies de ênfase;
+// `href` torna o card clicável com o rodapé "ver detalhe →".
 export function KpiCard({
   eyebrow,
   numero,
@@ -39,24 +41,23 @@ export function KpiCard({
   const corpo = (
     <div
       className={cn(
-        "flex h-full flex-col rounded-xl p-5 ring-1 transition-all duration-150",
-        variante === "padrao" && "bg-card ring-foreground/10",
-        variante === "hi" && "grad-main text-white ring-transparent",
-        variante === "dark" && "grad-dark text-white ring-transparent",
-        href &&
-          "hover:-translate-y-0.5 hover:shadow-[0_6px_18px_rgba(6,24,64,.12)] hover:ring-brand-cyan",
+        "flex h-full flex-col rounded-xl p-[22px] transition-all duration-150",
+        variante === "padrao" && "bg-card shadow-card",
+        variante === "hi" && "grad-main text-white shadow-card",
+        variante === "dark" && "grad-dark text-white shadow-card",
+        href && "hover:-translate-y-0.5 hover:shadow-card-hover",
         className
       )}
     >
-      <div className={cn("eyebrow", escuro && "text-brand-mint/90")}>{eyebrow}</div>
-      <div className="kpi-num mt-1" style={{ fontSize: 22 }}>
+      <div className={cn("eyebrow", escuro && "text-white/70")}>{eyebrow}</div>
+      <div className="kpi-num mt-2" style={{ fontSize: 24 }}>
         {numero}
       </div>
       <div className={cn("kpi-lbl", escuro && "text-white/75")}>{rotulo}</div>
       {delta ? (
         <span
           className={cn(
-            "mt-2 w-fit rounded-full px-2.5 py-0.5 text-xs font-bold",
+            "mt-2.5 w-fit rounded-full px-2.5 py-1 text-[11.5px] font-bold",
             escuro ? "bg-white/15 text-white" : TOM_DELTA[delta.tom]
           )}
         >
@@ -66,8 +67,8 @@ export function KpiCard({
       {fonte ? (
         <div
           className={cn(
-            "mt-auto pt-3 text-[11.5px]",
-            escuro ? "text-white/55" : "text-muted-foreground/80"
+            "mt-auto pt-3 text-[11px] font-medium",
+            escuro ? "text-white/55" : "text-muted-foreground"
           )}
         >
           {fonte}
@@ -77,7 +78,7 @@ export function KpiCard({
         <span
           className={cn(
             "mt-2 text-[11px] font-bold",
-            escuro ? "text-brand-mint" : "text-brand-cyan"
+            escuro ? "text-white" : "text-primary"
           )}
         >
           ver detalhe →

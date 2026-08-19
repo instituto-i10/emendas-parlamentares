@@ -31,7 +31,7 @@ type Opt = { id: string; codigo: string; nome: string };
 type Base = { id: string; numero: string; tipo: string; ano: number };
 
 const controle =
-  "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50";
+  "flex h-9 w-full rounded-[10px] border border-input bg-card px-3 py-1 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50";
 
 // Deriva um id estável do rótulo, para associar <label> e <select>. Sem isso o
 // campo não é anunciado por leitor de tela nem alcançável por `getByLabel`.
@@ -362,7 +362,7 @@ export function NovaEmendaForm({
         {relatorio ? (
           <RelatorioValidacao relatorio={relatorio} />
         ) : (
-          <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+          <div className="rounded-xl bg-secondary p-6 text-center text-[12.5px] font-medium text-muted-foreground">
             Salve o rascunho e clique em <b>Validar</b> para ver o relatório de
             compatibilidade. A submissão só é liberada quando a emenda está{" "}
             <b>válida</b>.

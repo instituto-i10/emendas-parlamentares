@@ -5,7 +5,7 @@ import { getDados360, brl, brlCompacto } from "@/lib/queries-360";
 import { ROTULO_STATUS_EMENDA } from "@/lib/rotulos";
 import { SecTitle } from "@/components/e360/sec-title";
 import { KpiCard } from "@/components/e360/kpi-card";
-import { Card360, CardSrc, Eyebrow } from "@/components/e360/card360";
+import { Card360, Eyebrow } from "@/components/e360/card360";
 import { Farol, type FarolItemDado } from "@/components/e360/farol";
 import { Banner } from "@/components/e360/banner";
 import { Subtabs } from "@/components/e360/subtabs";
@@ -49,7 +49,7 @@ export default async function EmendasVistaPage({
     <div>
       <SecTitle
         titulo="Emendas & Beneficiários"
-        nota={`${c.qtd} emendas · ${brlCompacto(c.valor)} · por autor, por destino e conformidade · exercício ${ano ?? "—"}`}
+        nota={`${c.qtd} emendas · ${brlCompacto(c.valor)}`}
       />
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -57,7 +57,7 @@ export default async function EmendasVistaPage({
         {podeApresentar ? (
           <Link
             href="/legislativo/emendas/nova"
-            className="grad-main mb-4 rounded-lg px-4 py-2 text-[13px] font-bold text-white hover:brightness-110"
+            className="mb-4 rounded-[10px] bg-primary px-4 py-2.5 text-[12.5px] font-bold text-white transition-colors hover:bg-[var(--primary-600)]"
           >
             + Nova emenda
           </Link>
@@ -163,15 +163,6 @@ export default async function EmendasVistaPage({
                 </tbody>
               </table>
             </div>
-            <CardSrc
-              direita={
-                params.cotaPorAutor != null
-                  ? `cota individual ${brl(params.cotaPorAutor)}`
-                  : undefined
-              }
-            >
-              agregado das emendas do exercício por autor
-            </CardSrc>
           </Card360>
         </>
       ) : null}
@@ -219,10 +210,6 @@ export default async function EmendasVistaPage({
               </tbody>
             </table>
           </div>
-          <CardSrc direita={`exercício ${ano ?? "—"}`}>
-            {c.qtd} itens agregados pelo órgão da dotação · entidades muito
-            indicadas merecem conferência de capacidade de execução
-          </CardSrc>
         </Card360>
       ) : null}
 
@@ -286,13 +273,9 @@ export default async function EmendasVistaPage({
                   ].filter(Boolean) as FarolItemDado[]
                 }
               />
-              <CardSrc>
-                checagens do motor: cota, teto, base do instrumento, PPA/LDO —
-                relatório completo por emenda na análise técnica
-              </CardSrc>
             </Card360>
             <Card360 variante="mesa">
-              <Eyebrow className="text-[#b97a0b]">
+              <Eyebrow className="text-brand-amber">
                 Pontos de atenção para o parecer
               </Eyebrow>
               <p className="text-[13px] leading-7">
@@ -313,10 +296,17 @@ export default async function EmendasVistaPage({
                   .join(" · ")}
                 .
               </p>
-              <CardSrc>
-                base: LC 101/2000 (LRF) · Lei 4.320/64 · Lei Orgânica · confira a
-                norma local nas Configurações
-              </CardSrc>
+              <p className="mt-3 border-t border-brand-amber/25 pt-2.5 text-[11px] font-medium text-muted-foreground">
+                Base normativa: LC 101/2000 (LRF) · Lei 4.320/64 · Lei Orgânica —
+                confira a norma local em{" "}
+                <Link
+                  href="/config"
+                  className="font-bold text-accent-foreground hover:underline"
+                >
+                  Configurações
+                </Link>
+                .
+              </p>
             </Card360>
           </div>
         </>

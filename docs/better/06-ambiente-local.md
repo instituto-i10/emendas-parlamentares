@@ -106,12 +106,68 @@ teto R$ 6,5 mi · "1 autor(es) acima da cota" · "3 autor(es) usando a reserva d
 saúde em outras áreas"; `/analise` lista as filas de saneamento e parecer;
 `/publica/emendas` lista as 41 com beneficiários.
 
-### O que o dataset **não** cobre
+### `prisma/seed-volume.ts` — a base com volume de LOA real
 
-O volume. São **20 dotações** — a cascata de seleção da Nova Emenda parece
-confortável nesse tamanho e é justamente onde está o risco B2 (`<select>`
-nativo sem busca). Para avaliar a cascata de verdade é preciso uma base na
-ordem de milhares de dotações. **Pendente.**
+O dataset acima resolve os painéis, mas deixa a base com **20 dotações** — e
+nesse tamanho a cascata da Nova Emenda parece confortável, escondendo o risco
+B2. Este script gera a base no tamanho em que o sistema vai realmente operar.
+
+```bash
+npm run db:volume     # npx tsx prisma/seed-volume.ts
+```
+
+| | |
+| --- | --- |
+| Órgãos / unidades | 15 / 33 |
+| Funções / subfunções | 17 / 42 |
+| Programas / ações | 39 / 326 |
+| Naturezas / fontes | 28 / 16 |
+| **Dotações** | **~2.300** |
+| Prioridades da LDO | 25 (≈ metade dos programas) |
+| Orçamento total | ~R$ 919 milhões |
+
+Compatível com um município de 150–300 mil habitantes. A classificação segue os
+padrões reais: funções e subfunções da **Portaria MOG 42/1999**, naturezas da
+despesa da **Portaria STN/SOF 163/2001** e fontes no padrão da **Portaria STN
+710/2021** (adotado em SP desde 2023). As combinações são coerentes — FUNDEB só
+na educação, investimento só em projeto, e assim por diante.
+
+O script também **cadastra o PPA** do exercício (37 dos 39 programas — dois
+ficam de fora de propósito, para existir o caso real de falha na checagem
+`PROGRAMA_NO_PPA`) e popula prioridades da LDO, o que dá significado às
+checagens 4 e 7 do motor.
+
+É **idempotente** e nunca apaga dotação com emenda vinculada.
+
+### O que o volume revelou
+
+| Nível da cascata | Opções |
+| --- | --- |
+| Órgão | 15 |
+| Unidades por órgão (máx.) | 4 |
+| Programas por unidade (máx.) | 7 |
+| Ações por programa (máx.) | 16 |
+| Dotações por ação (média / máx.) | 7 / 15 |
+| **Remanejamento (origem e destino)** | **2.375 opções num `<select>` nativo, sem busca** |
+
+E o rótulo de cada opção mostra só natureza, fonte e saldo — nunca órgão,
+programa ou ação: **2.375 opções para 2.334 rótulos distintos**. Detalhes na
+observação 4 do [documento 04](04-mapa-de-telas.md).
+
+## Testes end-to-end
+
+```bash
+npm run test:e2e          # 45 testes, ~1 min
+npm run test:e2e:ui       # modo interativo
+npm run test:e2e:report   # último relatório HTML
+```
+
+Rodam contra um **build de produção** e um banco próprio (`emendas_test`), sem
+tocar no banco de desenvolvimento. O motivo de não usar `next dev`: fora de
+produção o sistema desliga a autenticação, e os testes de permissão passariam
+sem exercitar guard nenhum.
+
+Documentação completa em [`e2e/README.md`](../../e2e/README.md).
 
 ## Modo C — apontar para o Neon de produção
 

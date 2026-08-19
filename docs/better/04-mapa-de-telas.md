@@ -181,11 +181,51 @@ autor. É a primeira tela após o login para quase todos os papéis. Precisa de
 hierarquia: o que é decisão, o que é monitoramento, o que é contexto.
 
 ### 4. O formulário de Nova Emenda é a tela crítica de conversão
-`nova-emenda-form.tsx` (361 L, client) usa `<select>` **nativos** encadeados em
-5 níveis, não os `Select` do shadcn nem combobox com busca. Numa LOA municipal
-real são **centenas ou milhares de dotações** — um `<select>` nativo sem busca
-é inviável. Existe `fetchTodasDotacoes` como atalho, o que agrava o problema.
-**Alta prioridade de redesign.**
+`nova-emenda-form.tsx` (client) usa `<select>` **nativos** encadeados em 5
+níveis, não os `Select` do shadcn nem combobox com busca.
+
+**Medido** contra a base de volume realista (~2.300 dotações, gerada por
+`prisma/seed-volume.ts` — ver [06](06-ambiente-local.md)):
+
+| Nível da cascata | Opções |
+| --- | --- |
+| Órgão | 15 |
+| Unidades por órgão (máx.) | 4 |
+| Programas por unidade (máx.) | 7 |
+| Ações por programa (máx.) | 16 |
+| Dotações por ação (média / máx.) | 7 / 15 |
+| **Remanejamento — origem e destino** | **2.375 opções, num `<select>` nativo, sem busca** |
+
+Cada passo isolado é administrável. Dois problemas continuam:
+
+1. **Remanejamento carrega a base inteira.** `fetchTodasDotacoes` popula dois
+   `<select>` com todas as dotações — 4.750 nós `<option>` na página.
+2. **O rótulo não diz o que é.** `DotacaoOpcao` expõe apenas natureza, fonte e
+   saldo — **nunca órgão, programa ou ação**. Resultado medido: **2.375 opções
+   para 2.334 rótulos distintos**, e o que os distingue é o valor em reais.
+   Escolher entre `3.3.90.39 39 / 500 Recursos não Vinculados — R$ 250.000` e a
+   opção idêntica de R$ 251.000 é impossível para quem quer "dinheiro para a
+   UBS do Jardim Itamaraty".
+
+O terceiro problema é conceitual: **não há busca por texto em lugar nenhum**. O
+vereador pensa no destino (uma escola, uma UBS, uma entidade); o formulário
+exige que ele conheça de antemão o órgão, a unidade, o programa e a ação.
+
+Os números acima estão travados em `e2e/nova-emenda.spec.ts` → *"cascata sob
+volume realista"*. **Alta prioridade de redesign.**
+
+### 4b. "Minhas emendas" não mostra o objeto
+`emendas-table.tsx` lista nº, programa, ação, valor, tipo e situação. O
+**objeto** — a única coisa que diz o que a emenda faz — não aparece. O autor
+identifica a própria emenda por número ou por valor.
+
+### 4c. O parecer é pedido por `window.prompt`
+`tramitacao-actions.tsx` coleta o parecer de aprovação/rejeição com
+`window.prompt()`. É um documento com peso jurídico sendo capturado por um
+diálogo nativo: sem formatação, sem múltiplas linhas, sem validação de tamanho,
+sem rascunho, sem estilo do produto — e bloqueado por padrão em alguns
+contextos de navegador. Trocar por um diálogo do próprio sistema é item de
+redesign com efeito direto em conformidade.
 
 ### 5. Sub-navegação por querystring
 `Subtabs` usa `?aba=` com navegação server-side — bom para SSR e links
@@ -206,6 +246,12 @@ Sem verificação de contraste, sem foco visível customizado além do `ring`
 padrão, sem `aria-live` nos toasts/faróis, sem skip-link. Sistema de governo
 municipal deveria mirar **WCAG 2.1 AA** (e há exigência legal de acessibilidade
 em portais públicos brasileiros — eMAG/LBI).
+
+Exemplo já corrigido: no formulário de Nova Emenda os `<Label>` não tinham
+`htmlFor` e os controles não tinham `id` — **nenhum campo da cascata era
+anunciado por leitor de tela**. Corrigido ao montar a suíte E2E (os testes
+também não conseguiam alcançar os campos, o que é um bom detector). Vale varrer
+o resto da aplicação atrás do mesmo padrão.
 
 ### 9. Mobile não foi projetado
 Há classes responsivas (`sm:`, `lg:`, `xl:`) e `use-mobile`, mas o layout

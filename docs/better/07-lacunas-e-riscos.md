@@ -60,9 +60,9 @@ Os vazios são o **fim da fase 1** e **toda a fase 2**.
 | # | Item | Por quê importa para UX |
 | --- | --- | --- |
 | B1 | **Navegação dupla** (vistas 360 × ferramentas legadas) | A ação principal do produto atravessa duas linguagens visuais. É a decisão de arquitetura de informação nº 1. |
-| B2 | **Cascata com `<select>` nativo** em `nova-emenda-form.tsx` | Em LOA municipal real são milhares de dotações. Inviável sem busca/combobox/virtualização. Bloqueia adoção real. |
-| B3 | **Zero testes de UI/E2E** | Não há rede de segurança para mudanças de interface. Um Playwright cobrindo os 6 fluxos críticos deveria vir **antes** do redesign. |
-| B4 | **Acessibilidade não endereçada** | Sistema de governo tem exigência legal (LBI/eMAG). Retrofit é caro; incorporar no redesign é barato. |
+| B2 | **Cascata com `<select>` nativo** em `nova-emenda-form.tsx` | **Medido** com a base de volume: o seletor de remanejamento tem **2.375 opções num `<select>` nativo sem busca**, e o rótulo mostra só natureza/fonte/saldo — **2.375 opções para 2.334 rótulos distintos**, sem órgão, programa ou ação. Não há busca por texto em nenhum nível. Bloqueia adoção real. Baseline travado em `e2e/nova-emenda.spec.ts`. |
+| ~~B3~~ | ~~**Zero testes de UI/E2E**~~ | ✅ **Resolvido (18/08/2026).** 45 testes Playwright contra build de produção e banco próprio. Ver [`e2e/README.md`](../../e2e/README.md). |
+| B4 | **Acessibilidade não endereçada** | Sistema de governo tem exigência legal (LBI/eMAG). Retrofit é caro; incorporar no redesign é barato. Um caso já corrigido: os campos da cascata não tinham `label`/`id` associados e não eram anunciados por leitor de tela. |
 | B5 | **Mobile não projetado** | Vereador em plenário é caso de uso plausível. |
 
 ### 🟡 Médio
@@ -72,6 +72,8 @@ Os vazios são o **fim da fase 1** e **toda a fase 2**.
 | B6 | `valorAtual` da `Dotacao` nunca atualizado | Emendas não movem o saldo. A checagem de `ANULACAO` compara contra um valor estático, e a UI não consegue mostrar "quanto sobra". |
 | B7 | Rate limit **em memória** | `src/lib/rate-limit.ts` não funciona em serverless multi-instância. Dívida já reconhecida (migrar p/ Upstash/Redis). |
 | B8 | Parecer dentro do `AuditLog` | Ver gap regulatório #6. Também é problema de produto: não dá para listar pareceres. |
+| B8b | **Parecer coletado por `window.prompt`** | Documento com peso jurídico capturado num diálogo nativo: sem múltiplas linhas, sem validação, sem rascunho, sem estilo do produto. Ver observação 4c do [documento 04](04-mapa-de-telas.md). |
+| B8c | **"Minhas emendas" não mostra o objeto** | A listagem traz nº, programa, ação, valor, tipo e situação. O autor não reconhece a própria emenda pelo que ela faz. |
 | B9 | Estados mortos no enum | `EM_VALIDACAO` e `EM_TRAMITACAO` (de `StatusEmenda`) nunca são atribuídos. Ou se usam, ou se removem. |
 | B10 | `ui/sidebar.tsx` sem uso | 702 linhas — o maior arquivo do projeto, órfão desde o redesign para abas. |
 | B11 | Tema escuro completo, sem alternador | `next-themes` instalado e não usado; paleta `.dark` definida e inalcançável. |
@@ -115,6 +117,10 @@ Os vazios são o **fim da fase 1** e **toda a fase 2**.
    obrigatório.
 
 5. **Sem banco, as telas mentem.** Estados vazios não revelam problemas de
-   densidade, paginação ou performance. Subir o Postgres local com o seed
-   (Modo B em [06](06-ambiente-local.md)) é o mínimo — e vale gerar um dataset
-   maior que o seed para testar a cascata com volume realista.
+   densidade, paginação ou performance. O ambiente local já sobe com dados —
+   ver [06](06-ambiente-local.md), incluindo a base com volume de LOA real.
+
+6. **Rode a suíte E2E antes e depois de cada mudança de interface.**
+   `npm run test:e2e` (~1 min). Ela trava justamente o que um redesign quebra
+   sem querer: quem vê o quê, o que a submissão exige, o que o portal público
+   expõe sem login.

@@ -69,8 +69,11 @@ export default async function Vereador360Page({
     params.cotaPorAutor != null
       ? {
           tom: cotaOk ? "g" : "r",
-          titulo: cotaOk ? "Cota dentro do limite" : "Cota ultrapassada",
-          texto: `${brl(resumo?.valorTotal ?? 0)} de ${brl(params.cotaPorAutor)}`,
+          titulo: cotaOk
+            ? "Apresentado dentro da cota"
+            : "Apresentado acima da cota",
+          texto: `${brl(resumo?.valorTotal ?? 0)} apresentados de ${brl(params.cotaPorAutor)}`,
+          fix: cotaOk ? undefined : "Soma tudo o que o autor apresentou, inclusive o que está inválido ou rejeitado — que não consome cota na pré-checagem.",
         }
       : {
           tom: "a" as const,
@@ -247,7 +250,7 @@ export default async function Vereador360Page({
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <KpiCard
-              eyebrow="Cota utilizada"
+              eyebrow="Apresentado"
               numero={brlCompacto(resumo?.valorTotal ?? 0)}
               rotulo={
                 params.cotaPorAutor != null

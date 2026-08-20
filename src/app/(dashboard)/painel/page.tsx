@@ -119,9 +119,12 @@ export default async function PainelPage() {
           }
         : {
             tom: "r",
-            titulo: `${acimaDaCota.length} autor(es) acima da cota individual`,
+            titulo: `${acimaDaCota.length} autor(es) com apresentado acima da cota`,
             texto: acimaDaCota.map((a) => a.nome).join(", "),
-            fix: `Cota: ${brl(params.cotaPorAutor)} por autor`,
+            // O somatório inclui emenda inválida e rejeitada; a pré-checagem
+            // não conta essas na cota. Dizer isso evita duas contas para o
+            // mesmo autor entre esta tela e o relatório da emenda.
+            fix: `Cota: ${brl(params.cotaPorAutor)} por autor · a soma inclui o que está inválido ou rejeitado, que não consome cota`,
             href: "/emendas",
           }
     );

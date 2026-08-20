@@ -53,8 +53,16 @@ test.describe("painel da comissão", () => {
     await expect(page.getByText(/R\$ 6,5 mi/).first()).toBeVisible();
   });
 
-  test("o farol acusa quem está acima da cota", async ({ page }) => {
-    await expect(page.getByText(/\d+ autor\(es\) acima da cota individual/)).toBeVisible();
+  // "apresentado acima da cota", não "acima da cota": o somatório do painel
+  // inclui emenda inválida e rejeitada, que a pré-checagem não conta na cota.
+  // O rótulo tem de dizer qual das duas contas está na tela.
+  test("o farol acusa quem apresentou acima da cota", async ({ page }) => {
+    await expect(
+      page.getByText(/\d+ autor\(es\) com apresentado acima da cota/)
+    ).toBeVisible();
+    await expect(
+      page.getByText(/não consome cota/)
+    ).toBeVisible();
   });
 
   test("o farol acusa a invasão da reserva da saúde por autor", async ({ page }) => {
@@ -82,7 +90,7 @@ test.describe("vereador 360", () => {
     await expect(page).toHaveURL(/\/vereador360/);
     // Os rótulos ficam nos "eyebrow" dos cards de indicador.
     const eyebrows = page.locator(".eyebrow");
-    await expect(eyebrows.filter({ hasText: "Cota utilizada" })).toBeVisible();
+    await expect(eyebrows.filter({ hasText: "Apresentado" })).toBeVisible();
     await expect(eyebrows.filter({ hasText: /^Saúde$/ })).toBeVisible();
     await expect(eyebrows.filter({ hasText: "Demais áreas" })).toBeVisible();
   });

@@ -48,7 +48,7 @@ export function TabelaAutores({
             <th className="px-1 pb-2 text-left font-bold">Uso da cota</th>
             <th className="px-1 pb-2 text-right font-bold">Saúde R$</th>
             <th className="px-1 pb-2 text-right font-bold">Demais R$</th>
-            <th className="px-1 pb-2 text-right font-bold">Total R$</th>
+            <th className="px-1 pb-2 text-right font-bold">Apresentado R$</th>
             <th className="px-1 pb-2 text-right font-bold">% cota</th>
           </tr>
         </thead>

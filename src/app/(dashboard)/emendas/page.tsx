@@ -116,7 +116,7 @@ export default async function EmendasVistaPage({
               <table className="w-full min-w-[640px] border-collapse text-[13px]">
                 <thead>
                   <tr>
-                    {["Autor", "Itens", "Saúde", "Demais", "Total", "Cota"].map((h) => (
+                    {["Autor", "Itens", "Saúde", "Demais", "Apresentado", "Cota"].map((h) => (
                       <th
                         key={h}
                         className="border-b-2 border-border px-2.5 py-2 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
@@ -163,6 +163,11 @@ export default async function EmendasVistaPage({
                   ))}
                 </tbody>
               </table>
+              <p className="pt-3 text-[11.5px] font-medium leading-relaxed text-muted-foreground">
+                <b className="font-semibold">Apresentado</b> soma tudo o que o
+                autor propôs, inclusive o que está inválido ou rejeitado — que
+                não consome cota na pré-checagem.
+              </p>
             </div>
           </Card360>
         </>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Check, CircleAlert, CircleSlash } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type FarolTom = "r" | "a" | "g";
@@ -11,25 +12,31 @@ export type FarolItemDado = {
   href?: string;
 };
 
+// Verde/âmbar/vermelho na versão profunda dos tokens --estado-*. Fundo sólido
+// e glifo branco: a linha inteira já é uma superfície lavada, e um círculo
+// lavado sobre ela some — o item precisa ser lido de relance.
 const DOT: Record<FarolTom, string> = {
-  r: "bg-destructive shadow-[0_0_0_3px_rgba(229,72,77,.15)]",
-  a: "bg-brand-amber shadow-[0_0_0_3px_rgba(245,165,36,.18)]",
-  g: "bg-brand-green shadow-[0_0_0_3px_rgba(0,178,120,.15)]",
+  r: "bg-[var(--estado-bloqueio)] text-white",
+  a: "bg-[var(--estado-atencao)] text-white",
+  g: "bg-[var(--estado-ok)] text-white",
 };
 
-const SINAL: Record<FarolTom, string> = { r: "✕", a: "!", g: "✓" };
+const ICONE = { r: CircleSlash, a: CircleAlert, g: Check } as const;
 
 function Item({ item }: { item: FarolItemDado }) {
   const conteudo = (
     <>
       <span
         className={cn(
-          "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full text-[9px] font-black leading-none text-white",
+          "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full",
           DOT[item.tom]
         )}
         aria-hidden
       >
-        {SINAL[item.tom]}
+        {(() => {
+          const Icone = ICONE[item.tom];
+          return <Icone className="size-3" strokeWidth={3} />;
+        })()}
       </span>
       <div className="min-w-0">
         <b className="block text-[13px] font-bold leading-snug tracking-[-.015em]">
@@ -61,7 +68,7 @@ function Item({ item }: { item: FarolItemDado }) {
   return <div className={classes}>{conteudo}</div>;
 }
 
-// Farol de conformidade do mockup: lista de itens com bolinha ✓/!/✕.
+// Farol de conformidade: lista de itens com ícone de estado.
 export function Farol({ itens }: { itens: FarolItemDado[] }) {
   return (
     <div className="flex flex-col gap-2.5">

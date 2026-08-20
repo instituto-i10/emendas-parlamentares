@@ -33,7 +33,7 @@ export default async function PitchPage() {
           de saúde e destinos conferidos automaticamente — e o que não conforma
           sai destacado para saneamento antes da consolidação.
         </p>
-        <p className="mt-4 border-l-[3px] border-brand-mint pl-4 font-serif text-xl italic text-white">
+        <p className="mt-4 font-serif text-xl italic text-white/90">
           “A planilha vira painel: a comissão confere em minutos o que levava
           dias, e o relator assina com segurança.”
         </p>
@@ -74,7 +74,7 @@ export default async function PitchPage() {
             href={href}
             className="grid grid-cols-[52px_1fr_auto] items-center gap-4 rounded-lg bg-card px-5 py-4 shadow-card transition-shadow hover:shadow-card-hover"
           >
-            <span className="grad-hi flex size-10 items-center justify-center rounded-full text-[17px] font-black text-brand-deep">
+            <span className="flex size-10 items-center justify-center rounded-full bg-brand-cyan text-[17px] font-black text-white">
               {n}
             </span>
             <span>

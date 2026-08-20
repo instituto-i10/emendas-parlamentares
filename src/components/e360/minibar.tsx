@@ -31,7 +31,7 @@ export function MiniBar({
         <i
           className={cn(
             "block h-full rounded-md",
-            alerta ? "bg-brand-amber" : "grad-hi"
+            alerta ? "bg-[var(--estado-atencao)]" : "bg-brand-cyan"
           )}
           style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
         />

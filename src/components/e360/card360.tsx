@@ -2,8 +2,11 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 // Card base: branco, canto 18px, sem borda — o que o separa do fundo é uma
-// sombra baixa (estrutura da referência de UI). Variantes: mesa (âmbar, para
-// pendência), azul (painel calmo), dark/hi (gradientes da identidade).
+// sombra baixa. Variantes: mesa (pendência), azul (painel calmo), dark/hi
+// (superfícies da identidade).
+//
+// Nenhuma variante usa barra colorida à esquerda: o estado é dito pela
+// superfície e pelo texto, não por um traço decorativo na lateral.
 export function Card360({
   children,
   variante = "padrao",
@@ -16,10 +19,13 @@ export function Card360({
   return (
     <div
       className={cn(
-        "relative flex flex-col rounded-xl p-[22px] shadow-card",
+        // min-w-0: como item de grid/flex o card tem min-width:auto por
+        // padrão e se recusa a encolher abaixo do próprio conteúdo — era o que
+        // estourava a largura no celular (tabelas e textos longos empurravam o
+        // card para fora da tela em vez de rolarem dentro dele).
+        "relative flex min-w-0 flex-col rounded-xl p-[22px] shadow-card",
         variante === "padrao" && "bg-card",
-        variante === "mesa" &&
-          "border-l-4 border-l-brand-amber bg-[var(--surf-warn)]",
+        variante === "mesa" && "bg-[var(--surf-warn)] text-[var(--on-warn)]",
         variante === "azul" && "surface-tint shadow-none",
         variante === "dark" && "grad-dark text-white",
         variante === "hi" && "grad-main text-white",

@@ -121,7 +121,7 @@ O **art. 23 da LDO 2027** é, na prática, a especificação do motor:
 | Dispositivo | Regra | Estado no sistema |
 | --- | --- | --- |
 | art. 23, *caput* | Emenda que reduz receita ou aumenta despesa exige **estimativa de impacto orçamentário-financeiro no exercício e nos dois seguintes** (LRF art. 16) | ❌ **campo não existe** em `Emenda` |
-| art. 23 §1º, I | Compatibilidade com o **PPA e a LDO** | ⚠️ existe `ADERENCIA_LDO`; falta aderência explícita ao PPA |
+| art. 23 §1º, I | Compatibilidade com o **PPA e a LDO** | ✅ `ADERENCIA_LDO` e `PROGRAMA_NO_PPA`, este último contra os 47 programas do PPA 2026-2029 extraídos do Anexo II por OCR em 20/08/2026. Mesma exigência na **LOM art. 140 §1º, I** |
 | art. 23 §1º, II | Não ultrapassar limites de gasto com pessoal | ❌ |
 | art. 23 §2º, I | Emenda **redutiva**: demonstrar que vinculações constitucionais/legais de receita seguem observadas | ❌ |
 | art. 23 §2º, II | Emenda redutiva: demonstrar que não inviabiliza serviço obrigatório nem encargo legal | ❌ |
@@ -306,54 +306,70 @@ alimentando a fila de saneamento e a Análise Técnica.
 | Portal público com exercício 2027 | renderiza valores e beneficiários |
 | Nova Emenda com a base 2027 | cascata carrega, rótulo "(simulada)" visível |
 
-### Achado: os parâmetros GERAIS não são de Mogi Guaçu
+### RESOLVIDO: os parâmetros agora são os de Mogi Guaçu
 
-O seed oficial grava `RCL` e `PERCENTUAL_IMPOSITIVO` com escopo **GERAL** — ou
-seja, valendo para todo exercício, inclusive 2027. Os dois vinham do protótipo
-original e não têm relação com o município:
+Em 20/08/2026 a Lei Orgânica chegou (arquivo consolidado, atualizada até a
+Emenda nº 56/2023) e o jurídico do cliente confirmou a leitura. As três
+pendências desta seção estão fechadas.
 
-| Parâmetro | Estava | Correto | Fonte |
+| Parâmetro | Estava | Agora | Fonte |
 | --- | --- | --- | --- |
-| `RCL` | R$ 433.000.000 | **R$ 1.059.216.686,35** | LDO 2027, Anexo das Metas Fiscais — Metas Anuais (`PLR01128`) |
-| `PERCENTUAL_IMPOSITIVO` | 1,5% | **não conferido** | remete ao art. 140 §6º da LOM, que não temos |
+| `RCL` | R$ 433 mi (protótipo) → R$ 1.059.216.686,35 (projeção 2027) | **R$ 926.030.562,09** | Siconfi/Tesouro, RREO 6º bim/2025, Anexo 03, ente IBGE 3530706 |
+| `PERCENTUAL_IMPOSITIVO` | 1,5% não conferido | **1,2%** BLOQUEANTE | LOM art. 140 §6º (Emenda à LOM nº 47/2017) |
+| `TETO_VALOR_AUTOR` | R$ 1.000.000 marcador | **R$ 854.797,44** BLOQUEANTE | derivado: (RCL × 1,2%) ÷ 13 |
+| `RESERVA_SAUDE_PERCENTUAL` | 50% ALERTA (herdado) | **50%** BLOQUEANTE | LOM art. 140 §6º, *in fine* |
+| `NUMERO_AUTORES` | 13 sem fundamento | **13** | LOM art. 11 §2º (Emenda à LOM nº 55/2023) |
 
-A RCL estava errada por um fator de **2,4×**. Corrigida: o `db:2027` grava agora
-o valor real com escopo de exercício, que tem precedência sobre o GERAL (ver
-`src/lib/queries-360.ts`). O percentual continua 1,5% mas foi marcado como
-`ALERTA` com o fundamento dizendo que não foi verificado.
+#### A armadilha da base de cálculo
 
-### Achado: o "Teto impositivo" do painel não fecha com a própria base de cálculo
+O §6º diz, literalmente, "receita corrente líquida **prevista no projeto
+encaminhado pelo Poder Executivo**". O §8º, que trata da execução obrigatória,
+diz "**realizada no exercício anterior**". Quem ler só a LOM usa a primeira.
 
-Pôr a RCL real expôs uma inconsistência que já existia e estava escondida atrás
-de dois números inventados. O Painel da Comissão mostra:
+Está errado. A redação do §6º é de 2017 e ficou defasada: a **EC 126/2022**
+passou a base do art. 166 da Constituição para a RCL realizada no exercício
+anterior, e o Município não pode aplicar base diversa da constitucional.
+Orientação expressa do jurídico do cliente (Correia Pontes Advocacia) em
+20/08/2026. Por isso a base é a **RCL realizada de 2025**, e não a projeção de
+2027 da LDO que estava no seed.
 
-```
-Teto impositivo   R$ 13 mi
-─────────────────────────────
-RCL (base de cálculo)  R$ 1.059,22 mi
-Percentual impositivo         1,5%
-```
+O fundamento inteiro está gravado em `fundamentoDescricao` de cada parâmetro,
+em `prisma/seed-2027.ts` — é lá que se olha antes de mexer nos números.
 
-Mas **R$ 1.059,22 mi × 1,5% = R$ 15,89 mi**, não R$ 13 mi. O teto exibido não
-vem daí: `src/lib/queries-360.ts` calcula
-`tetoGlobal = cotaPorAutor × totalAutores` = R$ 1 mi × 13 = R$ 13 mi. A RCL e o
-percentual são apenas rótulos informativos ao lado — mas o painel os apresenta
-como "base de cálculo", e o comentário do código (`painel/page.tsx:174`) afirma
-"de onde sai o teto: RCL × percentual impositivo". **A derivação exibida não
-produz o número exibido.**
+### RESOLVIDO: o teto do painel passou a fechar com a base de cálculo
 
-Antes isso não aparecia porque a RCL falsa (R$ 433 mi × 1,5% = R$ 6,5 mi)
-também não batia com os R$ 13 mi — só que ninguém tinha por que conferir.
+A seção anterior registrava que `tetoGlobal = cotaPorAutor × totalAutores`
+(R$ 13 mi) não batia com RCL × percentual, embora o painel apresentasse os dois
+como "base de cálculo". A LDO art. 23 §3º aponta para o teto **global** como
+primitivo, com a cota nascendo dele.
 
-**Qual dos dois é o primitivo é decisão de produto, e a lei aponta para um
-lado.** O art. 23 §3º da LDO 2027 limita *o somatório* das impositivas ao teto
-da LOM — isto é, o teto global é que nasce de RCL × percentual, e a cota por
-autor deveria ser `teto ÷ nº de autores`. O código faz o contrário. Com os
-números reais, seria R$ 15,89 mi ÷ 13 = **R$ 1,22 mi por autor**.
+Não foi preciso inverter a fórmula. A cota gravada passou a ser **derivada** do
+teto legal — `(926.030.562,09 × 1,2%) ÷ 13 = 854.797,44` —, de modo que
+`cota × 13 = R$ 11.112.366,72` reproduz `RCL × 1,2% = R$ 11.112.366,75`. A
+derivação exibida agora produz o número exibido.
 
-Não mexi na fórmula: mudar isso altera o motor de validação e o que os 45 testes
-E2E esperam. Fica registrado para decidir junto com o art. 140 §6º — os dois
-problemas se resolvem com a mesma informação.
+Sobram **3 centavos** de diferença, do arredondamento da cota para centavos. É
+irrelevante para o painel, mas quem for reescrever a fórmula para calcular o
+teto global direto da RCL deve saber que os dois caminhos não coincidem ao
+centavo.
+
+### Regra nova encontrada na leitura: LOM art. 140 §7º
+
+O mesmo artigo traz uma vedação que não estava em nenhuma lista nossa: a
+execução do montante destinado a ações e serviços públicos de saúde é "**vedada
+a destinação para pagamento de pessoal ou encargos sociais**".
+
+Virou checagem do motor (`SAUDE_NAO_PESSOAL`): emenda na função 10 apontando
+para dotação do grupo 1 da natureza da despesa (Pessoal e Encargos Sociais) é
+reprovada. É proibição legal, não parâmetro de política — bloqueia sempre, sem
+chave que a afrouxe.
+
+O §11 do mesmo artigo traz ainda o **calendário do impedimento de ordem
+técnica** (120 dias para o Executivo justificar; 30 dias para o Legislativo
+indicar remanejamento; 30 de setembro para o projeto de lei; 20 de novembro
+para a decisão tácita) e o §13, o limite de **0,6% da RCL realizada** para
+restos a pagar contarem na execução obrigatória. Nenhum dos dois está
+implementado — ficam registrados para a fase de acompanhamento.
 
 ## 9. O que ainda depende de uma pessoa
 
@@ -365,23 +381,12 @@ são documentos públicos ou decisões nossas:
 Os dois documentos estão publicados no sistema da Câmara, mas atrás de um gate
 anti-automação que não foi contornado de propósito. Basta abrir e salvar:
 
-1. **Lei Orgânica Municipal** — <https://sistema.camaramogiguacu.sp.gov.br/consultas/norma_juridica/norma_juridica_mostrar_proc?cod_norma=792>
-   Interessa o **art. 140, §6º** (teto das emendas impositivas) e os arts.
-   139-141 (prazo de envio da PLOA).
-
-   Esse número resolve **quatro** pendências de uma vez:
-   - o `TETO_VALOR_AUTOR`, hoje gravado como **R$ 1.000.000 provisório e em
-     modo ALERTA** — é um marcador, não a cota real;
-   - o `PERCENTUAL_IMPOSITIVO`, hoje **1,5% não conferido**;
-   - a afirmação **"1,5% da RCL"** que a tela de login exibe
-     (`src/app/login/page.tsx:41`), fixa no código, herdada do protótipo
-     original e **nunca conferida** contra a LOM de Mogi Guaçu. Se estiver
-     errada, é uma informação incorreta sobre a regra do município exibida no
-     primeiro contato do usuário com o sistema;
-   - a **inconsistência do teto** descrita na seção 8: com o percentual
-     confirmado dá para decidir se o teto global nasce de RCL × percentual
-     (como a LDO art. 23 §3º sugere) ou se a cota por autor é o primitivo,
-     como o código faz hoje.
+1. ~~**Lei Orgânica Municipal**~~ — **obtida em 20/08/2026.** O arquivo
+   consolidado (atualizado até a Emenda nº 56/2023) foi enviado pelo cliente e
+   está na raiz do workspace. Resolveu as quatro pendências que esta lista
+   apontava — percentual, cota, a afirmação da tela de login e a inconsistência
+   do teto —, além de trazer o art. 140 §7º, §11 e §13, que não conhecíamos.
+   Ver a seção 8.
 2. **Regimento Interno da Câmara** — mesmo sistema, consulta de normas.
    Rito da CPFO, prazo para emendar o PLOA, quórum e formato do parecer.
 

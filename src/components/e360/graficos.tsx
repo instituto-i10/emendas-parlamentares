@@ -171,7 +171,7 @@ export function Gauge({
         <path
           d="M35 114a80 80 0 0 1 160 0"
           fill="none"
-          stroke={alerta ? "#f5a524" : "#00b4d8"}
+          stroke={alerta ? "var(--estado-atencao)" : "var(--brand-cyan)"}
           strokeWidth="18"
           strokeLinecap="round"
           strokeDasharray={`${((limitado / 100) * arco).toFixed(1)} 300`}
@@ -231,7 +231,13 @@ export function Ring({
   const limitado = Math.min(100, Math.max(0, pct));
   const r = 16;
   const C = 2 * Math.PI * r; // 100.5
-  const cor = tom === "bad" ? "#e5484d" : tom === "amber" ? "#f5a524" : "#00b4d8";
+  // Mesmos tokens das tags e do farol.
+  const cor =
+    tom === "bad"
+      ? "var(--estado-bloqueio)"
+      : tom === "amber"
+        ? "var(--estado-atencao)"
+        : "var(--brand-cyan)";
   return (
     <svg
       width={tamanho}

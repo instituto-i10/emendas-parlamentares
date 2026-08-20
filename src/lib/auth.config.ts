@@ -16,11 +16,16 @@ export const authConfig = {
       // /publica/* é o portal do cidadão: consulta sem login (transparência
       // ativa — STF/TCE), incluindo a lista de emendas e o manual. A raiz
       // também é pública — é ela que leva o visitante ao portal.
+      // /plano-trabalho/<token> é a porta da entidade beneficiária, que não tem
+      // conta no sistema: o token no endereço é a credencial, conferido (e com
+      // validade) na própria ação. Sem esta exceção, o link enviado à entidade
+      // cairia na tela de login.
       if (
         pathname === "/" ||
         pathname === "/login" ||
         pathname === "/publica" ||
         pathname.startsWith("/publica/") ||
+        pathname.startsWith("/plano-trabalho/") ||
         pathname.startsWith("/api/auth")
       )
         return true;

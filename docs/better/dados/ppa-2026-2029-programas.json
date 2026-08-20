@@ -1,0 +1,338 @@
+{
+  "fonte": "Lei nº 6.245/2025 — PPA 2026-2029, Anexos, Anexo II (Demonstrativo de Programas e Ações por Programa)",
+  "metodo": "OCR das páginas 12-105 do PDF (imagem escaneada) via Vision/macOS — mesmo pipeline de docs/better/dados/extracao/ocr.swift. Conferência por código de 4 dígitos E por sobreposição das palavras do nome.",
+  "extraidoEm": "2026-08-20",
+  "totalConferido": 47,
+  "programas": [
+    {
+      "codigo": "1001",
+      "nome": "PROGRAMA DE ATENCAO BASICA A SAUDE",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "3/3",
+      "confirmado": true
+    },
+    {
+      "codigo": "1003",
+      "nome": "ASSISTENCIA AMBULATORIAL, EMERGENCIAL E HOSPITALAR",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "4/4",
+      "confirmado": true
+    },
+    {
+      "codigo": "1005",
+      "nome": "VIGILANCIA EM SAUDE",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "2/2",
+      "confirmado": true
+    },
+    {
+      "codigo": "1006",
+      "nome": "PROGRAMA DE ASSISTENCIA FARMACEUTICA",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "2/2",
+      "confirmado": true
+    },
+    {
+      "codigo": "1009",
+      "nome": "GESTAO DO SISTEMA DE SAUDE",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "3/3",
+      "confirmado": true
+    },
+    {
+      "codigo": "1010",
+      "nome": "ASSISTENCIA MEDIA/ALTA COMPLEX.AMBUL.HOSPITALAR",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "6/6",
+      "confirmado": true
+    },
+    {
+      "codigo": "2001",
+      "nome": "ENSINO FUNDAMENTAL",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "2/2",
+      "confirmado": true
+    },
+    {
+      "codigo": "2002",
+      "nome": "ATENÇÃO À PRIMEIRA INFÂNCIA",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "3/3",
+      "confirmado": true
+    },
+    {
+      "codigo": "2003",
+      "nome": "FORTALECIMENTO DO ENSINO MEDIO",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "3/3",
+      "confirmado": true
+    },
+    {
+      "codigo": "2004",
+      "nome": "FORTALECIMENTO DO ENSINO PROFISSIONALIZANTE",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "3/3",
+      "confirmado": true
+    },
+    {
+      "codigo": "2005",
+      "nome": "ENSINO SUPERIOR",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "2/2",
+      "confirmado": true
+    },
+    {
+      "codigo": "2007",
+      "nome": "ENSINO MÉDIO/ENSINO TÉCNICO/ENSINO SUPERIOR",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "6/6",
+      "confirmado": true
+    },
+    {
+      "codigo": "3002",
+      "nome": "VALORIZAÇÃO E ACESSO A CULTURA",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "3/3",
+      "confirmado": true
+    },
+    {
+      "codigo": "3010",
+      "nome": "RUMO AO MOGI GUAÇU TURISTICO",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "4/4",
+      "confirmado": true
+    },
+    {
+      "codigo": "3011",
+      "nome": "ESPORTE,LAZER E QUALIDADE DE VIDA PARA TODOS.",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "4/4",
+      "confirmado": true
+    },
+    {
+      "codigo": "4011",
+      "nome": "GESTAO DA POLITICA DE ASSISTENCIA SOCIAL",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "4/4",
+      "confirmado": true
+    },
+    {
+      "codigo": "5001",
+      "nome": "LIXO TEM LUGAR CERTO",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "3/3",
+      "confirmado": true
+    },
+    {
+      "codigo": "5002",
+      "nome": "CIDADE LIMPA",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "2/2",
+      "confirmado": true
+    },
+    {
+      "codigo": "5003",
+      "nome": "OBRAS DE INFRA-ESTRUTURA URBANA",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "4/4",
+      "confirmado": true
+    },
+    {
+      "codigo": "5004",
+      "nome": "INFRA-ESTRUTURA E SERVIÇOS PARA MARTINHO PRADO",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "5/5",
+      "confirmado": true
+    },
+    {
+      "codigo": "5005",
+      "nome": "SURPREENDA GUAÇU INDÚSTRIA E COMÉRCIO",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "4/4",
+      "confirmado": true
+    },
+    {
+      "codigo": "5007",
+      "nome": "SISTEMAS DE AGUA E DE ESGOTO SANITARIO",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "4/4",
+      "confirmado": true
+    },
+    {
+      "codigo": "5009",
+      "nome": "GESTÃO HABITACIONAL SUSTENTÁVEL",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "3/3",
+      "confirmado": true
+    },
+    {
+      "codigo": "5011",
+      "nome": "CIDADE ILUMINADA",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "2/2",
+      "confirmado": true
+    },
+    {
+      "codigo": "5012",
+      "nome": "GESTAO DE SERVICOS URBANOS",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "3/3",
+      "confirmado": true
+    },
+    {
+      "codigo": "5013",
+      "nome": "CONTROLE DE FROTA E OFICINA",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "3/3",
+      "confirmado": true
+    },
+    {
+      "codigo": "6001",
+      "nome": "AGRICULTURA E ABASTECIMENTO SUSTENTÁVEIS",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "3/3",
+      "confirmado": true
+    },
+    {
+      "codigo": "6006",
+      "nome": "GESTAO AMBIENTAL",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "2/2",
+      "confirmado": true
+    },
+    {
+      "codigo": "6007",
+      "nome": "SAÚDE, QUALIDADE DE VIDA E CONTROLE DE NATALIDADE DOS PETS",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "6/6",
+      "confirmado": true
+    },
+    {
+      "codigo": "7001",
+      "nome": "FINANÇAS, ARRECADAÇÃO, CADASTRO E AUDITORIA.",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "4/4",
+      "confirmado": true
+    },
+    {
+      "codigo": "7002",
+      "nome": "GESTÃO DE PESSOAS E SUPRIMENTOS/LICITAÇÃO",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "4/4",
+      "confirmado": true
+    },
+    {
+      "codigo": "7003",
+      "nome": "PROCURADORIA JURÍDICA DO MUNICIPIO",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "2/2",
+      "confirmado": true
+    },
+    {
+      "codigo": "7004",
+      "nome": "COMUNICACAO E PUBLICIDADE",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "2/2",
+      "confirmado": true
+    },
+    {
+      "codigo": "7005",
+      "nome": "GESTÃO, DESENVOLVIMENTO E MODERNIZAÇÃO DAS ATIVIDADES LEGISLATIVAS",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "5/5",
+      "confirmado": true
+    },
+    {
+      "codigo": "7006",
+      "nome": "RELAÇÕES INSTITUCIONAIS",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "2/2",
+      "confirmado": true
+    },
+    {
+      "codigo": "7007",
+      "nome": "OUVIDORIA PÚBLICA",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "2/2",
+      "confirmado": true
+    },
+    {
+      "codigo": "7008",
+      "nome": "MOGI GUAÇU DIGITAL, MAIS INTELIGENTE E SUSTENTÁVEL",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "5/5",
+      "confirmado": true
+    },
+    {
+      "codigo": "7009",
+      "nome": "GESTÃO URBANA INTELIGENTE E INOVADORA",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "4/4",
+      "confirmado": true
+    },
+    {
+      "codigo": "7010",
+      "nome": "GESTÃO ESTRATÉGICA, GOVERNANÇA MUNICIPAL E FORTALECIMENTO INSTITUCIONAL",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "5/5",
+      "confirmado": true
+    },
+    {
+      "codigo": "7011",
+      "nome": "APOIO À GOVERNABILIDADE E INTEGRAÇÃO POLÍTICA",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "4/4",
+      "confirmado": true
+    },
+    {
+      "codigo": "8001",
+      "nome": "TRÂNSITO SEGURO",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "2/2",
+      "confirmado": true
+    },
+    {
+      "codigo": "8002",
+      "nome": "SEGURANCA MUNICIPAL",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "1/1",
+      "confirmado": true
+    },
+    {
+      "codigo": "8003",
+      "nome": "APOIO A PROGRAMAS ESTADUAIS E FEDERAIS",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "4/4",
+      "confirmado": true
+    },
+    {
+      "codigo": "9001",
+      "nome": "CONTRIBUIÇÕES A UNIÃO",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "2/2",
+      "confirmado": true
+    },
+    {
+      "codigo": "9002",
+      "nome": "SERVICO DA DIVIDA",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "2/2",
+      "confirmado": true
+    },
+    {
+      "codigo": "9003",
+      "nome": "INDENIZACOES",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "1/1",
+      "confirmado": true
+    },
+    {
+      "codigo": "9999",
+      "nome": "RESERVA DE CONTINGENCIA",
+      "codigoNoPPA": true,
+      "palavrasDoNomeNoPPA": "2/2",
+      "confirmado": true
+    }
+  ],
+  "confirmados": 47
+}

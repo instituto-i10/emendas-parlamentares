@@ -51,8 +51,10 @@ export function ParametrosTab({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <p className="max-w-2xl text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+        {/* break-words: os nomes de chave/código são palavras únicas e longas;
+            sem isto elas fixam a largura mínima e estouram a tela no celular. */}
+        <p className="min-w-0 max-w-2xl break-words text-sm text-muted-foreground">
           Regras que o motor aplica às emendas. Parâmetros <b>bloqueantes</b>{" "}
           impedem a submissão; <b>alertas</b> apenas avisam. Chaves conhecidas:
           <code className="mx-1">TETO_VALOR_AUTOR</code>,

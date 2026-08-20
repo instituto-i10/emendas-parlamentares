@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import type { PrismaClient } from "@/generated/prisma/client";
+import { nomeNatureza } from "./naturezas-nomes";
 
 // Dados de um município fictício (exercício 2025). Compartilhado entre o script
 // `npm run seed` e a rota de bootstrap. Prisma aceita number em campos Decimal.
@@ -127,7 +128,7 @@ export async function semear(prisma: PrismaClient) {
   for (const n of naturezas) {
     const r = await prisma.naturezaDespesa.upsert({
       where: { exercicioId_codigo: { exercicioId, codigo: n.codigo } },
-      create: { codigo: n.codigo, categoriaEconomica: n.cat, grupo: n.grupo, modalidadeAplicacao: n.mod, elemento: n.elem, exercicioId },
+      create: { codigo: n.codigo, categoriaEconomica: n.cat, grupo: n.grupo, modalidadeAplicacao: n.mod, elemento: n.elem, nome: nomeNatureza(n.codigo), exercicioId },
       update: {},
     });
     naturezaId.set(n.codigo, r.id);

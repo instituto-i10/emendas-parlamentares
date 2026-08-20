@@ -100,10 +100,14 @@ enum ModoValidacao {
 
 // Natureza do beneficiário final da emenda (rastreabilidade ponta a ponta —
 // exigência STF/TCE; ver docs/analise-regulatoria-gaps.md).
+// Categorias pedidas pelo jurídico do cliente. Não é rótulo: a categoria define
+// o RITO. Terceiro setor exige plano de trabalho completo (justificativa,
+// objetivo, declaração e planilha); administração direta e indireta exigem só a
+// justificativa.
 enum TipoBeneficiario {
-  ORGAO_PUBLICO
-  ENTIDADE_TERCEIRO_SETOR
-  OUTRO
+  ADMINISTRACAO_DIRETA
+  ADMINISTRACAO_INDIRETA
+  TERCEIRO_SETOR
 }
 
 // Tipo de emenda parlamentar.
@@ -237,6 +241,11 @@ model Programa {
   id          String   @id @default(cuid())
   codigo      String
   nome        String
+  // Consta do PPA vigente? É a base da checagem PROGRAMA_NO_PPA (LOM art. 140
+  // §1º, I). Não dá para derivar isso de dotações: PPA não tem dotação — tem
+  // programas, ações e metas plurianuais. Preenchido a partir do Anexo II do
+  // PPA (ver docs/better/dados/ppa-2026-2029-programas.json).
+  constaNoPPA Boolean  @default(false)
   exercicioId String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -279,7 +288,11 @@ model NaturezaDespesa {
   categoriaEconomica  String
   grupo               String
   modalidadeAplicacao String
+  // `elemento` guarda o CÓDIGO do elemento ("30", "11"); `nome` guarda o rótulo
+  // por extenso ("Material de Consumo"). Sem o nome, o vereador só via o código
+  // na hora de escolher a dotação — apontamento do jurídico do cliente.
   elemento            String
+  nome                String?
   exercicioId         String
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
@@ -459,7 +472,7 @@ model ParametroValidacao {
 model Beneficiario {
   id         String           @id @default(cuid())
   nome       String
-  tipo       TipoBeneficiario @default(OUTRO)
+  tipo       TipoBeneficiario @default(ADMINISTRACAO_DIRETA)
   cnpj       String?
   observacao String?
   createdAt  DateTime         @default(now())
@@ -516,6 +529,7 @@ model Emenda {
   dotacaoOrigem   Dotacao?                @relation("EmendaDotacaoOrigem", fields: [dotacaoOrigemId], references: [id])
   dotacaoDestino  Dotacao?                @relation("EmendaDotacaoDestino", fields: [dotacaoDestinoId], references: [id])
   validacoes      ValidacaoEmenda[]
+  planoTrabalho   PlanoTrabalho?
 
   // Regra estrutural: dotacaoId e instrumentoBaseId obrigatórios e do mesmo
   // exercício (coerência de exercício é reforçada no motor/API — PROMPT 5/6).
@@ -628,4 +642,62 @@ model AuditLog {
   @@index([usuarioId])
   @@index([entidade, entidadeId])
   @@index([criadoEm])
+}
+
+// ============================================================================
+// Plano de trabalho SIMPLIFICADO.
+//
+// Não é o plano de trabalho do MROSC (Lei 13.019/2014). Aquele — com metas no
+// formato Audesp, matriz de indicadores, memória de cálculo de RH, rateio e
+// cronograma de desembolso — é elaborado depois, na execução orçamentária,
+// quando o município for de fato repassar o recurso à entidade.
+//
+// O que entra aqui, na apresentação da emenda, é o mínimo que o jurídico do
+// cliente definiu:
+//   · terceiro setor → justificativa + objetivo + declaração + planilha
+//   · administração direta e indireta → só a justificativa
+// ============================================================================
+
+model PlanoTrabalho {
+  id       String @id @default(cuid())
+  emendaId String @unique
+
+  justificativa String @default("")
+  objetivo      String @default("")
+  // Declaração de que a entidade atende aos requisitos para receber repasse
+  // público. Só se aplica ao terceiro setor.
+  declaracaoAceita Boolean @default(false)
+
+  // Preenchimento pela própria entidade, sem conta no sistema: o vereador gera
+  // um link e envia. Token nulo = nunca foi compartilhado.
+  token         String?   @unique
+  tokenExpiraEm DateTime?
+  preenchidoPor String?
+  preenchidoEm  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  emenda Emenda              @relation(fields: [emendaId], references: [id], onDelete: Cascade)
+  itens  ItemPlanoTrabalho[]
+
+  @@index([token])
+}
+
+// Linha da planilha orçamentária. O total é derivado (quantidade × unitário) —
+// guardar o produto seria abrir espaço para os dois discordarem.
+model ItemPlanoTrabalho {
+  id            String  @id @default(cuid())
+  planoId       String
+  ordem         Int     @default(0)
+  descricao     String
+  quantidade    Decimal @db.Decimal(18, 4)
+  valorUnitario Decimal @db.Decimal(18, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plano PlanoTrabalho @relation(fields: [planoId], references: [id], onDelete: Cascade)
+
+  @@index([planoId])
 }

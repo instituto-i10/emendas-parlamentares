@@ -28,19 +28,20 @@ export default function LoginPage() {
         <div className="relative mx-auto my-8 w-full max-w-[440px]">
           <IlustracaoConferencia className="mx-auto mb-10 w-full max-w-[330px]" />
           <h2 className="text-[26px] font-extrabold leading-tight tracking-[-.03em]">
-            A emenda conferida antes de virar decisão
+            A pré-checagem antes de a emenda seguir
           </h2>
           <p className="mt-2.5 text-[13.5px] font-medium leading-relaxed text-white/70">
-            Cota, teto e reserva da saúde verificados pelo motor. O juízo de
-            mérito e a assinatura seguem sendo do parlamentar.
+            As condições de validade da emenda são verificadas pela ferramenta,
+            que auxilia na análise da documentação. O juízo de mérito e a
+            assinatura seguem sendo do parlamentar.
           </p>
         </div>
 
         <div className="relative flex gap-8">
           {[
-            ["Impositivo", "1,5% da RCL"],
-            ["Reserva", "50% em saúde"],
-            ["Portal", "sem login"],
+            ["Pré-checagem", "condições de validade"],
+            ["Documentação", "análise assistida"],
+            ["Portal", "consulta sem login"],
           ].map(([t, s]) => (
             <div key={t}>
               <div className="text-[11px] font-bold uppercase tracking-[1.4px] text-brand-mint">

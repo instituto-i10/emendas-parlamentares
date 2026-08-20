@@ -20,7 +20,7 @@ export type Etapa = {
 // uma tela inteira e deixa a etapa corrente óbvia à primeira vista.
 export function Stepper({ etapas }: { etapas: Etapa[] }) {
   return (
-    <ol className="flex list-none gap-0 overflow-x-auto p-0">
+    <ol className="flex min-w-0 list-none gap-0 overflow-x-auto p-0">
       {etapas.map((e, i) => {
         const primeiro = i === 0;
         const ultimo = i === etapas.length - 1;

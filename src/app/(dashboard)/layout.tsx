@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/app-shell";
 import { getCurrentUser } from "@/lib/session";
-import { getAnoAtivo, listarExercicios } from "@/lib/exercicio";
+import { anoElaboracao, getAnoAtivo, listarExercicios } from "@/lib/exercicio";
 import { getDados360 } from "@/lib/queries-360";
 import { getInstrumentoBaseAberto } from "@/lib/queries-orcamento";
 import { ROTULO_TIPO_INSTRUMENTO } from "@/lib/rotulos";
@@ -31,6 +31,9 @@ export default async function DashboardLayout({
     analise: qtd("INVALIDA") + qtd("SUBMETIDA") + qtd("EM_TRAMITACAO"),
   };
 
+  // A linha de contexto da topbar diz o que o seletor sozinho não diz: em que
+  // ano se está TRABALHANDO. O ciclo "2026/2027" resolve a ambiguidade do
+  // rótulo; esta linha deixa explícito que 2026 é o ano de elaboração.
   return (
     <AppShell
       user={{ nome: user.nome, poder: user.poder, role: user.role }}
@@ -38,8 +41,11 @@ export default async function DashboardLayout({
       anoAtivo={anoAtivo}
       contadores={contadores}
       contexto={
-        base
-          ? `${ROTULO_TIPO_INSTRUMENTO[base.tipo] ?? base.tipo} ${base.numero} — base das emendas`
+        anoAtivo
+          ? `Elaborando em ${anoElaboracao(anoAtivo)} as emendas de ${anoAtivo}` +
+            (base
+              ? ` · base ${ROTULO_TIPO_INSTRUMENTO[base.tipo] ?? base.tipo} ${base.numero}`
+              : "")
           : undefined
       }
     >

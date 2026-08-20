@@ -1,0 +1,13 @@
+# O deploy NUNCA leva o .env local: em produção quem manda são as variáveis
+# de ambiente do projeto na Vercel. Sem isto o Next carrega o .env que subiu
+# junto e sobrescreve o que não estiver definido lá (foi o que apontou o
+# AUTH_URL da produção para http://localhost:3000).
+.env
+.env.*
+!.env.example
+
+.next
+node_modules
+test-results
+playwright-report
+blob-report

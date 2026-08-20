@@ -30,10 +30,12 @@ export function LogoEmendas360({
   return (
     <span className={cn("flex items-center gap-2.5", className)}>
       {compacta ? null : (
-        <>
+        // Abaixo de 360px a marca do mantenedor sai de cena: numa tela dessas
+        // ela custaria ~60px e empurraria a ação do cabeçalho para fora.
+        <span className="hidden items-center gap-2.5 min-[360px]:flex">
           <LogoI10 />
           <span className="h-7 w-px bg-white/20" aria-hidden />
-        </>
+        </span>
       )}
       <svg
         viewBox="0 0 48 48"

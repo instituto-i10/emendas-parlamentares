@@ -26,7 +26,7 @@ export function InstrumentoStatus({ id, status }: { id: string; status: string }
   return (
     <div className="flex items-center gap-2">
       <select
-        className={controle}
+        className={`${controle} campo-select pl-3 pr-9`}
         value={valor}
         onChange={(e) => setValor(e.target.value)}
         aria-label="Status do instrumento"

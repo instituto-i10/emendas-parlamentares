@@ -267,7 +267,7 @@ export default async function PainelPage() {
           <Farol itens={farol} />
         </Card360>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-4">
           <Card360>
             <Eyebrow>Uso do teto</Eyebrow>
             <Gauge
@@ -304,7 +304,7 @@ export default async function PainelPage() {
                   href={a!.href}
                   className="flex items-center gap-3 rounded-[10px] bg-white/10 px-3 py-2.5 transition-colors hover:bg-white/15"
                 >
-                  <span className="grad-hi flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-extrabold text-brand-deep">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand-cyan text-xs font-extrabold text-white">
                     {a!.n}
                   </span>
                   <span className="min-w-0">
@@ -355,7 +355,7 @@ export default async function PainelPage() {
 
       <SecTitle titulo="Emendas por autor" />
       <Card360>
-        <div className="overflow-x-auto">
+        <div className="min-w-0 overflow-x-auto">
           <table className="w-full min-w-[680px] border-collapse text-[12.5px]">
             <thead>
               <tr>

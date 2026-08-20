@@ -3,15 +3,13 @@ import { getCurrentUser } from "@/lib/session";
 import { podeTramitar } from "@/lib/authz";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { getDados360, brl } from "@/lib/queries-360";
-import { ROTULO_STATUS_EMENDA } from "@/lib/rotulos";
 import { SecTitle } from "@/components/e360/sec-title";
 import { KpiCard } from "@/components/e360/kpi-card";
 import { Card360, Eyebrow } from "@/components/e360/card360";
 import { Banner } from "@/components/e360/banner";
-import { Tag360, tomDoStatus } from "@/components/e360/tag360";
-import { TramitacaoActions } from "@/components/emendas/tramitacao-actions";
 import { PrintButton } from "@/components/emendas/print-button";
-import { EmptyState } from "@/components/empty-state";
+import { Download, Scale } from "lucide-react";
+import { FilaAnalise } from "@/components/analise/fila";
 
 export default async function AnalisePage() {
   const user = await getCurrentUser();
@@ -35,7 +33,7 @@ export default async function AnalisePage() {
 
   return (
     <div>
-      <Banner tom="vermelho" emoji="⚖️">
+      <Banner tom="vermelho" icone={Scale}>
         <b>
           O motor confere os requisitos formais; o relator revisa, decide e
           assina
@@ -51,7 +49,7 @@ export default async function AnalisePage() {
         <KpiCard
           eyebrow="Emendas conferidas"
           numero={String(conferidas)}
-          rotulo="cota, teto, base e classificação verificados pelo motor"
+          rotulo="cota, teto, base e classificação na pré-checagem"
         />
         <KpiCard
           eyebrow="Para saneamento"
@@ -85,39 +83,7 @@ export default async function AnalisePage() {
           <Eyebrow>
             Fila de validação — nada é consolidado sem o relator assinar
           </Eyebrow>
-          {fila.length === 0 ? (
-            <EmptyState
-              titulo="Fila vazia"
-              descricao="Nenhuma emenda aguardando saneamento ou parecer neste exercício."
-            />
-          ) : (
-            <div className="flex flex-col gap-2.5">
-              {fila.map((e) => (
-                <div
-                  key={e.id}
-                  className="flex flex-wrap items-center gap-3 rounded-[10px] border bg-background/60 px-3.5 py-3"
-                >
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/legislativo/emendas/${e.id}`}
-                      className="block truncate text-[13.5px] font-bold hover:text-brand-cyan hover:underline"
-                    >
-                      Emenda {e.numero} — {e.objeto}
-                    </Link>
-                    <span className="text-xs text-muted-foreground">
-                      {e.autorNome} · {e.orgaoNome} · {brl(e.valor)}
-                    </span>
-                  </div>
-                  <Tag360 tom={tomDoStatus(e.status)}>
-                    {ROTULO_STATUS_EMENDA[e.status] ?? e.status}
-                  </Tag360>
-                  {podeAgir && e.status === "SUBMETIDA" ? (
-                    <TramitacaoActions id={e.id} />
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          )}
+          <FilaAnalise itens={fila} podeAgir={podeAgir} />
         </Card360>
 
         <Card360>
@@ -186,7 +152,7 @@ export default async function AnalisePage() {
               href="/legislativo/tramitacao/relatorios"
               className="inline-flex h-8 items-center rounded-[10px] bg-secondary px-3 text-xs font-semibold text-secondary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             >
-              ⬇ Relatórios e exportação
+              <Download className="size-4" aria-hidden /> Relatórios e exportação
             </Link>
           </div>
         </Card360>

@@ -71,6 +71,70 @@ const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url 
 const ANO = 2027;
 
 // ---------------------------------------------------------------------------
+// Programas confirmados no PPA 2026-2029 (Lei 6.245/2025), Anexo II.
+//
+// O anexo é PDF escaneado; a lista saiu do OCR das páginas 12-105 pelo mesmo
+// pipeline que extraiu a LDO (docs/better/dados/extracao/ocr.swift), conferida
+// por código E por nome. Evidência item a item em
+// docs/better/dados/ppa-2026-2029-programas.json.
+//
+// Os 47 programas da base (que vieram do Anexo V da LDO 2027) foram TODOS
+// localizados no PPA — a compatibilidade do art. 140 §1º, I da LOM se sustenta
+// integralmente para este exercício.
+// ---------------------------------------------------------------------------
+const PROGRAMAS_NO_PPA: string[] = [
+  "1001",
+  "1003",
+  "1005",
+  "1006",
+  "1009",
+  "1010",
+  "2001",
+  "2002",
+  "2003",
+  "2004",
+  "2005",
+  "2007",
+  "3002",
+  "3010",
+  "3011",
+  "4011",
+  "5001",
+  "5002",
+  "5003",
+  "5004",
+  "5005",
+  "5007",
+  "5009",
+  "5011",
+  "5012",
+  "5013",
+  "6001",
+  "6006",
+  "6007",
+  "7001",
+  "7002",
+  "7003",
+  "7004",
+  "7005",
+  "7006",
+  "7007",
+  "7008",
+  "7009",
+  "7010",
+  "7011",
+  "8001",
+  "8002",
+  "8003",
+  "9001",
+  "9002",
+  "9003",
+  "9999",
+];
+
+
+
+// ---------------------------------------------------------------------------
 // Base real
 // ---------------------------------------------------------------------------
 
@@ -318,15 +382,21 @@ async function main() {
     subfuncaoId.set(`${s.funcaoCodigo}/${s.codigo}`, r.id);
   }
 
+  const noPPA = new Set(PROGRAMAS_NO_PPA);
   const programaId = new Map<string, string>();
   for (const p of base.programas) {
+    const consta = noPPA.has(p.codigo);
     const r = await prisma.programa.upsert({
       where: { exercicioId_codigo: { exercicioId, codigo: p.codigo } },
-      create: { codigo: p.codigo, nome: p.nome, exercicioId },
-      update: { nome: p.nome },
+      create: { codigo: p.codigo, nome: p.nome, constaNoPPA: consta, exercicioId },
+      update: { nome: p.nome, constaNoPPA: consta },
     });
     programaId.set(p.codigo, r.id);
   }
+  console.log(
+    `Programas: ${base.programas.length} · ${noPPA.size} confirmados no PPA ` +
+    `2026-2029 (Anexo II, via OCR — ver docs/better/dados/ppa-2026-2029-programas.json)`,
+  );
 
   const acaoId = new Map<string, string>(); // chave: `${programa}/${acao}`
   for (const a of base.acoes) {
@@ -353,9 +423,11 @@ async function main() {
       where: { exercicioId_codigo: { exercicioId, codigo: n.codigo } },
       create: {
         codigo: n.codigo, categoriaEconomica: cat, grupo, modalidadeAplicacao: mod,
-        elemento: elem, exercicioId,
+        elemento: elem, nome: n.elemNome, exercicioId,
       },
-      update: {},
+      // O nome por extenso passou a ser gravado depois da primeira carga; o
+      // update garante que uma base já semeada também o receba.
+      update: { nome: n.elemNome },
     });
     naturezaId.set(n.codigo, r.id);
   }
@@ -583,51 +655,83 @@ async function main() {
     chave: string; valor: string; modo: "BLOQUEANTE" | "ALERTA" | null; fundamento: string;
   }[] = [
     {
-      // Único número desta lista que é FATO, tirado da lei.
-      chave: "RCL", valor: "1059216686.35", modo: null,
+      chave: "RCL", valor: "926030562.09", modo: null,
       fundamento:
-        "Receita Corrente Líquida projetada para 2027: R$ 1.059.216.686,35. " +
-        "Fonte: LDO 2027 (Lei 6.393/2026), Anexo das Metas Fiscais — Metas " +
-        "Anuais, relatório PLR01128, versão 15/04/2026. Substitui o parâmetro " +
-        "GERAL de R$ 433 mi, herdado do protótipo e alheio a Mogi Guaçu.",
+        "Receita Corrente Líquida REALIZADA em 2025: R$ 926.030.562,09. Fonte: " +
+        "Siconfi/Tesouro Nacional, RREO do 6º bimestre de 2025, Anexo 03 " +
+        "(Demonstrativo da RCL), ente IBGE 3530706, coluna 'Total (últimos 12 " +
+        "meses)'. É a base do exercício anterior à elaboração — não a projeção " +
+        "de 2027 da LDO (R$ 1.059.216.686,35), que era o que estava aqui antes.",
     },
     {
-      chave: "PERCENTUAL_IMPOSITIVO", valor: "1.5", modo: "ALERTA",
+      chave: "PERCENTUAL_IMPOSITIVO", valor: "1.2", modo: "BLOQUEANTE",
       fundamento:
-        "NÃO CONFERIDO — 1,5% é o valor herdado do protótipo original, não " +
-        "verificado contra a Lei Orgânica de Mogi Guaçu. O art. 23 §3º da LDO " +
-        "2027 remete ao art. 140 §6º da LOM, que não veio nos documentos " +
-        "recebidos. Conferir antes de exibir este número à comissão.",
+        "1,2% — art. 140, § 6º, da Lei Orgânica de Mogi Guaçu (incluído pela " +
+        "Emenda à LOM nº 47/2017). ATENÇÃO à base: o § 6º diz 'receita corrente " +
+        "líquida prevista no projeto encaminhado pelo Poder Executivo', redação " +
+        "de 2017 que ficou defasada — a EC 126/2022 passou a base do art. 166 da " +
+        "CF para a RCL REALIZADA NO EXERCÍCIO ANTERIOR, e o Município não pode " +
+        "aplicar base diversa da constitucional. Orientação do jurídico do " +
+        "cliente (Correia Pontes Advocacia) em 20/08/2026: usar a realizada do " +
+        "exercício anterior. Substitui o 1,5% herdado do protótipo original.",
     },
     {
-      chave: "TETO_VALOR_AUTOR", valor: "1000000", modo: "ALERTA",
+      chave: "TETO_VALOR_AUTOR", valor: "854797.44", modo: "BLOQUEANTE",
       fundamento:
-        "PROVISÓRIO — conferir na Lei Orgânica Municipal, art. 140 §6º, a que " +
-        "remete o art. 23 §3º da LDO 2027. O valor aqui é um marcador, não a " +
-        "cota real. Trocar o número e passar para BLOQUEANTE quando confirmado.",
+        "Cota por vereador: R$ 854.797,44 = (RCL 2025 de R$ 926.030.562,09 × " +
+        "1,2%) ÷ 13 vereadores. O teto global é R$ 11.112.366,75. A Lei Orgânica " +
+        "fixa apenas o limite global (art. 140, § 6º) e não reparte por autor; a " +
+        "divisão em partes iguais foi confirmada pelo jurídico do cliente em " +
+        "20/08/2026.",
     },
     {
       chave: "NUMERO_AUTORES", valor: "13", modo: null,
-      fundamento: "Número de vereadores usado nos agregados do painel.",
+      fundamento:
+        "13 vereadores — art. 11, § 2º, da Lei Orgânica de Mogi Guaçu, nova " +
+        "redação dada pela Emenda à LOM nº 55/2023.",
+    },
+    {
+      chave: "RESERVA_SAUDE_PERCENTUAL", valor: "50", modo: "BLOQUEANTE",
+      fundamento:
+        "Metade da cota destinada a ações e serviços públicos de saúde — art. " +
+        "140, § 6º, in fine, da Lei Orgânica ('sendo que a metade deste " +
+        "percentual será destinada a ações e serviços públicos de saúde'). " +
+        "Confirmado pelo jurídico do cliente em 20/08/2026: é regra municipal " +
+        "vigente, não herança do protótipo.",
+    },
+    {
+      chave: "FUNCAO_SAUDE", valor: "10", modo: null,
+      fundamento:
+        "Função 10 (Saúde) da classificação funcional — Portaria MOG nº 42/1999. " +
+        "Define quais dotações contam para a reserva do art. 140, § 6º, da LOM.",
     },
   ];
+  // Upsert de verdade: o seed roda de novo depois que um parâmetro muda (foi o
+  // caso do 1,5% → 1,2%), e um create-se-não-existe deixaria o número velho no
+  // banco sem avisar ninguém.
   for (const p of params) {
     const existente = await prisma.parametroValidacao.findFirst({
       where: { exercicioId, chave: p.chave },
     });
-    if (!existente) {
-      await prisma.parametroValidacao.create({
-        data: {
-          escopo: "EXERCICIO", exercicioId, chave: p.chave, valor: p.valor,
-          modo: p.modo, fundamentoDescricao: p.fundamento,
-        },
-      });
+    const data = {
+      escopo: "EXERCICIO" as const, exercicioId, chave: p.chave, valor: p.valor,
+      modo: p.modo, fundamentoDescricao: p.fundamento,
+    };
+    if (existente) {
+      if (existente.valor !== p.valor) {
+        console.log(`  ${p.chave}: ${existente.valor} → ${p.valor}`);
+      }
+      await prisma.parametroValidacao.update({ where: { id: existente.id }, data });
+    } else {
+      await prisma.parametroValidacao.create({ data });
     }
   }
+
   console.log(
-    `Parâmetros do exercício: RCL R$ 1.059.216.686,35 (real, LDO Anexo de ` +
-    `Metas Fiscais) · TETO_VALOR_AUTOR e PERCENTUAL_IMPOSITIVO provisórios ` +
-    `em ALERTA (falta o art. 140 §6º da LOM)`,
+    `Parâmetros do exercício (art. 140 §6º da LOM + art. 11 §2º): RCL 2025 ` +
+    `realizada R$ 926.030.562,09 · 1,2% · teto global R$ 11.112.366,75 · ` +
+    `13 vereadores · cota R$ 854.797,44 · reserva da saúde 50% — todos ` +
+    `BLOQUEANTES`,
   );
 
   console.log(`\nConcluído em ${((Date.now() - t0) / 1000).toFixed(1)}s.`);

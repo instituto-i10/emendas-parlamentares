@@ -38,14 +38,13 @@ export function PageHeader({
           ))}
         </nav>
       ) : null}
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-[26px] font-extrabold tracking-[-.03em]">
-              {titulo}
-            </h1>
-            <span className="sec-bar" aria-hidden />
-          </div>
+      {/* flex-wrap + min-w-0: no celular a ação desce para baixo do título
+          em vez de espremer (ou empurrar para fora) o texto. */}
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+        <div className="min-w-0 space-y-1">
+          <h1 className="text-[22px] font-extrabold tracking-[-.03em] sm:text-[26px]">
+            {titulo}
+          </h1>
           {descricao ? (
             <p className="text-[13px] font-medium text-muted-foreground">
               {descricao}

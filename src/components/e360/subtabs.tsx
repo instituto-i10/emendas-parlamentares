@@ -16,7 +16,7 @@ export function Subtabs({
   ativa: string;
 }) {
   return (
-    <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+    <div className="mb-4 flex min-w-0 gap-2 overflow-x-auto pb-1">
       {abas.map((a) => (
         <Link
           key={a.id}

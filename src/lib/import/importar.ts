@@ -6,6 +6,7 @@ import { derivarComponentes, chaveAcao, chaveSubfuncao, chaveUnidade } from "./d
 import { checarIntegridade } from "./integridade";
 import type { ErroLinha } from "./tipos";
 import { TipoAcao } from "@/generated/prisma/enums";
+import { nomeNatureza } from "@/lib/naturezas-nomes";
 
 export type ResultadoImportacao = {
   ok: boolean;
@@ -107,6 +108,9 @@ export async function importarBaseDeArquivo(
             grupo: n.grupo,
             modalidadeAplicacao: n.modalidadeAplicacao,
             elemento: n.elemento,
+            // O projeto de lei só traz o código; o nome vem da tabela da
+            // Portaria 163/2001, para o vereador não escolher às cegas.
+            nome: nomeNatureza(n.codigo),
             exercicioId,
           },
           update: {
@@ -114,6 +118,7 @@ export async function importarBaseDeArquivo(
             grupo: n.grupo,
             modalidadeAplicacao: n.modalidadeAplicacao,
             elemento: n.elemento,
+            nome: nomeNatureza(n.codigo),
           },
         });
         naturezaId.set(n.codigo, r.id);

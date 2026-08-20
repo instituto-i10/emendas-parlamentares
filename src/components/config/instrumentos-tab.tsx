@@ -62,7 +62,7 @@ export function InstrumentosTab({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <p className="max-w-2xl text-sm text-muted-foreground">
+        <p className="min-w-0 max-w-2xl break-words text-sm text-muted-foreground">
           Ciclo PL → lei aprovada. O <b>projeto de lei</b> serve de base às
           emendas (gere a base a partir dele). Depois de sancionada, suba a{" "}
           <b>lei aprovada</b> vinculada ao PL de origem para acompanhamento.

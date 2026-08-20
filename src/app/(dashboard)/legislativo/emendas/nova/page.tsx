@@ -43,7 +43,7 @@ export default async function NovaEmendaPage() {
       {base ? (
         <NovaEmendaForm
           base={{ id: base.id, numero: base.numero, tipo: base.tipo, ano: base.exercicio.ano }}
-          beneficiarios={beneficiarios.map((b) => ({ id: b.id, nome: b.nome }))}
+          beneficiarios={beneficiarios.map((b) => ({ id: b.id, nome: b.nome, tipo: b.tipo }))}
         />
       ) : (
         <EmptyState

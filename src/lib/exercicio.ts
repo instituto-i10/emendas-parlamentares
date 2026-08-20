@@ -2,6 +2,10 @@ import "server-only";
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 
+// Helpers de ciclo vivem em ./ciclo (módulo puro): a topbar é client component
+// e não pode importar deste arquivo, que é server-only.
+export { anoElaboracao, rotuloCiclo, descricaoCiclo } from "./ciclo";
+
 // ============================================================================
 // Contexto de Exercício (ano orçamentário) que controla os dados de toda a app.
 // O ano ativo é guardado em cookie; a lista vem do banco de forma resiliente

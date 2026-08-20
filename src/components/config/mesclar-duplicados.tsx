@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Merge } from "lucide-react";
+import { Check, Merge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { mesclarBeneficiarios } from "@/lib/actions/beneficiarios";
 
@@ -59,7 +59,7 @@ function GrupoLinha({ grupo }: { grupo: Grupo }) {
   if (feito)
     return (
       <div className="rounded-lg bg-secondary px-3 py-2.5 text-[12.5px] font-medium text-muted-foreground">
-        ✓ Mesclado em <b className="text-foreground">{grupo.membros.find((m) => m.id === canonicalId)?.nome}</b>.
+        <Check className="inline size-3.5" aria-hidden /> Mesclado em <b className="text-foreground">{grupo.membros.find((m) => m.id === canonicalId)?.nome}</b>.
       </div>
     );
 

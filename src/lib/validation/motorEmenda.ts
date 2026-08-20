@@ -6,6 +6,10 @@ import {
   type DotacaoCtx,
   type ResultadoMotor,
 } from "./motor";
+import {
+  pendenciasDoPlano,
+  type CategoriaBeneficiario,
+} from "@/lib/plano-trabalho";
 
 export { avaliarEmenda } from "./motor";
 export type { ResultadoMotor, ItemValidacao } from "./motor";
@@ -24,6 +28,7 @@ type DotacaoDb = {
   fonteRecursoId: string;
   valorAtual: Prisma.Decimal;
   acao: { programaId: string } | null;
+  naturezaDespesa: { grupo: string } | null;
 };
 
 function toCtx(d: DotacaoDb | null): DotacaoCtx | null {
@@ -42,6 +47,10 @@ function toCtx(d: DotacaoDb | null): DotacaoCtx | null {
     fonteRecursoId: d.fonteRecursoId,
     valorAtual: Number(d.valorAtual),
     acaoProgramaId: d.acao?.programaId ?? d.programaId,
+    // Sem grupo não dá para aplicar a vedação do art. 140 §7º; "" não casa com
+    // "1", então a checagem passa — e a dotação sem natureza já cai antes, em
+    // CLASSIFICACAO_COMPLETA.
+    naturezaGrupo: d.naturezaDespesa?.grupo ?? "",
   };
 }
 
@@ -57,27 +66,46 @@ export async function validarEmenda(emendaId: string): Promise<ResultadoMotor> {
         include: {
           acao: { select: { programaId: true } },
           funcao: { select: { codigo: true } },
+          naturezaDespesa: { select: { grupo: true } },
         },
       },
-      dotacaoOrigem: { include: { acao: { select: { programaId: true } } } },
-      dotacaoDestino: { include: { acao: { select: { programaId: true } } } },
+      dotacaoOrigem: {
+        include: {
+          acao: { select: { programaId: true } },
+          naturezaDespesa: { select: { grupo: true } },
+        },
+      },
+      dotacaoDestino: {
+        include: {
+          acao: { select: { programaId: true } },
+          naturezaDespesa: { select: { grupo: true } },
+        },
+      },
+      beneficiario: { select: { tipo: true } },
+      planoTrabalho: { include: { itens: true } },
     },
   });
   if (!emenda) throw new Error("Emenda não encontrada.");
 
   // PPA do exercício e seus programas.
+  //
+  // Vem da flag `Programa.constaNoPPA`, não de dotações: PPA não tem dotação —
+  // tem programas, ações e metas plurianuais. Derivar de dotação fazia o
+  // conjunto chegar sempre vazio, e a checagem reprovava toda emenda nova.
   const ppa = await prisma.instrumentoPlanejamento.findFirst({
     where: { exercicioId: emenda.exercicioId, tipo: "PPA" },
     select: { id: true },
   });
-  const programasNoPPA = new Set<string>();
-  if (ppa) {
-    const dots = await prisma.dotacao.findMany({
-      where: { instrumentoId: ppa.id },
-      select: { programaId: true },
-    });
-    for (const x of dots) programasNoPPA.add(x.programaId);
-  }
+  const programasNoPPA = new Set<string>(
+    ppa
+      ? (
+          await prisma.programa.findMany({
+            where: { exercicioId: emenda.exercicioId, constaNoPPA: true },
+            select: { id: true },
+          })
+        ).map((x) => x.id)
+      : []
+  );
 
   // Prioridades da LDO.
   const prioridades = await prisma.prioridadeLDO.findMany({
@@ -157,6 +185,30 @@ export async function validarEmenda(emendaId: string): Promise<ResultadoMotor> {
     ? Number(somaDemais._sum.valor)
     : 0;
 
+  // Plano de trabalho simplificado: o que ele exige depende da categoria do
+  // beneficiário final.
+  const beneficiarioCategoria =
+    (emenda.beneficiario?.tipo as CategoriaBeneficiario | undefined) ?? null;
+  const plano = emenda.planoTrabalho;
+  const pendenciasPlanoTrabalho = beneficiarioCategoria
+    ? pendenciasDoPlano(
+        plano
+          ? {
+              justificativa: plano.justificativa,
+              objetivo: plano.objetivo,
+              declaracaoAceita: plano.declaracaoAceita,
+              itens: plano.itens.map((i) => ({
+                descricao: i.descricao,
+                quantidade: Number(i.quantidade),
+                valorUnitario: Number(i.valorUnitario),
+              })),
+            }
+          : null,
+        beneficiarioCategoria,
+        Number(emenda.valor)
+      )
+    : [];
+
   const ctx: ContextoEmenda = {
     emenda: {
       tipo: emenda.tipo,
@@ -164,6 +216,8 @@ export async function validarEmenda(emendaId: string): Promise<ResultadoMotor> {
       exercicioId: emenda.exercicioId,
       instrumentoBaseId: emenda.instrumentoBaseId,
       autorId: emenda.autorId,
+      objeto: emenda.objeto,
+      justificativa: emenda.justificativa,
     },
     exercicioStatus: emenda.exercicio.status,
     instrumentoBaseStatus: emenda.instrumentoBase.status,
@@ -181,6 +235,8 @@ export async function validarEmenda(emendaId: string): Promise<ResultadoMotor> {
     modoReservaSaude,
     emendaEhSaude,
     somaAutorDemaisExistente,
+    beneficiarioCategoria,
+    pendenciasPlanoTrabalho,
   };
 
   const resultado = avaliarEmenda(ctx);

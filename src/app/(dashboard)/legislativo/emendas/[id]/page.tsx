@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ClipboardList } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { PrintButton } from "@/components/emendas/print-button";
@@ -52,6 +54,13 @@ export default async function EmendaDetalhePage({
       />
 
       <div className="flex flex-wrap items-center gap-2">
+        <Link
+          href={`/legislativo/emendas/${e.id}/plano-trabalho`}
+          className="inline-flex items-center gap-1.5 rounded-[10px] bg-secondary px-3 py-1.5 text-[12.5px] font-semibold transition-colors hover:bg-accent print:hidden"
+        >
+          <ClipboardList className="size-4" aria-hidden />
+          Plano de trabalho
+        </Link>
         <Badge>{ROTULO_STATUS_EMENDA[e.status] ?? e.status}</Badge>
         <Badge variant="outline">Exercício {e.exercicio.ano}</Badge>
         <Badge variant="outline">
@@ -69,7 +78,10 @@ export default async function EmendaDetalhePage({
           <Campo rotulo="Subfunção" valor={`${d.subfuncao.codigo} — ${d.subfuncao.nome}`} />
           <Campo rotulo="Programa" valor={`${d.programa.codigo} — ${d.programa.nome}`} />
           <Campo rotulo="Ação" valor={`${d.acao.codigo} — ${d.acao.nome}`} />
-          <Campo rotulo="Natureza da despesa" valor={`${d.naturezaDespesa.codigo}`} />
+          <Campo
+            rotulo="Natureza da despesa"
+            valor={`${d.naturezaDespesa.codigo}${d.naturezaDespesa.nome ? ` — ${d.naturezaDespesa.nome}` : ""}`}
+          />
           <Campo rotulo="Fonte de recurso" valor={`${d.fonteRecurso.codigo} — ${d.fonteRecurso.nome}`} />
           <Campo rotulo="Valor" valor={brl(Number(e.valor))} />
         </div>

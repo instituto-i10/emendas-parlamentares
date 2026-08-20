@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { Poder, Role } from "@/generated/prisma/enums";
 import { vistasVisiveis } from "@/config/vistas360";
 import { ROTULO_ROLE } from "@/lib/rotulos";
-import { SideNav } from "./side-nav";
+import { SideNav, SideNavMobile } from "./side-nav";
 import { ExercicioSelector } from "./exercicio-selector";
 import { AssistenteWidget } from "./assistente/widget";
 
@@ -34,19 +34,30 @@ export function AppShell({
     href,
   }));
 
+  const usuarioNav = {
+    nome: user.nome,
+    papel: ROTULO_ROLE[user.role] ?? user.role,
+  };
+
   return (
     <div className="flex min-h-screen">
       <SideNav
         vistas={vistas}
         contadores={contadores}
-        usuario={{ nome: user.nome, papel: ROTULO_ROLE[user.role] ?? user.role }}
+        usuario={usuarioNav}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur-xl backdrop-saturate-150">
-          <div className="flex h-16 items-center gap-3 px-5 lg:px-7">
+          <div className="flex h-16 items-center gap-3 px-4 sm:px-5 lg:px-7">
+            {/* abaixo de lg o menu lateral não existe: entra a gaveta */}
+            <SideNavMobile
+              vistas={vistas}
+              contadores={contadores}
+              usuario={usuarioNav}
+            />
             {contexto ? (
-              <span className="hidden items-center gap-2 text-[12.5px] font-semibold text-muted-foreground md:flex">
+              <span className="hidden min-w-0 items-center gap-2 truncate text-[12.5px] font-semibold text-muted-foreground md:flex">
                 <span className="size-1.5 rounded-full bg-brand-mint" aria-hidden />
                 {contexto}
               </span>
@@ -57,9 +68,9 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="w-full flex-1 px-5 pb-12 pt-6 lg:px-7">{children}</main>
+        <main className="w-full min-w-0 flex-1 px-4 pb-12 pt-6 sm:px-5 lg:px-7">{children}</main>
 
-        <footer className="px-5 lg:px-7">
+        <footer className="px-4 sm:px-5 lg:px-7">
           <div className="flex flex-wrap items-center justify-between gap-3 border-t py-5 pb-24 text-[11.5px] font-medium text-muted-foreground lg:pr-20">
             <span>
               <b className="font-extrabold text-primary">Emendas360</b> ·

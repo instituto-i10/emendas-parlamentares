@@ -93,7 +93,7 @@ export function SelectField({
         name={name}
         required={required}
         defaultValue={defaultValue ?? ""}
-        className={controle}
+        className={`${controle} campo-select pl-3 pr-9`}
       >
         <option value="" disabled={required}>
           {placeholder}

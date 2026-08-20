@@ -9,6 +9,8 @@ function ctxValido(over: Partial<ContextoEmenda> = {}): ContextoEmenda {
       exercicioId: "ex1",
       instrumentoBaseId: "pl1",
       autorId: "a1",
+      objeto: "Objeto de teste",
+      justificativa: "Justificativa de teste",
     },
     exercicioStatus: "ABERTO",
     instrumentoBaseStatus: "EM_TRAMITACAO",
@@ -26,6 +28,7 @@ function ctxValido(over: Partial<ContextoEmenda> = {}): ContextoEmenda {
       fonteRecursoId: "fr1",
       valorAtual: 5000,
       acaoProgramaId: "prog1",
+      naturezaGrupo: "3",
     },
     dotacaoOrigem: null,
     dotacaoDestino: null,
@@ -40,6 +43,8 @@ function ctxValido(over: Partial<ContextoEmenda> = {}): ContextoEmenda {
     modoReservaSaude: null,
     emendaEhSaude: false,
     somaAutorDemaisExistente: 0,
+    beneficiarioCategoria: "ADMINISTRACAO_DIRETA",
+    pendenciasPlanoTrabalho: [],
   };
   return { ...base, ...over };
 }
@@ -193,6 +198,99 @@ describe("avaliarEmenda", () => {
       ctxValido({ ppaCadastrado: false, programasNoPPA: new Set() })
     );
     expect(item(r, "PROGRAMA_NO_PPA").status).toBe("ALERTA");
+    expect(r.resultado).toBe("VALIDA");
+  });
+
+  // Regressão: o instrumento PPA passou a existir (base real de Mogi Guaçu,
+  // commit 173eb53) sem programas carregados — PPA não tem dotação, e é de
+  // dotação que `programasNoPPA` era derivado. Com o conjunto vazio, TODA
+  // emenda nova era reprovada por um motivo falso. Conjunto vazio significa
+  // "não dá para conferir", não "nenhum programa consta".
+  it("PPA cadastrado sem programas → ALERTA, não FALHA", () => {
+    const r = avaliarEmenda(
+      ctxValido({ ppaCadastrado: true, programasNoPPA: new Set() })
+    );
+    expect(item(r, "PROGRAMA_NO_PPA").status).toBe("ALERTA");
+    expect(item(r, "PROGRAMA_NO_PPA").detalhe).toContain("não pôde ser conferida");
+    expect(r.resultado).toBe("VALIDA");
+  });
+
+  it("PPA com programas continua reprovando o programa de fora", () => {
+    const r = avaliarEmenda(
+      ctxValido({ ppaCadastrado: true, programasNoPPA: new Set(["outro-prog"]) })
+    );
+    expect(item(r, "PROGRAMA_NO_PPA").status).toBe("FALHA");
+    expect(r.resultado).toBe("INVALIDA");
+  });
+
+  // ------------------------------------------------- CAMPOS_PREENCHIDOS
+  // O rascunho pode ser salvo pela metade; a trava mudou de lugar — do salvar
+  // para o validar/remeter.
+
+  it("rascunho sem objeto → INVÁLIDA, apontando o campo que falta", () => {
+    const r = avaliarEmenda(
+      ctxValido({ emenda: { ...ctxValido().emenda, objeto: "   " } })
+    );
+    expect(item(r, "CAMPOS_PREENCHIDOS").status).toBe("FALHA");
+    expect(item(r, "CAMPOS_PREENCHIDOS").detalhe).toContain("objeto");
+    expect(r.resultado).toBe("INVALIDA");
+  });
+
+  it("rascunho sem valor → INVÁLIDA (valor zero não é valor)", () => {
+    const r = avaliarEmenda(
+      ctxValido({ emenda: { ...ctxValido().emenda, valor: 0 } })
+    );
+    expect(item(r, "CAMPOS_PREENCHIDOS").status).toBe("FALHA");
+    expect(item(r, "CAMPOS_PREENCHIDOS").detalhe).toContain("valor");
+  });
+
+  it("rascunho vazio lista os três campos de uma vez", () => {
+    const r = avaliarEmenda(
+      ctxValido({
+        emenda: { ...ctxValido().emenda, objeto: "", justificativa: "", valor: 0 },
+      })
+    );
+    const d = item(r, "CAMPOS_PREENCHIDOS").detalhe;
+    expect(d).toContain("objeto");
+    expect(d).toContain("justificativa");
+    expect(d).toContain("valor");
+  });
+
+  // ------------------------------------------------- SAUDE_NAO_PESSOAL
+  // Art. 140, § 7º, da Lei Orgânica de Mogi Guaçu: a parcela da saúde não pode
+  // custear pessoal nem encargos sociais. É vedação legal — bloqueia sempre,
+  // sem parâmetro que a afrouxe.
+
+  it("emenda de saúde em dotação de pessoal → INVÁLIDA (LOM art. 140 §7º)", () => {
+    const r = avaliarEmenda(
+      ctxValido({
+        emendaEhSaude: true,
+        dotacao: { ...ctxValido().dotacao!, naturezaGrupo: "1" },
+      })
+    );
+    expect(item(r, "SAUDE_NAO_PESSOAL").status).toBe("FALHA");
+    expect(r.resultado).toBe("INVALIDA");
+  });
+
+  it("emenda de saúde fora do grupo de pessoal → OK", () => {
+    const r = avaliarEmenda(
+      ctxValido({
+        emendaEhSaude: true,
+        dotacao: { ...ctxValido().dotacao!, naturezaGrupo: "3" },
+      })
+    );
+    expect(item(r, "SAUDE_NAO_PESSOAL").status).toBe("OK");
+    expect(r.resultado).toBe("VALIDA");
+  });
+
+  it("dotação de pessoal FORA da saúde → OK (a vedação é só da saúde)", () => {
+    const r = avaliarEmenda(
+      ctxValido({
+        emendaEhSaude: false,
+        dotacao: { ...ctxValido().dotacao!, naturezaGrupo: "1" },
+      })
+    );
+    expect(item(r, "SAUDE_NAO_PESSOAL").status).toBe("OK");
     expect(r.resultado).toBe("VALIDA");
   });
 });

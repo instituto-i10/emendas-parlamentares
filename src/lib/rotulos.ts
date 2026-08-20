@@ -69,9 +69,20 @@ export const ROTULO_ROLE: Record<string, string> = {
 };
 
 export const ROTULO_TIPO_BENEFICIARIO: Record<string, string> = {
-  ORGAO_PUBLICO: "Órgão público",
-  ENTIDADE_TERCEIRO_SETOR: "Entidade (3º setor)",
-  OUTRO: "Outro",
+  ADMINISTRACAO_DIRETA: "Administração direta",
+  ADMINISTRACAO_INDIRETA: "Administração indireta",
+  TERCEIRO_SETOR: "Entidade do terceiro setor",
+};
+
+// Explicação curta de cada categoria, para o vereador escolher sem consultar
+// ninguém. A escolha muda o que o plano de trabalho vai pedir.
+export const AJUDA_TIPO_BENEFICIARIO: Record<string, string> = {
+  ADMINISTRACAO_DIRETA:
+    "Secretarias, fundos e equipamentos do próprio município (UBS, escola, creche).",
+  ADMINISTRACAO_INDIRETA:
+    "Autarquias, fundações e empresas públicas municipais — pessoa jurídica própria.",
+  TERCEIRO_SETOR:
+    "Entidades sem fins lucrativos: Santa Casa, APAE, associações, institutos.",
 };
 
 export const ROTULO_TIPO_EMENDA: Record<string, string> = {

@@ -32,7 +32,7 @@ export default async function EmendaPublicaPage({
       e.beneficiario ? (
         <>
           {e.beneficiario.nome}{" "}
-          <Tag360 tom={e.beneficiario.tipo === "ENTIDADE_TERCEIRO_SETOR" ? "roxo" : "info"}>
+          <Tag360 tom={e.beneficiario.tipo === "TERCEIRO_SETOR" ? "roxo" : "info"}>
             {ROTULO_TIPO_BENEFICIARIO[e.beneficiario.tipo] ?? e.beneficiario.tipo}
           </Tag360>
           {e.beneficiario.cnpj ? ` · CNPJ ${e.beneficiario.cnpj}` : ""}
@@ -57,15 +57,17 @@ export default async function EmendaPublicaPage({
   return (
     <div className="flex min-h-screen flex-col">
       <header className="grad-dark text-white">
-        <div className="flex h-14 items-center gap-3 px-5 lg:px-7">
-          <Link href="/publica">
+        <div className="flex h-14 min-w-0 items-center gap-3 px-4 sm:px-5 lg:px-7">
+          <Link href="/publica" className="min-w-0 shrink">
             <LogoEmendas360 />
           </Link>
           <Link
             href="/publica/emendas"
-            className="ml-auto rounded-[10px] bg-white/10 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-white/20"
+            className="ml-auto shrink-0 whitespace-nowrap rounded-[10px] bg-white/10 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-white/20 sm:px-4"
           >
-            ← Todas as emendas
+            <span className="sm:hidden" aria-hidden>←</span>
+            <span className="hidden sm:inline">← Todas as emendas</span>
+            <span className="sr-only sm:hidden">Todas as emendas</span>
           </Link>
         </div>
       </header>
@@ -88,7 +90,7 @@ export default async function EmendaPublicaPage({
         <Card360>
           <Eyebrow>Objeto</Eyebrow>
           <p className="text-[15px] font-semibold">{e.objeto}</p>
-          <div className="mt-4 overflow-x-auto">
+          <div className="mt-4 min-w-0 overflow-x-auto">
             <table className="w-full border-collapse text-[13.5px]">
               <tbody>
                 {linhas.map(([k, v]) => (

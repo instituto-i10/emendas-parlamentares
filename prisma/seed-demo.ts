@@ -63,21 +63,25 @@ const VEREADORES = [
 
 // Variantes de grafia propositais: a aba Beneficiários → "mesclar duplicados"
 // só tem o que mostrar se existirem candidatos reais.
-const BENEFICIARIOS: { nome: string; tipo: "ORGAO_PUBLICO" | "ENTIDADE_TERCEIRO_SETOR" | "OUTRO"; cnpj?: string }[] = [
-  { nome: "Santa Casa de Misericórdia", tipo: "ENTIDADE_TERCEIRO_SETOR", cnpj: "44.567.890/0001-12" },
-  { nome: "Santa Casa", tipo: "ENTIDADE_TERCEIRO_SETOR" },
-  { nome: "Santa Casa de Misericórdia de Mogi Guaçu", tipo: "ENTIDADE_TERCEIRO_SETOR" },
-  { nome: "APAE", tipo: "ENTIDADE_TERCEIRO_SETOR", cnpj: "51.234.567/0001-90" },
-  { nome: "APAE Mogi Guaçu", tipo: "ENTIDADE_TERCEIRO_SETOR" },
-  { nome: "Fundo Municipal de Saúde", tipo: "ORGAO_PUBLICO" },
-  { nome: "UBS Jardim Itamaraty", tipo: "ORGAO_PUBLICO" },
-  { nome: "UBS Parque Cidade Nova", tipo: "ORGAO_PUBLICO" },
-  { nome: "EMEB Professora Marta Ribeiro", tipo: "ORGAO_PUBLICO" },
-  { nome: "Creche Municipal Vila Esperança", tipo: "ORGAO_PUBLICO" },
-  { nome: "Lar dos Velhinhos São Vicente", tipo: "ENTIDADE_TERCEIRO_SETOR", cnpj: "62.345.678/0001-45" },
-  { nome: "Associação de Pais e Amigos do Bairro Ypê", tipo: "ENTIDADE_TERCEIRO_SETOR" },
-  { nome: "Secretaria Municipal de Educação", tipo: "ORGAO_PUBLICO" },
-  { nome: "Corpo de Bombeiros — Posto Municipal", tipo: "OUTRO" },
+const BENEFICIARIOS: { nome: string; tipo: "ADMINISTRACAO_DIRETA" | "ADMINISTRACAO_INDIRETA" | "TERCEIRO_SETOR"; cnpj?: string }[] = [
+  { nome: "Santa Casa de Misericórdia", tipo: "TERCEIRO_SETOR", cnpj: "44.567.890/0001-12" },
+  { nome: "Santa Casa", tipo: "TERCEIRO_SETOR" },
+  { nome: "Santa Casa de Misericórdia de Mogi Guaçu", tipo: "TERCEIRO_SETOR" },
+  { nome: "APAE", tipo: "TERCEIRO_SETOR", cnpj: "51.234.567/0001-90" },
+  { nome: "APAE Mogi Guaçu", tipo: "TERCEIRO_SETOR" },
+  { nome: "Fundo Municipal de Saúde", tipo: "ADMINISTRACAO_DIRETA" },
+  { nome: "UBS Jardim Itamaraty", tipo: "ADMINISTRACAO_DIRETA" },
+  { nome: "UBS Parque Cidade Nova", tipo: "ADMINISTRACAO_DIRETA" },
+  { nome: "EMEB Professora Marta Ribeiro", tipo: "ADMINISTRACAO_DIRETA" },
+  { nome: "Creche Municipal Vila Esperança", tipo: "ADMINISTRACAO_DIRETA" },
+  { nome: "Lar dos Velhinhos São Vicente", tipo: "TERCEIRO_SETOR", cnpj: "62.345.678/0001-45" },
+  { nome: "Associação de Pais e Amigos do Bairro Ypê", tipo: "TERCEIRO_SETOR" },
+  { nome: "Secretaria Municipal de Educação", tipo: "ADMINISTRACAO_DIRETA" },
+  { nome: "Corpo de Bombeiros — Posto Municipal", tipo: "ADMINISTRACAO_DIRETA" },
+  // Administração INDIRETA — pessoa jurídica própria, separada da Prefeitura.
+  // Sem pelo menos um exemplo, a categoria existe no código e some da tela.
+  { nome: "SAMAE — Serviço Autônomo Municipal de Água e Esgoto", tipo: "ADMINISTRACAO_INDIRETA" },
+  { nome: "FEG — Fundação Educacional Guaçuana", tipo: "ADMINISTRACAO_INDIRETA" },
 ];
 
 const NORMAS = [
@@ -245,7 +249,11 @@ async function main() {
   // ---------------------------------------------------------------- dotações
   const dotacoes = await prisma.dotacao.findMany({
     where: { instrumentoId: base.id },
-    include: { acao: { select: { programaId: true } }, funcao: { select: { codigo: true } } },
+    include: {
+      acao: { select: { programaId: true } },
+      funcao: { select: { codigo: true } },
+      naturezaDespesa: { select: { grupo: true } },
+    },
   });
   const saude = dotacoes.filter((d) => d.funcao.codigo === "10");
   const demais = dotacoes.filter((d) => d.funcao.codigo !== "10");
@@ -256,14 +264,20 @@ async function main() {
     where: { exercicioId, tipo: "PPA" },
     select: { id: true },
   });
-  const programasNoPPA = new Set<string>();
-  if (ppa) {
-    const dots = await prisma.dotacao.findMany({
-      where: { instrumentoId: ppa.id },
-      select: { programaId: true },
-    });
-    for (const x of dots) programasNoPPA.add(x.programaId);
-  }
+  // Mesma derivação do motor em runtime (motorEmenda.ts): a flag
+  // `Programa.constaNoPPA`, não dotações do PPA. Se as duas divergirem, a
+  // demonstração valida diferente do produto — foi assim que o problema do PPA
+  // passou despercebido por semanas.
+  const programasNoPPA = new Set<string>(
+    ppa
+      ? (
+          await prisma.programa.findMany({
+            where: { exercicioId, constaNoPPA: true },
+            select: { id: true },
+          })
+        ).map((x) => x.id)
+      : [],
+  );
   const prioridades = await prisma.prioridadeLDO.findMany({
     where: { exercicioId },
     select: { programaId: true, acaoId: true },
@@ -299,6 +313,7 @@ async function main() {
       const dot = item.ehSaude ? pick(saude) : pick(demais);
       const [tpl, benefNome] = item.ehSaude ? pick(OBJETOS_SAUDE) : pick(OBJETOS_DEMAIS);
       const objeto = tpl.replace("{b}", benefNome);
+      const justificativaEmenda = pick(JUSTIFICATIVAS);
       const tipo = pick([...TIPOS]);
       // ANULACAO não pode exceder o saldo da dotação — respeita a checagem 9.
       const valorFinal =
@@ -313,7 +328,7 @@ async function main() {
           dotacaoId: dot.id,
           tipo,
           objeto,
-          justificativa: pick(JUSTIFICATIVAS),
+          justificativa: justificativaEmenda,
           valor: valorFinal,
           status: "RASCUNHO",
           beneficiarioId: benefId.get(benefNome) ?? null,
@@ -334,6 +349,7 @@ async function main() {
         fonteRecursoId: dot.fonteRecursoId,
         valorAtual: Number(dot.valorAtual),
         acaoProgramaId: dot.acao?.programaId ?? dot.programaId,
+        naturezaGrupo: dot.naturezaDespesa?.grupo ?? "",
       };
 
       const ctx: ContextoEmenda = {
@@ -343,6 +359,8 @@ async function main() {
           exercicioId,
           instrumentoBaseId: base.id,
           autorId: autor.id,
+          objeto,
+          justificativa: justificativaEmenda,
         },
         exercicioStatus: exercicio.status,
         instrumentoBaseStatus: "EM_TRAMITACAO",
@@ -360,6 +378,10 @@ async function main() {
         modoReservaSaude: "ALERTA",
         emendaEhSaude: item.ehSaude,
         somaAutorDemaisExistente: somaDemais,
+        // Base de 2025, anterior ao plano de trabalho simplificado: sem
+        // categoria, o motor registra ALERTA em vez de reprovar retroativamente.
+        beneficiarioCategoria: null,
+        pendenciasPlanoTrabalho: [],
       };
 
       const resultado = avaliarEmenda(ctx);
@@ -411,6 +433,9 @@ async function main() {
     const valorExcedente = Number(dot.valorAtual) + s.excedente;
     seq++;
     const [tpl, benefNome] = OBJETOS_DEMAIS[s.dotIdx % OBJETOS_DEMAIS.length];
+    const objetoSan = tpl.replace("{b}", benefNome);
+    const justificativaSan =
+      "Anulação parcial da dotação para realocar recursos conforme demanda apresentada em audiência pública.";
 
     const emenda = await prisma.emenda.create({
       data: {
@@ -420,9 +445,8 @@ async function main() {
         autorId: autor.id,
         dotacaoId: dot.id,
         tipo: "ANULACAO",
-        objeto: tpl.replace("{b}", benefNome),
-        justificativa:
-          "Anulação parcial da dotação para realocar recursos conforme demanda apresentada em audiência pública.",
+        objeto: objetoSan,
+        justificativa: justificativaSan,
         valor: valorExcedente,
         status: "RASCUNHO",
         beneficiarioId: benefId.get(benefNome) ?? null,
@@ -436,6 +460,8 @@ async function main() {
         exercicioId,
         instrumentoBaseId: base.id,
         autorId: autor.id,
+        objeto: objetoSan,
+        justificativa: justificativaSan,
       },
       exercicioStatus: exercicio.status,
       instrumentoBaseStatus: "EM_TRAMITACAO",
@@ -453,6 +479,7 @@ async function main() {
         fonteRecursoId: dot.fonteRecursoId,
         valorAtual: Number(dot.valorAtual),
         acaoProgramaId: dot.acao?.programaId ?? dot.programaId,
+        naturezaGrupo: dot.naturezaDespesa?.grupo ?? "",
       },
       dotacaoOrigem: null,
       dotacaoDestino: null,
@@ -467,6 +494,8 @@ async function main() {
       modoReservaSaude: "ALERTA",
       emendaEhSaude: false,
       somaAutorDemaisExistente: 0,
+      beneficiarioCategoria: null,
+      pendenciasPlanoTrabalho: [],
     };
 
     const resultado = avaliarEmenda(ctx);

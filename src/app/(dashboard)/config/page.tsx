@@ -67,14 +67,18 @@ export default async function ConfigPage() {
       />
 
       <Tabs defaultValue="parametros">
-        <TabsList>
-          <TabsTrigger value="parametros">Parâmetros</TabsTrigger>
-          <TabsTrigger value="beneficiarios">Beneficiários</TabsTrigger>
-          <TabsTrigger value="normas">Normas</TabsTrigger>
-          <TabsTrigger value="instrumentos">Instrumentos</TabsTrigger>
-          <TabsTrigger value="usuarios">Usuários</TabsTrigger>
-          <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
-        </TabsList>
+        {/* seis abas não cabem em 375px: a faixa rola na horizontal, como as
+            Subtabs do resto do sistema, em vez de estourar a tela. */}
+        <div className="-mx-1 overflow-x-auto px-1 pb-1">
+          <TabsList className="w-max">
+            <TabsTrigger value="parametros">Parâmetros</TabsTrigger>
+            <TabsTrigger value="beneficiarios">Beneficiários</TabsTrigger>
+            <TabsTrigger value="normas">Normas</TabsTrigger>
+            <TabsTrigger value="instrumentos">Instrumentos</TabsTrigger>
+            <TabsTrigger value="usuarios">Usuários</TabsTrigger>
+            <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="parametros" className="mt-4">
           <ParametrosTab

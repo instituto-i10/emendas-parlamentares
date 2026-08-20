@@ -76,6 +76,11 @@
   --brand-mint: #00e5a0;
   --brand-amber: #f5a524;
   --brand-green: #00b278;
+  /* Tons SÓLIDOS de estado (bolinha do farol, traço dos gráficos).
+     Mesmos matizes da paleta acima, na versão cheia — profundos, não neon. */
+  --estado-ok: #2e7d52;
+  --estado-atencao: #b07d12;
+  --estado-bloqueio: #a72830;
   --brand-purple: #7c5cfc;
 
   /* --- escala navy, para superfícies e traços --- */
@@ -84,16 +89,24 @@
   --navy-200: #c3cee4;
 
   /* --- pares superfície/texto dos estados ---
-     Cada estado é um bloco lavado com o texto no mesmo matiz: é o que
-     substitui as bordas coloridas da versão anterior. */
-  --surf-ok: #e2faf1;
-  --on-ok: #0b6e4c;
+     Verde/âmbar/vermelho, porque a convenção já está na cabeça de quem usa e
+     brigar com ela só custa leitura. O que muda é a TONALIDADE: nada de pastel
+     lavado — superfície de baixa saturação e tinta profunda, feitio de
+     documento impresso, não de marca-texto.
+
+       ok    → conforme          · sálvia + verde-floresta
+       info  → contexto          · azul da marca
+       warn  → exige decisão     · areia + ocre
+       bad   → impede seguir     · argila + tijolo
+       roxo  → recorte institucional */
+  --surf-ok: #e7f0e9;
+  --on-ok: #15603c;
   --surf-info: #e4f7fc;
   --on-info: #0779a8;
-  --surf-warn: #fdf1dd;
-  --on-warn: #96650a;
-  --surf-bad: #fdecec;
-  --on-bad: #b93b3f;
+  --surf-warn: #f7edd9;
+  --on-warn: #8a5a0b;
+  --surf-bad: #f8e3e3;
+  --on-bad: #9c1f24;
   --surf-roxo: #eeeafe;
   --on-roxo: #5a45c4;
 
@@ -150,20 +163,23 @@
   --brand-mint: #00e5a0;
   --brand-amber: #f5a524;
   --brand-green: #00c98a;
+  --estado-ok: #4bb583;
+  --estado-atencao: #d9a54a;
+  --estado-bloqueio: #d96a6f;
   --brand-purple: #9d85ff;
 
   --navy-700: #17408f;
   --navy-300: #6b7fa6;
   --navy-200: #35496f;
 
-  --surf-ok: rgba(0, 229, 160, 0.14);
-  --on-ok: #4fe3b4;
+  --surf-ok: rgba(46, 160, 105, 0.18);
+  --on-ok: #6fd3a0;
   --surf-info: rgba(0, 180, 216, 0.16);
   --on-info: #6fd8f2;
-  --surf-warn: rgba(245, 165, 36, 0.16);
-  --on-warn: #f0bb63;
-  --surf-bad: rgba(229, 72, 77, 0.16);
-  --on-bad: #f08a8d;
+  --surf-warn: rgba(200, 140, 30, 0.18);
+  --on-warn: #e0ad5c;
+  --surf-bad: rgba(200, 60, 60, 0.18);
+  --on-bad: #e88b8b;
   --surf-roxo: rgba(124, 92, 252, 0.18);
   --on-roxo: #b3a1ff;
 
@@ -234,9 +250,6 @@
   .grad-main {
     background-image: linear-gradient(135deg, #0a2463, #00b4d8);
   }
-  .grad-hi {
-    background-image: linear-gradient(90deg, #00b4d8, #00e5a0);
-  }
   .grad-dark {
     background-image: linear-gradient(135deg, #061840, #0a2463);
   }
@@ -265,14 +278,27 @@
     color: var(--muted-foreground);
     margin-top: 4px;
   }
-  /* Barrinha de gradiente ao lado dos títulos de seção */
-  .sec-bar {
-    display: inline-block;
-    width: 26px;
-    height: 3px;
-    border-radius: 999px;
-    background-image: linear-gradient(90deg, #00b4d8, #00e5a0);
+  /* Campo de seleção nativo.
+     O <select> do navegador desenha a seta colada na borda direita, dentro do
+     padding. Aqui a seta é nossa (background-image) e o padding à direita
+     reserva o espaço dela — assim todo select do produto tem o mesmo respiro,
+     e não um valor por navegador. */
+  .campo-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px 16px;
+    /* O respiro da seta é utilitário Tailwind (pl-3 pr-9) no ponto de uso:
+       a camada `utilities` vence a `components`, e um padding declarado aqui
+       seria silenciosamente sobrescrito por um px-* qualquer. */
   }
+
+  .dark .campo-select {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  }
+
   /* Pílula de filtro da referência (.chip) */
   .chip {
     display: inline-flex;

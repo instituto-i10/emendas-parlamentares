@@ -336,3 +336,22 @@ Oportunidade clara — e há dados ricos para isso.
 As emendas não alteram o saldo das dotações. A checagem `TIPO_COERENTE` de
 `ANULACAO` compara com `valorAtual`, que permanece igual a `valorInicial`.
 Consequência de UX: a tela não mostra "quanto ainda sobra nesta dotação".
+
+
+## Telas do plano de trabalho (20/08/2026)
+
+| Rota | Quem entra | O que faz |
+| --- | --- | --- |
+| `/legislativo/emendas/[id]/plano-trabalho` | autor da emenda (sessão) | preenche o plano, gera e revoga o link da entidade |
+| `/plano-trabalho/[token]` | entidade beneficiária, **sem login** | preenche o plano pelo link que o gabinete enviou |
+
+As duas renderizam o mesmo `PlanoTrabalhoForm`; o que muda é quem salva e se o
+responsável precisa se identificar. O formulário se adapta à categoria do
+beneficiário — terceiro setor vê objetivo, declaração e planilha; administração
+pública vê só a justificativa.
+
+O botão de **apoio à redação** (`src/lib/actions/redacao.ts`) aparece na
+justificativa e no objetivo. Ele só escreve: não busca dado externo, não estima
+número e não sobrescreve nada calado — a sugestão entra numa área de revisão e
+só vai para o campo se a pessoa mandar. Sem `OPENAI_API_KEY` ele entrega um
+texto-base editável em vez de falhar.

@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { registrarAuditoria } from "@/lib/audit";
 import { beneficiarioSchema } from "@/lib/validation/schemas";
+import { categoriaPeloNome } from "@/lib/beneficiarios-classificacao";
 
 export type ActionResult =
   | { ok: true; message?: string }
@@ -131,23 +132,6 @@ function nomeDoObjeto(objeto: string): string {
   return nome.replace(/\s+/g, " ");
 }
 
-// Heurística de tipo (revisável pelo CRUD depois).
-function tipoDoNome(nome: string): "ORGAO_PUBLICO" | "ENTIDADE_TERCEIRO_SETOR" | "OUTRO" {
-  if (
-    /^(secretaria|sec\.|ssm|som\b|saama|sub\s?prefeitura|fundo municipal|guarda|emef|emeb|emei|cei\b|ubs|usf|ceo\b|caps|hospital municipal|centro esportivo|sub prefeitura|prefeitura|c[âa]mara)/i.test(
-      nome
-    )
-  )
-    return "ORGAO_PUBLICO";
-  if (
-    /associa|institut|\blar\b|casa d|apae|polem|santa casa|vinha|[áa]gape|acolhem|pastoral|igreja|par[óo]quia|corpora[çc][ãa]o|apm\b|casmo[çc]u|calvi|camp\b|cars\b|centro dia|mais vida|anjos|ex[ée]rcito/i.test(
-      nome
-    )
-  )
-    return "ENTIDADE_TERCEIRO_SETOR";
-  return "OUTRO";
-}
-
 // Deriva beneficiários a partir do objeto das emendas sem vínculo e vincula.
 // Idempotente — roda quantas vezes for preciso; só toca emendas sem beneficiário.
 export async function derivarBeneficiarios(): Promise<ActionResult> {
@@ -183,7 +167,7 @@ export async function derivarBeneficiarios(): Promise<ActionResult> {
       const criados = await Promise.all(
         novos.slice(i, i + LOTE).map((nome) =>
           prisma.beneficiario.create({
-            data: { nome, tipo: tipoDoNome(nome) as never },
+            data: { nome, tipo: categoriaPeloNome(nome) as never },
           })
         )
       );

@@ -65,13 +65,51 @@ I/O) e devolve `{ resultado, itens[] }`. Cada item tem `codigo`, `descricao`,
 | 1 | `EXERCICIO_ABERTO` | `Exercicio.status === ABERTO` | não |
 | 2 | `INSTRUMENTO_BASE_ABERTO` | instrumento base em `EM_TRAMITACAO` | não |
 | 3 | `DOTACAO_EXISTE` | a dotação existe **e** pertence ao mesmo instrumento base e exercício | não |
-| 4 | `PROGRAMA_NO_PPA` | o programa da dotação consta no PPA do exercício | vira `ALERTA` se não houver PPA cadastrado |
+| 4 | `PROGRAMA_NO_PPA` | o programa da dotação consta no PPA do exercício | vira `ALERTA` se não houver PPA cadastrado **ou se o PPA estiver cadastrado sem programas** — ver nota abaixo |
 | 5 | `ACAO_VINCULADA` | a ação pertence ao programa da dotação | não |
 | 6 | `CLASSIFICACAO_COMPLETA` | todos os 8 componentes por FK presentes | não |
 | 7 | `ADERENCIA_LDO` | programa/ação consta nas prioridades da LDO | **sim** — parâmetro `ADERENCIA_LDO`, modo `BLOQUEANTE`/`ALERTA` |
 | 8 | `LIMITE_VALOR_AUTOR` | soma das emendas `VALIDA`+`SUBMETIDA` do autor no exercício + esta ≤ teto | **sim** — parâmetro `TETO_VALOR_AUTOR`; sem parâmetro → passa |
 | 9 | `TIPO_COERENTE` | `REMANEJAMENTO` exige origem e destino distintos; `ANULACAO` não pode exceder o saldo da dotação | não |
 | 10 | `RESERVA_SAUDE` | as emendas **fora da saúde** do autor não podem ultrapassar `teto × (1 − pct/100)` | **sim** — `RESERVA_SAUDE_PERCENTUAL` + modo |
+
+### `PROGRAMA_NO_PPA` confere uma regra real sobre um dado que não temos
+
+A exigência é municipal e não foi inventada: **LOM art. 140, §1º, I** — "as
+emendas […] serão admitidas desde que: I - sejam compatíveis com o Plano
+Plurianual e com a Lei de Diretrizes Orçamentárias" —, repetida na **LDO 2027,
+art. 23, §1º, I**.
+
+O que é frágil é a implementação, herdada do protótipo original: `programasNoPPA`
+é derivado das **dotações** ligadas ao instrumento PPA. Só que **PPA não tem
+dotação** — ele tem programas, ações e metas plurianuais; dotação é peça da LOA.
+
+Enquanto o protótipo não cadastrava PPA nenhum, isso era invisível: sem
+instrumento, a checagem caía no ramo `ALERTA` e não incomodava ninguém. Quando a
+base real de Mogi Guaçu passou a criar o instrumento PPA (Lei 6.245/2025) sem
+dados — commit `173eb53` —, a checagem migrou sozinha para o ramo que reprova, e
+**toda emenda nova nascia INVÁLIDA** com a mensagem "Programa não consta no PPA
+do exercício". Nada em `motor.ts` havia sido tocado.
+
+Duas correções em 20/08/2026, na mesma tarde:
+
+1. **Conjunto vazio passou a significar "não dá para conferir"**, não "nenhum
+   programa consta". A checagem sai em `ALERTA` dizendo isso, em vez de reprovar
+   tudo. Coberta por teste de regressão em `motor.test.ts`.
+2. **A origem do dado mudou.** `programasNoPPA` não vem mais de dotações, e sim
+   da flag `Programa.constaNoPPA`, preenchida a partir do Anexo II do PPA
+   2026-2029. Os 47 programas da base foram **todos** localizados no PPA — a
+   compatibilidade se sustenta integralmente para este exercício. Evidência item
+   a item em `docs/better/dados/ppa-2026-2029-programas.json`.
+
+A granularidade é **programa**, não ação: o TCE-SP cobra emendas "compatíveis com
+os **programas de governo** e os planos setoriais vigentes".
+
+> **Lição de método:** o seed de 2027 derivava `programasNoPPA` de forma mais
+> permissiva que o runtime (todos os programas do exercício). Por isso as 43
+> emendas de demonstração apareciam válidas enquanto qualquer emenda criada de
+> verdade era reprovada. Semente que valida diferente do produto não demonstra o
+> produto — as duas derivações agora são idênticas.
 
 ### A regra da reserva da saúde — a sutileza que custou 3 commits
 

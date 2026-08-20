@@ -214,7 +214,7 @@ export default async function Vereador360Page({
 
         {/* --------------------------------------------------------- detalhe */}
         <div className="min-w-0">
-          <div className="mb-4 flex flex-wrap items-center gap-4 rounded-xl bg-card p-[22px] shadow-card">
+          <div className="mb-4 flex min-w-0 flex-wrap items-center gap-4 rounded-xl bg-card p-[22px] shadow-card">
             <Avatar360 nome={selecionado.nome} tamanho="lg" />
             <div className="min-w-0 flex-1">
               <h2 className="truncate text-[19px] font-extrabold tracking-[-.025em]">
@@ -312,7 +312,7 @@ export default async function Vereador360Page({
                   }
                 />
               ) : (
-                <div className="overflow-x-auto">
+                <div className="min-w-0 overflow-x-auto">
                   <table className="w-full min-w-[560px] border-collapse text-[12.5px]">
                     <thead>
                       <tr>

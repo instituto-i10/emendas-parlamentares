@@ -10,6 +10,7 @@ import {
 } from "@/lib/queries-publicas";
 import { ROTULO_STATUS_EMENDA } from "@/lib/rotulos";
 import { brl } from "@/lib/queries-360";
+import { Search } from "lucide-react";
 
 // Portal público de emendas: busca e filtros em meio eletrônico — a
 // "transparência ativa" exigida pelo STF (ADPF 854) e cobrada pelo TCE-SP.
@@ -53,13 +54,13 @@ export default async function PortalEmendasPage({
   return (
     <div className="flex min-h-screen flex-col">
       <header className="grad-dark text-white">
-        <div className="flex h-14 items-center gap-3 px-5 lg:px-7">
-          <Link href="/publica">
+        <div className="flex h-14 min-w-0 items-center gap-3 px-4 sm:px-5 lg:px-7">
+          <Link href="/publica" className="min-w-0 shrink">
             <LogoEmendas360 />
           </Link>
           <Link
             href="/login"
-            className="ml-auto rounded-[10px] bg-white/10 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-white/20"
+            className="ml-auto shrink-0 whitespace-nowrap rounded-[10px] bg-white/10 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-white/20 sm:px-4"
           >
             Entrar
           </Link>
@@ -67,7 +68,7 @@ export default async function PortalEmendasPage({
       </header>
 
       <main className="w-full flex-1 px-5 pb-14 pt-6 lg:px-7">
-        <Banner tom="ok" emoji="🔎">
+        <Banner tom="ok" icone={Search}>
           <b>Consulta pública de emendas</b> — todas as emendas parlamentares,
           com autor, valor, beneficiário e situação. Busque e filtre à vontade.
         </Banner>
@@ -86,19 +87,19 @@ export default async function PortalEmendasPage({
             placeholder="Buscar por objeto, beneficiário ou autor…"
             className={`${controle} min-w-60 flex-1`}
           />
-          <select name="ano" defaultValue={sp.ano ?? ""} className={controle}>
+          <select name="ano" defaultValue={sp.ano ?? ""} className={`${controle} campo-select pl-3 pr-9`}>
             <option value="">Todos os exercícios</option>
             {opcoes.exercicios.map((e) => (
               <option key={e.ano} value={e.ano}>{e.ano}</option>
             ))}
           </select>
-          <select name="autor" defaultValue={sp.autor ?? ""} className={controle}>
+          <select name="autor" defaultValue={sp.autor ?? ""} className={`${controle} campo-select pl-3 pr-9`}>
             <option value="">Todos os autores</option>
             {opcoes.autores.map((a) => (
               <option key={a.id} value={a.id}>{a.nome}</option>
             ))}
           </select>
-          <select name="status" defaultValue={sp.status ?? ""} className={controle}>
+          <select name="status" defaultValue={sp.status ?? ""} className={`${controle} campo-select pl-3 pr-9`}>
             <option value="">Todas as situações</option>
             {opcoes.statusPublicos.map((s) => (
               <option key={s} value={s}>{ROTULO_STATUS_EMENDA[s] ?? s}</option>
@@ -118,7 +119,7 @@ export default async function PortalEmendasPage({
         </form>
 
         <Card360>
-          <div className="overflow-x-auto">
+          <div className="min-w-0 overflow-x-auto">
             <table className="w-full min-w-[720px] border-collapse text-[13px]">
               <thead>
                 <tr>

@@ -1,9 +1,16 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-// Badges no padrão da referência de UI: pílula, peso 700, fundo lavado do
-// próprio matiz. Azul para o que está conforme, laranja para atenção,
-// vermelho para o que barra, cinza para o que ainda não começou.
+// Badges: pílula, peso 700, fundo lavado do próprio matiz.
+//
+// Os tons vêm dos tokens --surf-*/--on-*: verde/âmbar/vermelho na convenção de
+// sempre, em tonalidade profunda (sem pastel).
+//   ok    → conforme               · aprovada
+//   info  → em andamento           · válida
+//   roxo  → recorte institucional  · submetida, em tramitação
+//   warn  → exige decisão          · em validação
+//   bad   → impede seguir          · inválida, rejeitada
+//   pend  → ainda não começou      · rascunho
 const TONS = {
   ok: "bg-[var(--surf-ok)] text-[var(--on-ok)]",
   warn: "bg-[var(--surf-warn)] text-[var(--on-warn)]",

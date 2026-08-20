@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Superfícies lavadas, sem borda — o tom já basta para separar do fundo.
@@ -10,18 +11,21 @@ const TONS = {
   vermelho: "bg-[var(--surf-bad)] text-[var(--on-bad)]",
 } as const;
 
-// Faixa de aviso do topo das vistas (mockup .banner): emoji + texto + tag,
-// inteira clicável quando tem destino.
+// Faixa de aviso do topo das vistas: ícone + texto + tag, inteira clicável
+// quando tem destino.
+//
+// Ícone, não emoji: o emoji muda de desenho a cada sistema operacional, não
+// herda a cor do tom e não tem tamanho previsível ao lado do texto.
 export function Banner({
   tom,
-  emoji,
+  icone: Icone,
   children,
   tag,
   href,
   className,
 }: {
   tom: keyof typeof TONS;
-  emoji: string;
+  icone: LucideIcon;
   children: ReactNode;
   tag?: ReactNode;
   href?: string;
@@ -36,7 +40,7 @@ export function Banner({
         className
       )}
     >
-      <span aria-hidden>{emoji}</span>
+      <Icone className="size-[18px] shrink-0" aria-hidden />
       <span className="min-w-0 flex-1">{children}</span>
       {tag ? <span className="ml-auto">{tag}</span> : null}
     </div>

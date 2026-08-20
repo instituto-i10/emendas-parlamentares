@@ -1,7 +1,7 @@
 import { Download } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { EmendasTable } from "@/components/emendas/emendas-table";
+import { EmendasLista } from "@/components/emendas/emendas-lista";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { listarEmendas } from "@/lib/queries-orcamento";
 
@@ -34,7 +34,7 @@ export default async function TodasEmendasPage() {
           </div>
         }
       />
-      <EmendasTable emendas={emendas} />
+      <EmendasLista emendas={emendas} />
     </div>
   );
 }

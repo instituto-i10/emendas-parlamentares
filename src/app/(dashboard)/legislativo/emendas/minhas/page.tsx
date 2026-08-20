@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/page-header";
-import { EmendasTable } from "@/components/emendas/emendas-table";
+import { EmendasLista } from "@/components/emendas/emendas-lista";
 import { getCurrentUser } from "@/lib/session";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { listarEmendas } from "@/lib/queries-orcamento";
@@ -19,7 +19,7 @@ export default async function MinhasEmendasPage() {
           { titulo: "Minhas emendas" },
         ]}
       />
-      <EmendasTable emendas={emendas} mostrarAutor={false} />
+      <EmendasLista emendas={emendas} mostrarAutor={false} />
     </div>
   );
 }

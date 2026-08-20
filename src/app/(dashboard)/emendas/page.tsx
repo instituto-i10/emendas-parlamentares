@@ -11,6 +11,7 @@ import { Banner } from "@/components/e360/banner";
 import { Subtabs } from "@/components/e360/subtabs";
 import { Tag360 } from "@/components/e360/tag360";
 import { Role } from "@/generated/prisma/enums";
+import { ClipboardList } from "lucide-react";
 
 const ABAS = [
   { id: "vereador", titulo: "Por autor" },
@@ -111,7 +112,7 @@ export default async function EmendasVistaPage({
 
           <Card360 className="mt-4">
             <Eyebrow>Emendas por autor (clique para abrir o Vereador 360)</Eyebrow>
-            <div className="overflow-x-auto">
+            <div className="min-w-0 overflow-x-auto">
               <table className="w-full min-w-[640px] border-collapse text-[13px]">
                 <thead>
                   <tr>
@@ -170,7 +171,7 @@ export default async function EmendasVistaPage({
       {aba === "destino" ? (
         <Card360>
           <Eyebrow>Destinos — órgãos indicados pelas emendas</Eyebrow>
-          <div className="overflow-x-auto">
+          <div className="min-w-0 overflow-x-auto">
             <table className="w-full min-w-[640px] border-collapse text-[13px]">
               <thead>
                 <tr>
@@ -216,7 +217,7 @@ export default async function EmendasVistaPage({
       {aba === "conformidade" ? (
         <>
           {invalidas || reservaInvadida ? (
-            <Banner tom="warn" emoji="🧾" href="/analise">
+            <Banner tom="warn" icone={ClipboardList} href="/analise">
               <b>
                 {[
                   invalidas ? `${invalidas.qtd} emenda(s) inválida(s) para saneamento` : null,

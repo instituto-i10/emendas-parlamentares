@@ -117,7 +117,7 @@ parecer de uma emenda" exige varrer o AuditLog — dívida reconhecida.
 | `TipoNorma` | `LOM`, `REGIMENTO_INTERNO`, `OUTRO` |
 | `EscopoParametro` | `GERAL`, `EXERCICIO` |
 | `ModoValidacao` | `BLOQUEANTE`, `ALERTA` |
-| `TipoBeneficiario` | `ORGAO_PUBLICO`, `ENTIDADE_TERCEIRO_SETOR`, `OUTRO` |
+| `TipoBeneficiario` | `ADMINISTRACAO_DIRETA`, `ADMINISTRACAO_INDIRETA`, `TERCEIRO_SETOR` |
 | `TipoEmenda` | `ACRESCIMO`, `ANULACAO`, `REMANEJAMENTO`, `IMPOSITIVA` |
 | `StatusEmenda` | `RASCUNHO`, `EM_VALIDACAO`, `VALIDA`, `INVALIDA`, `SUBMETIDA`, `EM_TRAMITACAO`, `APROVADA`, `REJEITADA` |
 | `ResultadoValidacao` | `VALIDA`, `INVALIDA` |
@@ -138,3 +138,41 @@ Município fictício, exercício **2025**, PL `PL 45/2024` (LOA, `EM_TRAMITACAO`
   emendas em nome próprio;
 - o seed é **idempotente** (upserts): alterar senha direto no banco é
   sobrescrito se o seed rodar de novo.
+
+
+## Plano de trabalho simplificado
+
+Duas entidades acrescentadas em 20/08/2026, a pedido do jurídico do cliente.
+
+| Modelo | Papel |
+| --- | --- |
+| `PlanoTrabalho` | 1:1 com `Emenda`. Guarda justificativa, objetivo, a declaração da entidade e o token do link de preenchimento externo. |
+| `ItemPlanoTrabalho` | Linha da planilha orçamentária: descrição, quantidade e valor unitário. O total é **derivado**, nunca gravado. |
+
+**Não é o plano de trabalho do MROSC.** O plano completo da Lei 13.019/2014 —
+metas no formato Audesp, matriz de indicadores, memória de cálculo de RH, rateio
+de custos indiretos, cronograma de desembolso — é elaborado na **execução
+orçamentária**, quando o município for de fato repassar o recurso à entidade.
+O que existe aqui é o mínimo da apresentação da emenda.
+
+O que o plano exige depende da **categoria do beneficiário final** — a categoria
+define o rito, não é rótulo:
+
+| Categoria | Exige |
+| --- | --- |
+| `TERCEIRO_SETOR` | justificativa + objetivo + declaração + planilha que fecha com o valor da emenda |
+| `ADMINISTRACAO_DIRETA` | só a justificativa |
+| `ADMINISTRACAO_INDIRETA` | só a justificativa |
+
+As regras são puras e vivem em `src/lib/plano-trabalho.ts`, testadas em
+`src/lib/__tests__/plano-trabalho.test.ts`. O motor consome o resultado pela
+checagem `PLANO_TRABALHO`, que é requisito da **remessa** — nunca do rascunho.
+
+### Token de preenchimento pela entidade
+
+`PlanoTrabalho.token` é a credencial de uma rota pública
+(`/plano-trabalho/<token>`) que a entidade beneficiária abre sem ter conta no
+sistema. 32 bytes de entropia, validade de 30 dias, revogável pelo gabinete.
+A rota é liberada no `authorized` de `src/lib/auth.config.ts`; a conferência de
+validade e o rate limit ficam na própria ação. Depois que a emenda sai do
+rascunho, o link para de funcionar mesmo dentro do prazo.

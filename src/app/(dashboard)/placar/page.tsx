@@ -1,10 +1,11 @@
 import { getAnoAtivo } from "@/lib/exercicio";
-import { getDados360, brl, brlCompacto } from "@/lib/queries-360";
+import { getDados360, brlCompacto } from "@/lib/queries-360";
 import { ROTULO_TIPO_EMENDA } from "@/lib/rotulos";
 import { SecTitle } from "@/components/e360/sec-title";
 import { KpiCard } from "@/components/e360/kpi-card";
 import { Card360, Eyebrow } from "@/components/e360/card360";
 import { MiniBar } from "@/components/e360/minibar";
+import { TabelaAutores } from "@/components/e360/tabela-autores";
 import { PrintButton } from "@/components/emendas/print-button";
 
 export default async function PlacarPage() {
@@ -76,7 +77,7 @@ export default async function PlacarPage() {
               key={t.status}
               rotulo={ROTULO_TIPO_EMENDA[t.status] ?? t.status}
               pct={c.valor > 0 ? (t.valor / c.valor) * 100 : 0}
-              valor={`${brl(t.valor)} · ${t.qtd} itens`}
+              valor={`${brlCompacto(t.valor)} · ${t.qtd}`}
             />
           ))}
         </Card360>
@@ -88,7 +89,7 @@ export default async function PlacarPage() {
               rotulo={d.nome}
               larguraRotulo={210}
               pct={porDestino[0]?.valor > 0 ? (d.valor / porDestino[0].valor) * 100 : 0}
-              valor={brl(d.valor)}
+              valor={brlCompacto(d.valor)}
             />
           ))}
         </Card360>
@@ -98,53 +99,17 @@ export default async function PlacarPage() {
         <Eyebrow>
           Cota × reserva de saúde por autor
           {params.cotaPorAutor != null
-            ? ` — cada barra = ${brl(params.cotaPorAutor)}`
+            ? ` — cota de ${brlCompacto(params.cotaPorAutor)}`
             : ""}
         </Eyebrow>
-        {porAutor.map((a) => {
-          const base = params.cotaPorAutor ?? Math.max(a.valorTotal, 1);
-          return (
-            <MiniBar
-              key={a.autorId}
-              rotulo={a.nome}
-              pct={(a.valorSaude / base) * 100}
-              valor={`Saúde ${brl(a.valorSaude)} · total ${brl(a.valorTotal)}`}
-              marcaPct={
-                c.pisoSaudeAutor != null && params.cotaPorAutor != null
-                  ? (c.pisoSaudeAutor / params.cotaPorAutor) * 100
-                  : undefined
-              }
-              alerta={
-                c.limiteDemaisAutor != null &&
-                a.valorDemais > c.limiteDemaisAutor + 0.5
-              }
-            />
-          );
-        })}
-        {/* A marca e a cor da barra só significam algo com a legenda. */}
-        {c.pisoSaudeAutor != null || c.limiteDemaisAutor != null ? (
-          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 border-t pt-3 text-[11px] font-medium text-muted-foreground">
-            {c.pisoSaudeAutor != null ? (
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-3 w-0.5 bg-foreground" aria-hidden />
-                reserva da saúde ({brl(c.pisoSaudeAutor)})
-              </span>
-            ) : null}
-            {c.limiteDemaisAutor != null ? (
-              <span className="inline-flex items-center gap-1.5">
-                <span
-                  className="h-2 w-4 rounded-full bg-brand-amber"
-                  aria-hidden
-                />
-                demais áreas acima do limite de {brl(c.limiteDemaisAutor)}
-              </span>
-            ) : null}
-            <span className="inline-flex items-center gap-1.5">
-              <span className="grad-hi h-2 w-4 rounded-full" aria-hidden />
-              parcela em saúde
-            </span>
-          </div>
-        ) : null}
+        {/* Sem legenda de rodapé: a barra empilhada e os cabeçalhos das colunas
+            já dizem o que cada faixa é. A legenda existia para explicar uma
+            barra que mostrava só a saúde. */}
+        <TabelaAutores
+          linhas={porAutor}
+          cota={params.cotaPorAutor}
+          limiteDemais={c.limiteDemaisAutor}
+        />
       </Card360>
     </div>
   );

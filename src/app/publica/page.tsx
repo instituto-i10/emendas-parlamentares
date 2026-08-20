@@ -50,8 +50,8 @@ export default async function PublicaPage() {
     <div className="flex min-h-screen flex-col bg-background">
       {/* ---------------------------------------------------------- topo --- */}
       <header className="grad-dark sticky top-0 z-40 text-white">
-        <div className="mx-auto flex h-16 max-w-[1240px] items-center gap-6 px-5">
-          <Link href="/publica">
+        <div className="mx-auto flex h-16 min-w-0 max-w-[1240px] items-center gap-3 px-4 sm:gap-6 sm:px-5">
+          <Link href="/publica" className="min-w-0 shrink">
             <LogoEmendas360 />
           </Link>
           <nav className="ml-auto hidden items-center gap-7 md:flex">
@@ -70,7 +70,7 @@ export default async function PublicaPage() {
           </nav>
           <Link
             href="/login"
-            className="ml-auto rounded-[10px] bg-white/10 px-4 py-2 text-[12.5px] font-bold text-white transition-colors hover:bg-white/20 md:ml-0"
+            className="ml-auto shrink-0 whitespace-nowrap rounded-[10px] bg-white/10 px-3 py-2 text-[12.5px] font-bold text-white transition-colors hover:bg-white/20 sm:px-4 md:ml-0"
           >
             Entrar
           </Link>
@@ -190,7 +190,7 @@ export default async function PublicaPage() {
         {/* ------------------------------------------------ para onde vai --- */}
         <section className="mx-auto max-w-[1240px] px-5 pt-14">
           <div className="grid gap-4 lg:grid-cols-[1fr_1.35fr]">
-            <div className="rounded-xl bg-card p-[22px] shadow-card">
+            <div className="min-w-0 rounded-xl bg-card p-[22px] shadow-card">
               <h2 className="text-[15.5px] font-bold tracking-[-.015em]">
                 Saúde × demais áreas
               </h2>
@@ -202,7 +202,7 @@ export default async function PublicaPage() {
               <DonutLegenda fatias={fatias} formatar={brlCompacto} />
             </div>
 
-            <div className="rounded-xl bg-card p-[22px] shadow-card">
+            <div className="min-w-0 rounded-xl bg-card p-[22px] shadow-card">
               <div className="mb-1 flex items-baseline justify-between gap-3">
                 <h2 className="text-[15.5px] font-bold tracking-[-.015em]">
                   Para onde vai o dinheiro
@@ -234,7 +234,7 @@ export default async function PublicaPage() {
                         <div className="mt-1.5 flex items-center gap-2.5">
                           <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary">
                             <i
-                              className="grad-hi block h-full rounded-full"
+                              className="block h-full rounded-full bg-brand-cyan"
                               style={{ width: `${pct}%` }}
                             />
                           </div>

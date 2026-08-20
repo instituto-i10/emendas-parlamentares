@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -9,7 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RelatorioValidacao } from "./relatorio-validacao";
-import { ROTULO_TIPO_EMENDA, ROTULO_TIPO_INSTRUMENTO, opcoes } from "@/lib/rotulos";
+import {
+  AJUDA_TIPO_BENEFICIARIO,
+  ROTULO_TIPO_BENEFICIARIO,
+  ROTULO_TIPO_EMENDA,
+  ROTULO_TIPO_INSTRUMENTO,
+  opcoes,
+} from "@/lib/rotulos";
 import {
   fetchAcoes,
   fetchDotacoes,
@@ -44,6 +52,54 @@ const idDoRotulo = (label: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
+// A dotação é a linha do orçamento onde o dinheiro entra. O vereador não a
+// reconhece pelo código — apontamento do jurídico do cliente —, então o cartão
+// abre a classificação inteira por extenso e fecha com uma frase em linguagem
+// corrente.
+function CartaoDotacao({ d }: { d: DotacaoOpcao }) {
+  const linhas: [string, string][] = [
+    ["Órgão", `${d.orgaoCodigo} — ${d.orgaoNome}`],
+    ["Unidade orçamentária", `${d.unidadeCodigo} — ${d.unidadeNome}`],
+    ["Função / Subfunção", `${d.funcaoCodigo} ${d.funcaoNome} · ${d.subfuncaoCodigo} ${d.subfuncaoNome}`],
+    ["Programa", `${d.programaCodigo} — ${d.programaNome}`],
+    ["Ação", `${d.acaoCodigo} — ${d.acaoNome}`],
+    ["Despesa", `${d.naturezaCodigo} — ${d.naturezaNome}`],
+    ["Fonte de recurso", `${d.fonteCodigo} — ${d.fonteNome}`],
+    [
+      "Saldo disponível",
+      d.valorAtual.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+    ],
+  ];
+  return (
+    <div className="rounded-xl border bg-secondary/40 p-4">
+      <div className="mb-3 text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">
+        O que é esta dotação
+      </div>
+      <dl className="grid gap-x-4 gap-y-2 sm:grid-cols-[minmax(0,150px)_1fr]">
+        {linhas.map(([rotulo, valor]) => (
+          <div key={rotulo} className="contents">
+            <dt className="text-[12px] font-semibold text-muted-foreground">
+              {rotulo}
+            </dt>
+            <dd className="text-[13px] font-medium">{valor}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-3 border-t pt-2.5 text-[12.5px] leading-relaxed text-muted-foreground">
+        Em outras palavras: recurso da <b>{d.unidadeNome}</b> para{" "}
+        <b>{d.naturezaNome.toLowerCase()}</b> na ação <b>{d.acaoNome}</b>.
+      </p>
+      {d.naturezaGrupo.trim() === "1" && d.funcaoCodigo === "10" ? (
+        <p className="mt-2.5 rounded-lg bg-destructive/10 px-3 py-2 text-[12.5px] font-medium text-destructive">
+          Esta é uma dotação de pessoal e encargos na função Saúde. O art. 140,
+          § 7º, da Lei Orgânica veda destinar a parcela da saúde a pessoal ou
+          encargos sociais — a pré-checagem vai apontar isso.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function Selecao({
   label,
   value,
@@ -65,7 +121,7 @@ function Selecao({
       <Label htmlFor={id}>{label}</Label>
       <select
         id={id}
-        className={controle}
+        className={`${controle} campo-select pl-3 pr-9`}
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
@@ -86,7 +142,7 @@ export function NovaEmendaForm({
   beneficiarios = [],
 }: {
   base: Base;
-  beneficiarios?: { id: string; nome: string }[];
+  beneficiarios?: { id: string; nome: string; tipo: string }[];
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -166,11 +222,22 @@ export function NovaEmendaForm({
   }
 
   const dotacaoSel = dotacoes.find((d) => d.id === dotacaoId);
+  const benefSel = beneficiarios.find((b) => b.id === beneficiarioId);
   const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+  // Rascunho salva com o que houver: só a dotação é exigida, porque é ela que
+  // ancora a emenda a uma linha do orçamento (e vem da cascata, não é digitada).
+  // Objeto, justificativa e valor são cobrados pela pré-checagem antes da
+  // remessa — não na hora de guardar o trabalho.
   const podeSalvar =
-    !!dotacaoId && objeto.trim() && justificativa.trim() && valor.trim() &&
+    !!dotacaoId &&
     (tipo !== "REMANEJAMENTO" || (origemId && destinoId && origemId !== destinoId));
+
+  const faltando = [
+    !objeto.trim() && "objeto",
+    !justificativa.trim() && "justificativa",
+    !valor.trim() && "valor",
+  ].filter((x): x is string => !!x);
 
   function montarInput() {
     return {
@@ -212,7 +279,9 @@ export function NovaEmendaForm({
       if (res.ok && res.resultado) {
         setRelatorio(res.resultado);
         toast[res.resultado.resultado === "VALIDA" ? "success" : "warning"](
-          res.resultado.resultado === "VALIDA" ? "Emenda válida." : "Emenda inválida — veja o relatório."
+          res.resultado.resultado === "VALIDA"
+            ? "Pré-checagem sem pendências."
+            : "Pré-checagem apontou pendências — veja o relatório."
         );
       } else if (!res.ok) {
         toast.error(res.error);
@@ -267,19 +336,21 @@ export function NovaEmendaForm({
                 label="Dotação"
                 value={dotacaoId}
                 onChange={(v) => { setDotacaoId(v); sujar(); }}
-                options={dotacoes.map((d) => ({ id: d.id, codigo: d.naturezaCodigo, nome: `Fonte ${d.fonteCodigo} · saldo ${brl(d.valorAtual)}` }))}
+                options={dotacoes.map((d) => ({
+                  id: d.id,
+                  codigo: d.naturezaCodigo,
+                  nome: `${d.naturezaNome} · fonte ${d.fonteNome} · saldo ${brl(d.valorAtual)}`,
+                }))}
                 disabled={!acaoId}
               />
             </div>
-            {/* Natureza e Fonte — SOMENTE LEITURA a partir da dotação */}
-            <div className="space-y-1.5">
-              <Label htmlFor="natureza-leitura">Natureza da despesa (leitura)</Label>
-              <Input id="natureza-leitura" readOnly value={dotacaoSel ? `${dotacaoSel.naturezaCodigo} — ${dotacaoSel.naturezaNome}` : ""} placeholder="—" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="fonte-leitura">Fonte de recurso (leitura)</Label>
-              <Input id="fonte-leitura" readOnly value={dotacaoSel ? `${dotacaoSel.fonteCodigo} — ${dotacaoSel.fonteNome}` : ""} placeholder="—" />
-            </div>
+            {/* A classificação por extenso substitui os antigos campos de
+                leitura de natureza e fonte, que repetiam o código. */}
+            {dotacaoSel ? (
+              <div className="sm:col-span-2">
+                <CartaoDotacao d={dotacaoSel} />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -288,10 +359,13 @@ export function NovaEmendaForm({
           <CardHeader>
             <CardTitle className="text-base">Emenda</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-4">
+          {/* Duas colunas a partir de sm: tipo, valor e beneficiário são
+              campos curtos e empilhá-los deixava o formulário alto à toa.
+              Objeto e justificativa ficam em largura cheia — são textos. */}
+          <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="tipo">Tipo</Label>
-              <select id="tipo" className={controle} value={tipo} onChange={(e) => { setTipo(e.target.value); sujar(); }}>
+              <select id="tipo" className={`${controle} campo-select pl-3 pr-9`} value={tipo} onChange={(e) => { setTipo(e.target.value); sujar(); }}>
                 {opcoes(ROTULO_TIPO_EMENDA).map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
@@ -299,7 +373,7 @@ export function NovaEmendaForm({
             </div>
 
             {tipo === "REMANEJAMENTO" ? (
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
                 <Selecao
                   label="Dotação de origem"
                   value={origemId}
@@ -319,53 +393,93 @@ export function NovaEmendaForm({
               <Label htmlFor="valor">Valor</Label>
               <Input id="valor" inputMode="decimal" placeholder="150000,00" value={valor} onChange={(e) => { setValor(e.target.value); sujar(); }} />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="objeto">Objeto</Label>
-              <textarea id="objeto" className={`${controle} min-h-20 py-2`} value={objeto} onChange={(e) => { setObjeto(e.target.value); sujar(); }} placeholder="Descrição narrativa do objeto da emenda" />
-            </div>
-            <div className="space-y-1.5">
+            {/* Agrupado por categoria porque a categoria decide o rito: quem
+                for do terceiro setor leva plano de trabalho completo; a
+                administração pública, só a justificativa. */}
+            <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="beneficiario">Beneficiário final</Label>
               <select
                 id="beneficiario"
-                className={controle}
+                className={`${controle} campo-select pl-3 pr-9`}
                 value={beneficiarioId}
                 onChange={(e) => { setBeneficiarioId(e.target.value); sujar(); }}
               >
                 <option value="">— (cadastre em Configurações → Beneficiários)</option>
-                {beneficiarios.map((b) => (
-                  <option key={b.id} value={b.id}>{b.nome}</option>
-                ))}
+                {(["ADMINISTRACAO_DIRETA", "ADMINISTRACAO_INDIRETA", "TERCEIRO_SETOR"] as const)
+                  .map((cat) => {
+                    const doGrupo = beneficiarios.filter((b) => b.tipo === cat);
+                    if (doGrupo.length === 0) return null;
+                    return (
+                      <optgroup key={cat} label={ROTULO_TIPO_BENEFICIARIO[cat]}>
+                        {doGrupo.map((b) => (
+                          <option key={b.id} value={b.id}>{b.nome}</option>
+                        ))}
+                      </optgroup>
+                    );
+                  })}
               </select>
+              {benefSel ? (
+                <p className="text-[12px] leading-relaxed text-muted-foreground">
+                  {AJUDA_TIPO_BENEFICIARIO[benefSel.tipo]}{" "}
+                  {benefSel.tipo === "TERCEIRO_SETOR"
+                    ? "O plano de trabalho vai pedir justificativa, objetivo, declaração e planilha orçamentária."
+                    : "O plano de trabalho vai pedir apenas a justificativa."}
+                </p>
+              ) : null}
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
+              <Label htmlFor="objeto">Objeto</Label>
+              <textarea id="objeto" className={`${controle} min-h-20 py-2`} value={objeto} onChange={(e) => { setObjeto(e.target.value); sujar(); }} placeholder="Descrição narrativa do objeto da emenda" />
+            </div>
+            <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
               <Label htmlFor="justificativa">Justificativa</Label>
               <textarea id="justificativa" className={`${controle} min-h-20 py-2`} value={justificativa} onChange={(e) => { setJustificativa(e.target.value); sujar(); }} />
             </div>
           </CardContent>
         </Card>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button onClick={salvar} disabled={pending || !podeSalvar}>
             {emendaId ? "Salvar alterações" : "Salvar rascunho"}
           </Button>
           <Button variant="outline" onClick={validar} disabled={pending || !emendaId}>
             Validar
           </Button>
-          <Button variant="secondary" onClick={submeter} disabled={pending || !podeSubmeter} title={!podeSubmeter ? "Valide a emenda (VÁLIDA) antes de submeter" : undefined}>
+          <Button variant="secondary" onClick={submeter} disabled={pending || !podeSubmeter} title={!podeSubmeter ? "Faça a pré-checagem e resolva as pendências antes de remeter" : undefined}>
             Submeter
           </Button>
+          {emendaId ? (
+            <Link
+              href={`/legislativo/emendas/${emendaId}/plano-trabalho`}
+              className="inline-flex items-center gap-1.5 rounded-[10px] bg-secondary px-3 py-2 text-[12.5px] font-semibold transition-colors hover:bg-accent"
+            >
+              <ClipboardList className="size-4" aria-hidden />
+              Plano de trabalho
+            </Link>
+          ) : null}
+          {faltando.length > 0 ? (
+            <span className="text-[12px] font-medium text-muted-foreground">
+              Rascunho salva assim mesmo. Falta preencher {faltando.join(", ")}{" "}
+              para poder remeter.
+            </span>
+          ) : null}
         </div>
       </div>
 
-      {/* Coluna do relatório */}
-      <div>
+      {/* Coluna do relatório.
+          `sticky` com `top` abaixo da topbar (h-16 = 64px) e altura máxima
+          própria: o formulário é alto, e sem isso o relatório sumia da tela
+          justamente quando a pessoa desce para corrigir o que ele apontou.
+          `self-start` é obrigatório — em grid o item estica por padrão, e um
+          item esticado nunca gruda. */}
+      <div className="lg:sticky lg:top-[84px] lg:max-h-[calc(100vh-104px)] lg:self-start lg:overflow-y-auto">
         {relatorio ? (
           <RelatorioValidacao relatorio={relatorio} />
         ) : (
-          <div className="rounded-xl bg-secondary p-6 text-center text-[12.5px] font-medium text-muted-foreground">
-            Salve o rascunho e clique em <b>Validar</b> para ver o relatório de
-            compatibilidade. A submissão só é liberada quando a emenda está{" "}
-            <b>válida</b>.
+          <div className="rounded-xl bg-secondary p-6 text-center text-[12.5px] font-medium leading-relaxed text-muted-foreground">
+            Salve o rascunho quando quiser — mesmo incompleto — e clique em{" "}
+            <b>Validar</b> para a pré-checagem das condições de validade. A
+            remessa só é liberada quando nenhuma pendência resta.
           </div>
         )}
       </div>

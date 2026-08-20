@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import { Trash2, Wand2 } from "lucide-react";
 import {
   Table,
@@ -19,6 +22,7 @@ import {
 } from "@/lib/actions/beneficiarios";
 import { MesclarDuplicados } from "./mesclar-duplicados";
 import { ROTULO_TIPO_BENEFICIARIO, opcoes } from "@/lib/rotulos";
+import { ListaPaginada } from "@/components/lista-paginada";
 
 type Beneficiario = {
   id: string;
@@ -44,10 +48,16 @@ export function BeneficiariosTab({
   beneficiarios: Beneficiario[];
   duplicados?: Grupo[];
 }) {
+  const [categoria, setCategoria] = useState("");
+  const listados = useMemo(
+    () => (categoria ? beneficiarios.filter((b) => b.tipo === categoria) : beneficiarios),
+    [beneficiarios, categoria]
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <p className="max-w-2xl text-sm text-muted-foreground">
+        <p className="min-w-0 max-w-2xl break-words text-sm text-muted-foreground">
           Beneficiário final de cada emenda (órgão público ou entidade do
           terceiro setor) — a ponta da <b>rastreabilidade</b> exigida pelo STF e
           pelo TCE. Use <b>Derivar dos objetos</b> para criar e vincular
@@ -85,12 +95,31 @@ export function BeneficiariosTab({
 
       <MesclarDuplicados grupos={duplicados} />
 
-      {beneficiarios.length === 0 ? (
+      {listados.length === 0 ? (
         <EmptyState
           titulo="Nenhum beneficiário cadastrado"
           descricao="Cadastre manualmente ou derive automaticamente do objeto das emendas."
         />
       ) : (
+        <ListaPaginada
+          itens={listados}
+          rotuloItens="beneficiários"
+          porPagina={12}
+          placeholder="Buscar por nome ou CNPJ"
+          textoBusca={(b) => `${b.nome} ${b.cnpj ?? ""}`}
+          filtros={[
+            {
+              rotulo: "Filtrar por categoria",
+              vazio: "Todas as categorias",
+              valor: categoria,
+              onChange: setCategoria,
+              opcoes: Object.entries(ROTULO_TIPO_BENEFICIARIO).map(
+                ([valor, rotulo]) => ({ valor, rotulo })
+              ),
+            },
+          ]}
+        >
+          {(visiveis) => (
         <div className="rounded-xl bg-card p-4 shadow-card">
           <Table>
             <TableHeader>
@@ -103,13 +132,13 @@ export function BeneficiariosTab({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {beneficiarios.map((b) => (
+              {visiveis.map((b) => (
                 <TableRow key={b.id}>
                   <TableCell className="font-medium">{b.nome}</TableCell>
                   <TableCell>
                     <Badge
                       variant={
-                        b.tipo === "ENTIDADE_TERCEIRO_SETOR" ? "secondary" : "outline"
+                        b.tipo === "TERCEIRO_SETOR" ? "secondary" : "outline"
                       }
                     >
                       {ROTULO_TIPO_BENEFICIARIO[b.tipo] ?? b.tipo}
@@ -137,6 +166,8 @@ export function BeneficiariosTab({
             </TableBody>
           </Table>
         </div>
+          )}
+        </ListaPaginada>
       )}
     </div>
   );

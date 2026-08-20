@@ -6,6 +6,7 @@ import { Banner } from "@/components/e360/banner";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { getParametros360, brl } from "@/lib/queries-360";
 import { PrintButton } from "@/components/emendas/print-button";
+import { Scale } from "lucide-react";
 
 // Manual orientativo de indicação e execução de emendas impositivas — a
 // ausência deste manual é apontada como IMPROPRIEDADE pelo TCE-SP (Comunicado
@@ -109,13 +110,13 @@ export default async function ManualPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="grad-dark text-white print:hidden">
-        <div className="flex h-14 items-center gap-3 px-5 lg:px-7">
-          <Link href="/publica">
+        <div className="flex h-14 min-w-0 items-center gap-3 px-4 sm:px-5 lg:px-7">
+          <Link href="/publica" className="min-w-0 shrink">
             <LogoEmendas360 />
           </Link>
           <Link
             href="/publica/emendas"
-            className="ml-auto rounded-[10px] bg-white/10 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-white/20"
+            className="ml-auto shrink-0 whitespace-nowrap rounded-[10px] bg-white/10 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-white/20 sm:px-4"
           >
             Consultar emendas
           </Link>
@@ -133,7 +134,7 @@ export default async function ManualPage() {
           </div>
         </div>
 
-        <Banner tom="ok" emoji="⚖️">
+        <Banner tom="ok" icone={Scale}>
           <b>Fundamentos:</b> art. 166, §§ 9º e 11 e art. 163-A da Constituição
           Federal · art. 140 da Lei Orgânica do Município · Comunicados SDG
           28/2025, Audesp 55/2025 e 09/2026 e Resolução 17/2025 do TCE-SP ·

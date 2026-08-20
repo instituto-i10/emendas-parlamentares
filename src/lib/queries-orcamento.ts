@@ -80,13 +80,31 @@ export async function listarAcoesBase(
   );
 }
 
+// A dotação apresentada ao vereador precisa dizer O QUE É, não só o código.
+// Por isso a opção carrega a classificação inteira por extenso — órgão,
+// unidade, função, subfunção, programa, ação, natureza e fonte.
 export type DotacaoOpcao = {
   id: string;
   valorAtual: number;
   naturezaCodigo: string;
+  /** Nome por extenso do elemento; cai no código quando a base não o traz. */
   naturezaNome: string;
+  /** Grupo da natureza ("1" = pessoal e encargos — vedado à parcela da saúde). */
+  naturezaGrupo: string;
   fonteCodigo: string;
   fonteNome: string;
+  orgaoCodigo: string;
+  orgaoNome: string;
+  unidadeCodigo: string;
+  unidadeNome: string;
+  funcaoCodigo: string;
+  funcaoNome: string;
+  subfuncaoCodigo: string;
+  subfuncaoNome: string;
+  programaCodigo: string;
+  programaNome: string;
+  acaoCodigo: string;
+  acaoNome: string;
 };
 
 export async function listarDotacoesBase(filtros: {
@@ -107,8 +125,16 @@ export async function listarDotacoesBase(filtros: {
           acaoId: filtros.acaoId,
         },
         include: {
-          naturezaDespesa: { select: { codigo: true, elemento: true } },
+          naturezaDespesa: {
+            select: { codigo: true, elemento: true, nome: true, grupo: true },
+          },
           fonteRecurso: { select: { codigo: true, nome: true } },
+          orgao: { select: { codigo: true, nome: true } },
+          unidadeOrcamentaria: { select: { codigo: true, nome: true } },
+          funcao: { select: { codigo: true, nome: true } },
+          subfuncao: { select: { codigo: true, nome: true } },
+          programa: { select: { codigo: true, nome: true } },
+          acao: { select: { codigo: true, nome: true } },
         },
         orderBy: { createdAt: "asc" },
       }),
@@ -118,9 +144,24 @@ export async function listarDotacoesBase(filtros: {
     id: d.id,
     valorAtual: Number(d.valorAtual),
     naturezaCodigo: d.naturezaDespesa.codigo,
-    naturezaNome: d.naturezaDespesa.elemento,
+    // Bases antigas (e importações de códigos fora da tabela) não têm o nome:
+    // melhor repetir o código do que mostrar campo vazio.
+    naturezaNome: d.naturezaDespesa.nome ?? d.naturezaDespesa.elemento,
+    naturezaGrupo: d.naturezaDespesa.grupo,
     fonteCodigo: d.fonteRecurso.codigo,
     fonteNome: d.fonteRecurso.nome,
+    orgaoCodigo: d.orgao.codigo,
+    orgaoNome: d.orgao.nome,
+    unidadeCodigo: d.unidadeOrcamentaria.codigo,
+    unidadeNome: d.unidadeOrcamentaria.nome,
+    funcaoCodigo: d.funcao.codigo,
+    funcaoNome: d.funcao.nome,
+    subfuncaoCodigo: d.subfuncao.codigo,
+    subfuncaoNome: d.subfuncao.nome,
+    programaCodigo: d.programa.codigo,
+    programaNome: d.programa.nome,
+    acaoCodigo: d.acao.codigo,
+    acaoNome: d.acao.nome,
   }));
 }
 

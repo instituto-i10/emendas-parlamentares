@@ -64,16 +64,48 @@ test.describe("apresentação de emenda", () => {
     await expect(page.getByLabel("Dotação", { exact: true })).toBeDisabled();
   });
 
-  test("natureza e fonte são preenchidas a partir da dotação, em somente leitura", async ({ page }) => {
+  // O vereador não reconhece a dotação pelo código — apontamento do jurídico
+  // do cliente. Os antigos campos de leitura de natureza e fonte, que só
+  // repetiam o código, deram lugar à classificação inteira por extenso.
+  test("a dotação escolhida é descrita por extenso", async ({ page }) => {
     await abrirFormulario(page);
     await percorrerCascata(page);
 
-    const natureza = page.getByLabel("Natureza da despesa (leitura)", { exact: true });
-    const fonte = page.getByLabel("Fonte de recurso (leitura)", { exact: true });
-    await expect(natureza).toHaveAttribute("readonly", "");
-    await expect(fonte).toHaveAttribute("readonly", "");
-    await expect(natureza).not.toHaveValue("");
-    await expect(fonte).not.toHaveValue("");
+    const cartao = page.getByText("O que é esta dotação").locator("..");
+    await expect(cartao).toBeVisible();
+    for (const rotulo of [
+      "Órgão",
+      "Unidade orçamentária",
+      "Função / Subfunção",
+      "Programa",
+      "Ação",
+      "Despesa",
+      "Fonte de recurso",
+      "Saldo disponível",
+    ]) {
+      await expect(cartao.getByText(rotulo, { exact: true })).toBeVisible();
+    }
+    // A frase em linguagem corrente é o que fecha o cartão.
+    await expect(cartao.getByText(/Em outras palavras/)).toBeVisible();
+  });
+
+  // Regra do jurídico do cliente: "sempre salvar rascunho independente de
+  // estar completa a emenda; somente não habilitar a remessa".
+  test("rascunho salva incompleto; a remessa é que fica travada", async ({ page }) => {
+    await abrirFormulario(page);
+    await percorrerCascata(page);
+
+    // Nada preenchido além da dotação.
+    await expect(page.getByRole("button", { name: "Salvar rascunho" })).toBeEnabled();
+    await expect(page.getByText(/Falta preencher objeto, justificativa, valor/)).toBeVisible();
+
+    await page.getByRole("button", { name: "Salvar rascunho" }).click();
+    await expect(page.getByText("Rascunho salvo.")).toBeVisible();
+
+    await page.getByRole("button", { name: "Validar" }).click();
+    await expect(page.getByText("Pré-checagem:")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText("Emenda preenchida")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Submeter" })).toBeDisabled();
   });
 
   test("rascunho → validar → submeter", async ({ page }) => {
@@ -95,7 +127,7 @@ test.describe("apresentação de emenda", () => {
 
     await page.getByRole("button", { name: "Validar" }).click();
     // O relatório item a item substitui o placeholder.
-    await expect(page.getByText("Resultado da validação:")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText("Pré-checagem:")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("Exercício está aberto")).toBeVisible();
     await expect(page.getByText("Dotação existe e pertence à base")).toBeVisible();
 

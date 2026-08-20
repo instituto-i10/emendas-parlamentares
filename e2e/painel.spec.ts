@@ -12,6 +12,31 @@ test.describe("painel da comissão", () => {
     await page.goto("/painel");
   });
 
+  // Regressão: o seletor já abriu FORA DA TELA por falta do <SelectValue> no
+  // gatilho — o Radix usa esse nó como âncora do posicionamento. Nenhum teste
+  // abria o menu, então a suíte inteira passou com o seletor quebrado. Este
+  // teste existe para isso não se repetir.
+  test("o seletor de ciclo abre e mostra elaboração/execução", async ({ page }) => {
+    const gatilho = page.getByRole("combobox", { name: "Ciclo orçamentário" });
+    await expect(gatilho).toHaveText(/^\d{4}\/\d{4}$/);
+
+    await gatilho.click();
+
+    const opcoes = page.getByRole("option");
+    await expect(opcoes.first()).toBeVisible();
+
+    // Dentro da janela: é exatamente o que falhava antes.
+    const caixa = await opcoes.first().boundingBox();
+    expect(caixa).not.toBeNull();
+    const janela = page.viewportSize()!;
+    expect(caixa!.y).toBeGreaterThanOrEqual(0);
+    expect(caixa!.y).toBeLessThan(janela.height);
+    expect(caixa!.x).toBeGreaterThanOrEqual(0);
+    expect(caixa!.x).toBeLessThan(janela.width);
+
+    await expect(opcoes.first()).toContainText(/emendas elaboradas em \d{4} para o orçamento de \d{4}/);
+  });
+
   test("consolida as emendas do exercício", async ({ page }) => {
     // Sem número fixo: as specs compartilham o banco e a suíte de apresentação
     // cria emendas antes desta rodar. O que importa é o consolidado existir.

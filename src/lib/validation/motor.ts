@@ -31,6 +31,8 @@ export type DotacaoCtx = {
   fonteRecursoId: string;
   valorAtual: number;
   acaoProgramaId: string; // programaId ao qual a ação pertence
+  // Grupo da natureza da despesa: "1" = Pessoal e Encargos Sociais.
+  naturezaGrupo: string;
 };
 
 export type ContextoEmenda = {
@@ -40,6 +42,10 @@ export type ContextoEmenda = {
     exercicioId: string;
     instrumentoBaseId: string;
     autorId: string;
+    // Rascunho pode estar incompleto; a checagem CAMPOS_PREENCHIDOS é que
+    // impede a remessa enquanto faltar alguma coisa.
+    objeto: string;
+    justificativa: string;
   };
   exercicioStatus: string;
   instrumentoBaseStatus: string;
@@ -61,6 +67,10 @@ export type ContextoEmenda = {
   modoReservaSaude: "BLOQUEANTE" | "ALERTA" | null;
   emendaEhSaude: boolean;
   somaAutorDemaisExistente: number;
+  // Plano de trabalho simplificado. `null` na categoria = beneficiário final
+  // ainda não informado; as pendências vêm apuradas de lib/plano-trabalho.
+  beneficiarioCategoria: string | null;
+  pendenciasPlanoTrabalho: string[];
 };
 
 const STATUS_BASE_ABERTO = new Set(["EM_TRAMITACAO"]);
@@ -80,6 +90,27 @@ export function avaliarEmenda(ctx: ContextoEmenda): ResultadoMotor {
   ) => itens.push({ codigo, descricao, status, detalhe });
 
   const d = ctx.dotacao;
+
+  // 0) CAMPOS_PREENCHIDOS
+  // O rascunho pode ser salvo pela metade — o que não pode é seguir assim.
+  // Esta checagem é o que troca a trava de lugar: sai do salvar, entra no
+  // validar/remeter.
+  {
+    const faltando = [
+      !ctx.emenda.objeto.trim() && "objeto",
+      !ctx.emenda.justificativa.trim() && "justificativa",
+      !(ctx.emenda.valor > 0) && "valor",
+    ].filter((x): x is string => !!x);
+    const ok = faltando.length === 0;
+    add(
+      "CAMPOS_PREENCHIDOS",
+      "Emenda preenchida",
+      ok ? "OK" : "FALHA",
+      ok
+        ? "Objeto, justificativa e valor preenchidos."
+        : `Falta preencher: ${faltando.join(", ")}.`
+    );
+  }
 
   // 1) EXERCICIO_ABERTO
   {
@@ -125,11 +156,31 @@ export function avaliarEmenda(ctx: ContextoEmenda): ResultadoMotor {
   }
 
   // 4) PROGRAMA_NO_PPA
+  // Exigência real e municipal: LOM art. 140 §1º, I ("as emendas serão admitidas
+  // desde que sejam compatíveis com o Plano Plurianual"), repetida na LDO 2027
+  // art. 23 §1º, I.
+  //
+  // O que NÃO é real é a premissa da implementação: `programasNoPPA` é derivado
+  // das DOTAÇÕES ligadas ao instrumento PPA — e PPA não tem dotação. Ele tem
+  // programas, ações e metas plurianuais; dotação é peça da LOA. Enquanto os
+  // programas do PPA não forem carregados, o conjunto chega vazio.
+  //
+  // Vazio não é "nenhum programa consta": é "não dá para conferir". Reprovar
+  // todas as emendas por isso não confere nada — só produz um falso negativo
+  // uniforme, que foi exatamente o que aconteceu quando a base de Mogi Guaçu
+  // passou a criar o instrumento PPA sem dados (commit 173eb53).
   {
     if (!d) {
       add("PROGRAMA_NO_PPA", "Programa consta no PPA", "FALHA", "Sem dotação.");
     } else if (!ctx.ppaCadastrado) {
       add("PROGRAMA_NO_PPA", "Programa consta no PPA", "ALERTA", "PPA do exercício não cadastrado.");
+    } else if (ctx.programasNoPPA.size === 0) {
+      add(
+        "PROGRAMA_NO_PPA",
+        "Programa consta no PPA",
+        "ALERTA",
+        "PPA cadastrado, mas sem programas carregados — a compatibilidade com o PPA não pôde ser conferida."
+      );
     } else {
       const ok = ctx.programasNoPPA.has(d.programaId);
       add(
@@ -283,6 +334,67 @@ export function avaliarEmenda(ctx: ContextoEmenda): ResultadoMotor {
         ok
           ? `Demais áreas acumulam ${brl(soma)} — dentro do limite de ${brl(limiteDemais)}.`
           : `Demais áreas acumulam ${brl(soma)} — acima do limite de ${brl(limiteDemais)} (${ctx.reservaSaudePct}% da cota são reservados à saúde).`
+      );
+    }
+  }
+
+  // 11) SAUDE_NAO_PESSOAL — art. 140, § 7º, da Lei Orgânica de Mogi Guaçu:
+  // a execução do montante destinado a ações e serviços públicos de saúde é
+  // "vedada a destinação para pagamento de pessoal ou encargos sociais".
+  // É proibição legal, não parâmetro de política: sempre bloqueia.
+  {
+    if (!ctx.emendaEhSaude) {
+      add(
+        "SAUDE_NAO_PESSOAL",
+        "Saúde não custeia pessoal (LOM art. 140 §7º)",
+        "OK",
+        "Emenda fora da parcela da saúde — a vedação não se aplica."
+      );
+    } else if (!d) {
+      add(
+        "SAUDE_NAO_PESSOAL",
+        "Saúde não custeia pessoal (LOM art. 140 §7º)",
+        "FALHA",
+        "Sem dotação."
+      );
+    } else {
+      const ehPessoal = d.naturezaGrupo.trim() === "1";
+      add(
+        "SAUDE_NAO_PESSOAL",
+        "Saúde não custeia pessoal (LOM art. 140 §7º)",
+        ehPessoal ? "FALHA" : "OK",
+        ehPessoal
+          ? "A dotação é do grupo 1 (Pessoal e Encargos Sociais). O art. 140, § 7º, da Lei Orgânica veda destinar a parcela da saúde a pessoal ou encargos sociais."
+          : "Dotação de saúde fora do grupo de pessoal e encargos."
+      );
+    }
+  }
+
+  // 12) PLANO_TRABALHO
+  // O plano é requisito da REMESSA, não do rascunho. O que ele pede depende da
+  // categoria do beneficiário: terceiro setor leva justificativa, objetivo,
+  // declaração e planilha; administração direta e indireta, só a justificativa.
+  {
+    if (!ctx.beneficiarioCategoria) {
+      add(
+        "PLANO_TRABALHO",
+        "Plano de trabalho",
+        "ALERTA",
+        "Beneficiário final não informado — sem ele não dá para saber o que o plano de trabalho precisa conter."
+      );
+    } else if (ctx.pendenciasPlanoTrabalho.length > 0) {
+      add(
+        "PLANO_TRABALHO",
+        "Plano de trabalho",
+        "FALHA",
+        `Falta ${ctx.pendenciasPlanoTrabalho.join("; ")}.`
+      );
+    } else {
+      add(
+        "PLANO_TRABALHO",
+        "Plano de trabalho",
+        "OK",
+        "Plano de trabalho preenchido conforme a categoria do beneficiário."
       );
     }
   }

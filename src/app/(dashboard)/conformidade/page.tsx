@@ -8,6 +8,7 @@ import { KpiCard } from "@/components/e360/kpi-card";
 import { Card360, Eyebrow } from "@/components/e360/card360";
 import { Farol, type FarolItemDado } from "@/components/e360/farol";
 import { Banner } from "@/components/e360/banner";
+import { Landmark } from "lucide-react";
 
 // Checklist de conformidade institucional — espelho do que o TCE-SP confere
 // nas contas anuais da Câmara (Comunicado GP 43/2025 e relatórios de
@@ -113,7 +114,7 @@ export default async function ConformidadePage() {
 
   return (
     <div>
-      <Banner tom="roxo" emoji="🏛️">
+      <Banner tom="roxo" icone={Landmark}>
         <b>Espelho da fiscalização do TCE-SP</b> — os itens abaixo reproduzem o
         que os auditores conferem nas contas anuais da Câmara (Comunicado GP
         43/2025). Estado calculado do sistema em tempo real.

@@ -25,15 +25,19 @@ export default function LoginPage() {
 
         <LogoEmendas360 className="relative" />
 
-        <div className="relative mx-auto my-8 w-full max-w-[440px]">
+        {/* Centralizado para acompanhar a ilustração, que já é centrada.
+            Largura maior que a da ilustração: o título tem de caber numa linha
+            só, e a coluna de 440px o quebrava em duas. */}
+        <div className="relative mx-auto my-8 w-full max-w-[600px] text-center">
           <IlustracaoConferencia className="mx-auto mb-10 w-full max-w-[330px]" />
-          {/* Texto do jurídico do cliente, ao pé da letra (só a ortografia foi
-              acertada — ele escreveu por mensagem). É posicionamento jurídico:
-              define o que a ferramenta promete, e parafrasear muda a promessa.
-              As duas frases dele viram título e subtítulo; empilhadas num
-              parágrafo só, a repetição de "a ferramenta" soaria descuido. */}
-          <h2 className="text-[26px] font-extrabold leading-tight tracking-[-.03em]">
-            As condições de validade da emenda são verificadas pela ferramenta
+          {/* Título curto + a segunda frase do jurídico do cliente como
+              subtítulo. "Pré-checagem" já está no título, então a frase dele
+              entra sem o "fazendo uma pré-checagem" do fim, que repetiria. */}
+          {/* `whitespace-nowrap` + corpo que cresce com a tela: o painel só
+              existe a partir de lg, e no lg mais estreito o título a 26px não
+              cabe numa linha. */}
+          <h2 className="whitespace-nowrap text-[21px] font-extrabold leading-tight tracking-[-.03em] xl:text-[24px] 2xl:text-[26px]">
+            A pré-checagem antes de a emenda seguir
           </h2>
           <p className="mt-2.5 text-[13.5px] font-medium leading-relaxed text-white/70">
             A ferramenta auxilia na análise da documentação fazendo uma

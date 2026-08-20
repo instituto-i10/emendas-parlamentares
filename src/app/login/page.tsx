@@ -27,13 +27,17 @@ export default function LoginPage() {
 
         <div className="relative mx-auto my-8 w-full max-w-[440px]">
           <IlustracaoConferencia className="mx-auto mb-10 w-full max-w-[330px]" />
+          {/* Texto do jurídico do cliente, ao pé da letra (só a ortografia foi
+              acertada — ele escreveu por mensagem). É posicionamento jurídico:
+              define o que a ferramenta promete, e parafrasear muda a promessa.
+              As duas frases dele viram título e subtítulo; empilhadas num
+              parágrafo só, a repetição de "a ferramenta" soaria descuido. */}
           <h2 className="text-[26px] font-extrabold leading-tight tracking-[-.03em]">
-            A pré-checagem antes de a emenda seguir
+            As condições de validade da emenda são verificadas pela ferramenta
           </h2>
           <p className="mt-2.5 text-[13.5px] font-medium leading-relaxed text-white/70">
-            As condições de validade da emenda são verificadas pela ferramenta,
-            que auxilia na análise da documentação. O juízo de mérito e a
-            assinatura seguem sendo do parlamentar.
+            A ferramenta auxilia na análise da documentação fazendo uma
+            pré-checagem.
           </p>
         </div>
 

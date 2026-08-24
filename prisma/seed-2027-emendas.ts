@@ -2,7 +2,6 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { avaliarEmenda, type ContextoEmenda, type DotacaoCtx } from "../src/lib/validation/motor";
-import { categoriaPeloNome } from "../src/lib/beneficiarios-classificacao";
 
 // ============================================================================
 // EMENDAS DE DEMONSTRAÇÃO sobre a base real de 2027.
@@ -66,34 +65,43 @@ const VEREADORES = [
   "Sônia Marquesini",
 ];
 
-const OBJETOS_SAUDE: [string, string][] = [
-  ["Aquisição de equipamentos odontológicos para a {b}", "Santa Casa de Misericórdia de Mogi Guaçu"],
-  ["Custeio de exames de imagem na {b}", "Santa Casa de Misericórdia de Mogi Guaçu"],
-  ["Reforma da sala de acolhimento da {b}", "UBS Jardim Itamaraty"],
-  ["Aquisição de veículo para visitas domiciliares vinculado à {b}", "UBS Parque Cidade Nova"],
-  ["Ampliação do atendimento fisioterápico na {b}", "APAE Mogi Guaçu"],
-  ["Aquisição de mobiliário clínico para o {b}", "Fundo Municipal de Saúde"],
-  ["Custeio de medicamentos de dispensação excepcional pelo {b}", "Fundo Municipal de Saúde"],
-  ["Aquisição de cadeiras de rodas para o {b}", "Lar dos Velhinhos São Vicente"],
-  ["Aquisição de monitores multiparâmetro para o {b}", "Hospital Municipal Dr. Tabajara Ramos"],
-  ["Custeio de plantões de pediatria no {b}", "Hospital Municipal Dr. Tabajara Ramos"],
+// Objetos das emendas de demonstração. Deliberadamente SEM nomear equipamento:
+// os nomes que estavam aqui — UBS Jardim Itamaraty, Creche Municipal Vila
+// Esperança, EMEB Professora Marta Ribeiro… — vinham do protótipo original e não
+// são equipamentos de Mogi Guaçu. O jurídico do cliente mandou apagá-los, e
+// deixá-los no texto do objeto seria apagar pela metade: eles continuariam
+// visíveis na listagem e no portal, e o botão "Derivar dos objetos" das
+// Configurações reconstruiria o cadastro inteiro num clique.
+//
+// O beneficiário final é o que o vereador informa ao apresentar a emenda. Aqui
+// ele fica em branco de propósito — a pré-checagem marca ALERTA (não falha), que
+// é exatamente o estado de uma emenda antes de o autor dizer para onde vai.
+const OBJETOS_SAUDE: string[] = [
+  "Aquisição de equipamentos odontológicos para unidade básica de saúde",
+  "Custeio de exames de imagem na rede municipal de saúde",
+  "Reforma da sala de acolhimento de unidade básica de saúde",
+  "Aquisição de veículo para visitas domiciliares da atenção primária",
+  "Ampliação do atendimento fisioterápico na rede municipal",
+  "Aquisição de mobiliário clínico para unidade de saúde",
+  "Custeio de medicamentos de dispensação excepcional",
+  "Aquisição de cadeiras de rodas para o serviço de reabilitação",
+  "Aquisição de monitores multiparâmetro para o pronto atendimento",
+  "Custeio de plantões de pediatria no pronto atendimento",
 ];
 
-const OBJETOS_DEMAIS: [string, string][] = [
-  ["Aquisição de material didático para a {b}", "EMEB Professora Marta Ribeiro"],
-  ["Reforma do parque infantil da {b}", "Creche Municipal Vila Esperança"],
-  ["Aquisição de ônibus escolar para a {b}", "Secretaria Municipal de Educação"],
-  ["Custeio de transporte de alunos da zona rural pela {b}", "Secretaria Municipal de Educação"],
-  ["Aquisição de computadores para a {b}", "EMEB Professora Marta Ribeiro"],
-  ["Instalação de cobertura na quadra da {b}", "EMEB Professora Marta Ribeiro"],
-  ["Apoio às atividades socioeducativas da {b}", "Associação de Pais e Amigos do Bairro Ypê"],
-  ["Aquisição de equipamentos de resgate para o {b}", "Corpo de Bombeiros — Posto Municipal"],
-  ["Recapeamento de vias no entorno da {b}", "Creche Municipal Vila Esperança"],
-  ["Instalação de iluminação em LED na área da {b}", "Associação de Pais e Amigos do Bairro Ypê"],
-  // Administração indireta: autarquia e fundação municipal da base real de
-  // Mogi Guaçu (órgãos 18 e 19 do orçamento).
-  ["Aquisição de equipamentos de saneamento para o {b}", "SAMAE — Serviço Autônomo Municipal de Água e Esgoto"],
-  ["Custeio de bolsas de estudo pela {b}", "FEG — Fundação Educacional Guaçuana"],
+const OBJETOS_DEMAIS: string[] = [
+  "Aquisição de material didático para a rede municipal de ensino",
+  "Reforma de parque infantil de creche municipal",
+  "Aquisição de ônibus escolar para o transporte da rede municipal",
+  "Custeio de transporte escolar de alunos da zona rural",
+  "Aquisição de computadores para laboratório de informática escolar",
+  "Instalação de cobertura em quadra poliesportiva escolar",
+  "Apoio a atividades socioeducativas de entidade sem fins lucrativos",
+  "Aquisição de equipamentos de resgate para o serviço de emergência",
+  "Recapeamento de vias no entorno de equipamento público",
+  "Instalação de iluminação em LED em área pública",
+  "Aquisição de equipamentos para o serviço municipal de água e esgoto",
+  "Custeio de bolsas de estudo em fundação educacional municipal",
 ];
 
 const JUSTIFICATIVAS = [
@@ -162,52 +170,6 @@ const brl = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 
-// ---------------------------------------------------------------------------
-// Plano de trabalho simplificado da emenda de demonstração.
-//
-// Terceiro setor leva o pacote completo (justificativa, objetivo, declaração e
-// planilha); administração direta e indireta, só a justificativa. A planilha é
-// montada em duas linhas cujo total fecha EXATAMENTE com o valor da emenda —
-// se não fechasse, a própria pré-checagem apontaria, e a demonstração abriria
-// com uma pendência que não é o ponto.
-// ---------------------------------------------------------------------------
-async function criarPlano(
-  emendaId: string,
-  categoria: string,
-  valor: number,
-  objeto: string,
-) {
-  const terceiroSetor = categoria === "TERCEIRO_SETOR";
-  const primeira = Math.floor(valor * 0.6 * 100) / 100;
-  const segunda = Math.round((valor - primeira) * 100) / 100;
-
-  await prisma.planoTrabalho.create({
-    data: {
-      emendaId,
-      justificativa:
-        `Os recursos serão aplicados integralmente em ${objeto.toLowerCase()}, ` +
-        "conforme demanda registrada e sem gerar despesa continuada de pessoal.",
-      objetivo: terceiroSetor
-        ? `Executar ${objeto.toLowerCase()} no exercício, com prestação de contas ` +
-          "ao órgão concessor na forma da legislação aplicável."
-        : "",
-      declaracaoAceita: terceiroSetor,
-      preenchidoPor: terceiroSetor ? "Entidade beneficiária" : "Gabinete do vereador",
-      preenchidoEm: new Date(0),
-      ...(terceiroSetor && valor > 0
-        ? {
-            itens: {
-              create: [
-                { ordem: 1, descricao: "Aquisição de itens e materiais do objeto", quantidade: 1, valorUnitario: primeira },
-                { ordem: 2, descricao: "Serviços e despesas acessórias do objeto", quantidade: 1, valorUnitario: segunda },
-              ],
-            },
-          }
-        : {}),
-    },
-  });
-}
-
 async function main() {
   const exercicio = await prisma.exercicio.findUnique({ where: { ano: ANO } });
   if (!exercicio) throw new Error(`Exercício ${ANO} não existe — rode 'npm run db:2027' antes.`);
@@ -230,27 +192,6 @@ async function main() {
   for (const nome of VEREADORES) {
     const ja = await prisma.autor.findFirst({ where: { nome } });
     autores.push(ja ?? (await prisma.autor.create({ data: { nome, cargo: "Vereador(a)" } })));
-  }
-
-  // ----------------------------------------------------------- beneficiários
-  const nomesBenef = new Set([
-    ...OBJETOS_SAUDE.map(([, b]) => b),
-    ...OBJETOS_DEMAIS.map(([, b]) => b),
-  ]);
-  const benefId = new Map<string, string>();
-  const categoriaBenef = new Map<string, string>();
-  for (const nome of nomesBenef) {
-    // Categoria do beneficiário — define o rito do plano de trabalho.
-    // Mesma classificação que a aplicação usa, para o seed não inventar uma
-    // regra própria (foi assim que a divergência do PPA passou despercebida).
-    const tipo = categoriaPeloNome(nome);
-    categoriaBenef.set(nome, tipo);
-    const r = await prisma.beneficiario.upsert({
-      where: { nome },
-      create: { nome, tipo: tipo as never },
-      update: {},
-    });
-    benefId.set(nome, r.id);
   }
 
   // ---------------------------------------------- dotações reais, por área
@@ -328,15 +269,13 @@ async function main() {
     for (const item of itens) {
       seq++;
       const dot = item.ehSaude ? pick(saude) : pick(demais);
-      const [tpl, benefNome] = item.ehSaude ? pick(OBJETOS_SAUDE) : pick(OBJETOS_DEMAIS);
-      const objeto = tpl.replace("{b}", benefNome);
+      const objeto = item.ehSaude ? pick(OBJETOS_SAUDE) : pick(OBJETOS_DEMAIS);
       const tipo = pick([...TIPOS]);
       // ANULACAO não pode exceder o saldo da dotação.
       const valorFinal =
         tipo === "ANULACAO" ? Math.min(item.valor, Number(dot.valorAtual)) : item.valor;
 
       const justificativa = pick(JUSTIFICATIVAS);
-      const categoria = categoriaBenef.get(benefNome) ?? "ADMINISTRACAO_DIRETA";
 
       const emenda = await prisma.emenda.create({
         data: {
@@ -350,11 +289,8 @@ async function main() {
           justificativa,
           valor: valorFinal,
           status: "RASCUNHO",
-          beneficiarioId: benefId.get(benefNome) ?? null,
         },
       });
-
-      await criarPlano(emenda.id, categoria, valorFinal, objeto);
 
       const dotCtx: DotacaoCtx = {
         id: dot.id,
@@ -395,8 +331,9 @@ async function main() {
         modoReservaSaude: "BLOQUEANTE",
         emendaEhSaude: item.ehSaude,
         somaAutorDemaisExistente: somaDemais,
-        beneficiarioCategoria: categoria,
-        // O plano acabou de ser criado completo para esta categoria.
+        // Sem beneficiário informado, a checagem do plano fica em ALERTA e o
+        // resultado da emenda não muda — ver motor.ts, item PLANO_TRABALHO.
+        beneficiarioCategoria: null,
         pendenciasPlanoTrabalho: [],
       };
 
@@ -458,9 +395,7 @@ async function main() {
     const dot = demaisMenorSaldo[s.dotIdx % demaisMenorSaldo.length];
     const valorExcedente = Number(dot.valorAtual) + s.excedente;
     seq++;
-    const [tpl, benefNome] = OBJETOS_DEMAIS[s.dotIdx % OBJETOS_DEMAIS.length];
-
-    const objetoSan = tpl.replace("{b}", benefNome);
+    const objetoSan = OBJETOS_DEMAIS[s.dotIdx % OBJETOS_DEMAIS.length];
     const justificativaSan =
       "Anulação parcial da dotação para realocar recursos conforme demanda " +
       "apresentada em audiência pública.";
@@ -477,7 +412,6 @@ async function main() {
         justificativa: justificativaSan,
         valor: valorExcedente,
         status: "RASCUNHO",
-        beneficiarioId: benefId.get(benefNome) ?? null,
       },
     });
 
@@ -506,16 +440,10 @@ async function main() {
       tetoValorAutor: TETO, somaAutorExistente: 0,
       reservaSaudePct: RESERVA_PCT, modoReservaSaude: "BLOQUEANTE",
       emendaEhSaude: false, somaAutorDemaisExistente: 0,
-      beneficiarioCategoria: categoriaBenef.get(benefNome) ?? "ADMINISTRACAO_DIRETA",
+      beneficiarioCategoria: null,
       pendenciasPlanoTrabalho: [],
     });
 
-    await criarPlano(
-      emenda.id,
-      categoriaBenef.get(benefNome) ?? "ADMINISTRACAO_DIRETA",
-      valorExcedente,
-      objetoSan,
-    );
     await prisma.validacaoEmenda.create({
       data: {
         emendaId: emenda.id,

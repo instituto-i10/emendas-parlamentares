@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   exigenciasDoPlano,
   pendenciasDoPlano,
+  planoEfetivo,
+  reusaJustificativaDaEmenda,
   totalPlanilha,
   type DadosPlano,
 } from "../plano-trabalho";
@@ -63,12 +65,18 @@ describe("pendenciasDoPlano", () => {
   });
 
   it("justificativa em branco é pendência em qualquer categoria", () => {
-    const p = pendenciasDoPlano(
-      { ...completo, justificativa: "   " },
-      "ADMINISTRACAO_DIRETA",
-      1000
-    );
-    expect(p).toEqual(["justificativa do plano"]);
+    // Na administração pública a pendência aponta a justificativa DA EMENDA,
+    // porque é ela que vale como a do plano — não há um segundo campo.
+    expect(
+      pendenciasDoPlano({ ...completo, justificativa: "   " }, "ADMINISTRACAO_DIRETA", 1000)
+    ).toEqual(["justificativa da emenda"]);
+    expect(
+      pendenciasDoPlano(
+        { justificativa: "   ", objetivo: "o", declaracaoAceita: true, itens: completo.itens },
+        "TERCEIRO_SETOR",
+        1000
+      )
+    ).toEqual(["justificativa do plano"]);
   });
 
   it("planilha que não fecha com o valor da emenda → pendência", () => {
@@ -92,6 +100,50 @@ describe("pendenciasDoPlano", () => {
       1000
     );
     expect(p).toEqual(["planilha orçamentária"]);
+  });
+});
+
+describe("reusaJustificativaDaEmenda", () => {
+  it("terceiro setor tem justificativa própria — quem escreve é a entidade", () => {
+    expect(reusaJustificativaDaEmenda("TERCEIRO_SETOR")).toBe(false);
+  });
+
+  it("administração pública reaproveita a da emenda", () => {
+    expect(reusaJustificativaDaEmenda("ADMINISTRACAO_DIRETA")).toBe(true);
+    expect(reusaJustificativaDaEmenda("ADMINISTRACAO_INDIRETA")).toBe(true);
+    // Categoria ainda não escolhida: o campo separado só aparece no terceiro setor.
+    expect(reusaJustificativaDaEmenda(null)).toBe(true);
+  });
+});
+
+describe("planoEfetivo", () => {
+  it("na administração pública, a justificativa da emenda entra no lugar", () => {
+    const p = planoEfetivo(
+      { ...completo, justificativa: "texto antigo do plano" },
+      "ADMINISTRACAO_DIRETA",
+      "Justificativa escrita na emenda."
+    );
+    expect(p?.justificativa).toBe("Justificativa escrita na emenda.");
+    // O resto do plano é preservado.
+    expect(p?.itens).toEqual(completo.itens);
+  });
+
+  it("no terceiro setor o plano passa intacto", () => {
+    expect(planoEfetivo(completo, "TERCEIRO_SETOR", "outra coisa")).toBe(completo);
+  });
+
+  // O caso que destrava a remessa: emenda de secretaria nunca teve linha de
+  // PlanoTrabalho no banco, e não precisa ter.
+  it("sem linha de plano, a emenda de órgão público não fica pendente", () => {
+    const p = planoEfetivo(null, "ADMINISTRACAO_DIRETA", "Reforma da unidade.");
+    expect(pendenciasDoPlano(p, "ADMINISTRACAO_DIRETA", 1000)).toEqual([]);
+  });
+
+  it("sem linha de plano, o terceiro setor continua pendente", () => {
+    const p = planoEfetivo(null, "TERCEIRO_SETOR", "Reforma da unidade.");
+    expect(pendenciasDoPlano(p, "TERCEIRO_SETOR", 1000)).toEqual([
+      "preencher o plano de trabalho",
+    ]);
   });
 });
 

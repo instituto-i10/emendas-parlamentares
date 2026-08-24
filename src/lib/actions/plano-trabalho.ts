@@ -181,6 +181,7 @@ export type PlanoPorToken = {
   emendaId: string;
   numero: string;
   objeto: string;
+  justificativaEmenda: string;
   valor: number;
   autor: string;
   beneficiario: string | null;
@@ -207,6 +208,7 @@ export async function buscarPlanoPorToken(
           id: true,
           numero: true,
           objeto: true,
+          justificativa: true,
           valor: true,
           status: true,
           autor: { select: { nome: true } },
@@ -224,6 +226,7 @@ export async function buscarPlanoPorToken(
     emendaId: plano.emenda.id,
     numero: plano.emenda.numero,
     objeto: plano.emenda.objeto,
+    justificativaEmenda: plano.emenda.justificativa,
     valor: Number(plano.emenda.valor),
     autor: plano.emenda.autor.nome,
     beneficiario: plano.emenda.beneficiario?.nome ?? null,

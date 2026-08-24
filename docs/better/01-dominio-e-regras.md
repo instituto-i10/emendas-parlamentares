@@ -201,3 +201,11 @@ texto do campo `objeto` das emendas — o que gera variantes de grafia
 duplicata por tokens — inclusive por subsequência ordenada com folga ≤2
 (commit `2393ca8`). A **mesclagem é sempre confirmada pelo usuário** na aba
 Beneficiários das Configurações.
+
+Desde 24/08/2026 o cadastro **cresce pelo uso**: o vereador cadastra o destino
+no próprio formulário da emenda (`cadastrarDestino`), sem passar pelas
+Configurações. Nome já cadastrado não é erro — a ação devolve o que existe, e a
+comparação ignora diferença de caixa, justamente para não criar a segunda
+"Santa Casa". Os beneficiários fictícios que vinham do seed do protótipo
+original foram apagados: `npm run db:limpar-beneficiarios` esvazia o cadastro
+sem apagar emenda nenhuma (elas ficam sem beneficiário vinculado).

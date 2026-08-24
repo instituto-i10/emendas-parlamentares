@@ -36,6 +36,7 @@ export function PlanoEntidade({
         categoria={plano.categoria}
         valorEmenda={plano.valor}
         exigirResponsavel
+        justificativaDaEmenda={plano.justificativaEmenda}
         inicial={{
           justificativa: plano.justificativa,
           objetivo: plano.objetivo,

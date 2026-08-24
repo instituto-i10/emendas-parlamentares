@@ -8,6 +8,7 @@ import {
 } from "./motor";
 import {
   pendenciasDoPlano,
+  planoEfetivo,
   type CategoriaBeneficiario,
 } from "@/lib/plano-trabalho";
 
@@ -190,20 +191,26 @@ export async function validarEmenda(emendaId: string): Promise<ResultadoMotor> {
   const beneficiarioCategoria =
     (emenda.beneficiario?.tipo as CategoriaBeneficiario | undefined) ?? null;
   const plano = emenda.planoTrabalho;
+  // `planoEfetivo` é o que faz a justificativa da EMENDA valer como a do plano
+  // na administração pública — a regra vive aqui, no motor, e não só na tela.
   const pendenciasPlanoTrabalho = beneficiarioCategoria
     ? pendenciasDoPlano(
-        plano
-          ? {
-              justificativa: plano.justificativa,
-              objetivo: plano.objetivo,
-              declaracaoAceita: plano.declaracaoAceita,
-              itens: plano.itens.map((i) => ({
-                descricao: i.descricao,
-                quantidade: Number(i.quantidade),
-                valorUnitario: Number(i.valorUnitario),
-              })),
-            }
-          : null,
+        planoEfetivo(
+          plano
+            ? {
+                justificativa: plano.justificativa,
+                objetivo: plano.objetivo,
+                declaracaoAceita: plano.declaracaoAceita,
+                itens: plano.itens.map((i) => ({
+                  descricao: i.descricao,
+                  quantidade: Number(i.quantidade),
+                  valorUnitario: Number(i.valorUnitario),
+                })),
+              }
+            : null,
+          beneficiarioCategoria,
+          emenda.justificativa
+        ),
         beneficiarioCategoria,
         Number(emenda.valor)
       )

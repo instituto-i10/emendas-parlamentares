@@ -12,6 +12,9 @@
 //   terceiro setor          → justificativa + objetivo + declaração + planilha
 //   administração direta    → só a justificativa
 //   administração indireta  → só a justificativa
+//
+// E "só a justificativa", na administração pública, é A JUSTIFICATIVA DA
+// EMENDA — não uma segunda. Ver `reusaJustificativaDaEmenda` abaixo.
 // ---------------------------------------------------------------------------
 
 export type CategoriaBeneficiario =
@@ -39,6 +42,26 @@ export const TEXTO_DECLARACAO =
   "encontra regularmente constituída e em funcionamento, e que os recursos " +
   "serão aplicados exclusivamente no objeto desta emenda.";
 
+/**
+ * A justificativa do plano é a própria justificativa da emenda, exceto no
+ * terceiro setor.
+ *
+ * Motivo: no terceiro setor quem escreve é a ENTIDADE, pelo link, e o texto
+ * dela não pode sobrescrever o do vereador — são duas vozes. Na administração
+ * pública não há entidade externa nenhuma: é o mesmo vereador, na mesma tela,
+ * e pedir o mesmo texto duas vezes é atrito puro. A diretriz do jurídico do
+ * cliente é "tudo tem que ser o mais simples possível".
+ *
+ * Categoria ainda não escolhida entra aqui também: duas das três categorias
+ * reutilizam, e o campo separado só aparece quando o terceiro setor é
+ * escolhido.
+ */
+export function reusaJustificativaDaEmenda(
+  categoria: CategoriaBeneficiario | null
+): boolean {
+  return categoria !== "TERCEIRO_SETOR";
+}
+
 export type ItemPlanilha = {
   descricao: string;
   quantidade: number;
@@ -51,6 +74,28 @@ export type DadosPlano = {
   declaracaoAceita: boolean;
   itens: ItemPlanilha[];
 };
+
+/**
+ * O plano como ele vale para a conferência: na administração pública, com a
+ * justificativa da emenda no lugar da do plano.
+ *
+ * Aplicado no MOTOR, não só na tela — assim uma emenda de administração direta
+ * sem linha de `PlanoTrabalho` no banco não é pendência, porque não há nada a
+ * preencher além do que já está na emenda.
+ */
+export function planoEfetivo(
+  plano: DadosPlano | null,
+  categoria: CategoriaBeneficiario | null,
+  justificativaDaEmenda: string
+): DadosPlano | null {
+  if (!reusaJustificativaDaEmenda(categoria)) return plano;
+  return {
+    justificativa: justificativaDaEmenda,
+    objetivo: plano?.objetivo ?? "",
+    declaracaoAceita: plano?.declaracaoAceita ?? false,
+    itens: plano?.itens ?? [],
+  };
+}
 
 export function totalItem(i: ItemPlanilha): number {
   return i.quantidade * i.valorUnitario;
@@ -82,7 +127,12 @@ export function pendenciasDoPlano(
   const exige = exigenciasDoPlano(categoria);
   const faltando: string[] = [];
 
-  if (!plano.justificativa.trim()) faltando.push("justificativa do plano");
+  if (!plano.justificativa.trim())
+    faltando.push(
+      reusaJustificativaDaEmenda(categoria)
+        ? "justificativa da emenda"
+        : "justificativa do plano"
+    );
   if (exige.objetivo && !plano.objetivo.trim()) faltando.push("objetivo");
   if (exige.declaracao && !plano.declaracaoAceita) faltando.push("declaração da entidade");
 

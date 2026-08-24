@@ -116,7 +116,7 @@ test.describe("apresentação de emenda", () => {
     await page.getByLabel("Valor", { exact: true }).fill("35000");
     await page.getByLabel("Objeto", { exact: true }).fill("Aquisição de equipamentos — emenda de teste automatizado");
     await page
-      .getByLabel("Justificativa", { exact: true })
+      .getByLabel("Justificativa da emenda", { exact: true })
       .fill("Emenda criada pela suíte end-to-end para validar o fluxo de apresentação.");
 
     // Submeter só libera depois de validar.
@@ -148,21 +148,34 @@ test.describe("apresentação de emenda", () => {
     await abrirFormulario(page);
     await page.getByLabel("Valor", { exact: true }).fill("10000");
     await page.getByLabel("Objeto", { exact: true }).fill("Objeto sem classificação");
-    await page.getByLabel("Justificativa", { exact: true }).fill("Justificativa sem classificação");
+    await page.getByLabel("Justificativa da emenda", { exact: true }).fill("Justificativa sem classificação");
     await expect(page.getByRole("button", { name: "Salvar rascunho" })).toBeDisabled();
   });
 
   test("não há campo livre de classificação orçamentária", async ({ page }) => {
     await abrirFormulario(page);
-    // A tese do produto: classificação se escolhe, não se digita. Os únicos
-    // campos de texto editáveis são valor, objeto e justificativa.
+    // A tese do produto: classificação se escolhe, não se digita. Digitáveis são
+    // só o que é texto do autor — valor, objeto, justificativa — e o destino do
+    // recurso, que é cadastro livre por decisão do jurídico do cliente (a
+    // classificação orçamentária continua toda em <select>).
+    //
+    // A justificativa do plano NÃO aparece aqui: fora do terceiro setor é a
+    // justificativa da emenda que vale como a do plano.
     const editaveis = page.locator(
-      'input:not([readonly]):not([type="hidden"]), textarea:not([readonly])'
+      'input:not([readonly]):not([type="hidden"]):not([type="radio"]):not([type="checkbox"]), textarea:not([readonly])'
     );
     const rotulos = await editaveis.evaluateAll((nós) =>
-      nós.map((n) => (n as HTMLElement).id || (n as HTMLInputElement).name || "sem-id")
+      nós.map((n) => {
+        const el = n as HTMLInputElement;
+        return (el.labels?.[0]?.textContent ?? el.getAttribute("aria-label") ?? "sem-rótulo").trim();
+      })
     );
-    expect(rotulos.sort()).toEqual(["justificativa", "objeto", "valor"]);
+    expect(rotulos.sort()).toEqual([
+      "Justificativa da emenda",
+      "Objeto",
+      "Para onde vai",
+      "Valor",
+    ]);
   });
 });
 

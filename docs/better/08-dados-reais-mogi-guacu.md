@@ -229,6 +229,11 @@ npm run db:2027           # exercício 2027 — base REAL de Mogi Guaçu
 npm run db:2027:emendas   # opcional: emendas de demonstração sobre ela
 ```
 
+> Os beneficiários que `db:2027:emendas` cria são fictícios, como as emendas.
+> Depois de 24/08/2026 o cadastro de beneficiários **abre vazio** e cresce pelo
+> uso — para esvaziá-lo num banco já semeado, `npm run db:limpar-beneficiarios`
+> (não apaga emenda; elas só ficam sem beneficiário vinculado).
+
 O app usa o exercício mais recente por padrão, então **2027 entra como ativo**;
 o seletor no topo continua permitindo voltar ao 2025 de demonstração.
 

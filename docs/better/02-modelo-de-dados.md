@@ -160,13 +160,31 @@ define o rito, não é rótulo:
 
 | Categoria | Exige |
 | --- | --- |
-| `TERCEIRO_SETOR` | justificativa + objetivo + declaração + planilha que fecha com o valor da emenda |
-| `ADMINISTRACAO_DIRETA` | só a justificativa |
-| `ADMINISTRACAO_INDIRETA` | só a justificativa |
+| `TERCEIRO_SETOR` | justificativa própria (da entidade) + objetivo + declaração + planilha que fecha com o valor da emenda |
+| `ADMINISTRACAO_DIRETA` | nada além da justificativa **da emenda** |
+| `ADMINISTRACAO_INDIRETA` | nada além da justificativa **da emenda** |
+
+### A justificativa não é pedida duas vezes (24/08/2026)
+
+`reusaJustificativaDaEmenda(categoria)` é falso só no terceiro setor. Fora dele,
+`Emenda.justificativa` **é** a justificativa do plano:
+
+- no terceiro setor quem escreve é a ENTIDADE, pelo link, e o texto dela não pode
+  sobrescrever o do vereador — são duas vozes, e por isso dois campos;
+- na administração pública não há entidade externa nenhuma. É o mesmo vereador,
+  na mesma tela, e pedir o mesmo texto duas vezes é atrito puro.
+
+`planoEfetivo(plano, categoria, justificativaDaEmenda)` aplica a regra e é usado
+**no motor**, não só na tela. Consequência prática: uma emenda de secretaria sem
+nenhuma linha de `PlanoTrabalho` no banco não é pendência — não há o que
+preencher além do que já está na emenda. O bloco 3 do formulário mostra a
+justificativa da emenda em leitura, para quem preenche ver que já está atendida.
 
 As regras são puras e vivem em `src/lib/plano-trabalho.ts`, testadas em
 `src/lib/__tests__/plano-trabalho.test.ts`. O motor consome o resultado pela
 checagem `PLANO_TRABALHO`, que é requisito da **remessa** — nunca do rascunho.
+Beneficiário não informado é **alerta**, não falha: sem categoria não dá para
+saber o que o plano precisa conter.
 
 ### Token de preenchimento pela entidade
 

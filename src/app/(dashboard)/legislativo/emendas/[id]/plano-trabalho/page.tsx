@@ -23,6 +23,7 @@ export default async function PlanoTrabalhoPage({
       id: true,
       numero: true,
       objeto: true,
+      justificativa: true,
       valor: true,
       status: true,
       autor: { select: { nome: true, usuarioId: true } },
@@ -62,6 +63,7 @@ export default async function PlanoTrabalhoPage({
         categoria={categoria}
         valorEmenda={Number(emenda.valor)}
         objeto={emenda.objeto}
+        justificativaEmenda={emenda.justificativa}
         beneficiario={emenda.beneficiario?.nome ?? null}
         editavel={emenda.status === "RASCUNHO" || emenda.status === "INVALIDA"}
         temLink={!!plano?.token}

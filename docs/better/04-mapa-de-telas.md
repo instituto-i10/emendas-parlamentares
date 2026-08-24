@@ -338,17 +338,56 @@ As emendas não alteram o saldo das dotações. A checagem `TIPO_COERENTE` de
 Consequência de UX: a tela não mostra "quanto ainda sobra nesta dotação".
 
 
-## Telas do plano de trabalho (20/08/2026)
+## O formulário da emenda em três blocos (24/08/2026)
+
+`/legislativo/emendas/nova` passou a ter três blocos numerados, visíveis desde
+que a tela abre:
+
+| Bloco | Conteúdo |
+| --- | --- |
+| **1 · Onde o dinheiro entra** | a cascata de cinco níveis e o cartão que descreve a dotação por extenso |
+| **2 · A emenda** | tipo, valor, beneficiário final (duas perguntas), objeto e justificativa |
+| **3 · Plano de trabalho** | os campos que a categoria do beneficiário exige, o estado do preenchimento e o link para a entidade |
+
+Para órgão público o bloco 3 **não abre campo de texto nenhum**: mostra a
+justificativa escrita no bloco 2, em leitura, e se dá por completo. O campo
+separado só existe no terceiro setor, onde quem escreve é a entidade. Ver
+`reusaJustificativaDaEmenda` em `docs/better/02-modelo-de-dados.md`.
+
+O bloco 3 **não depende de salvar**: ele está na tela desde o início e é gravado
+junto com o rascunho, num único botão. Antes o plano era uma rota separada,
+alcançável só depois de salvar — e o jurídico do cliente reclamou de "não estar
+abrindo a opção para elaboração do plano de trabalho". O cabeçalho do bloco
+mostra o próprio estado ("Faltam 2 itens" / "Completo").
+
+### Beneficiário final em duas perguntas
+
+1. **Que tipo de destino** — administração direta, indireta ou entidade do
+   terceiro setor. É a categoria que define o rito do plano de trabalho.
+2. **Para onde vai** — campo digitado, com sugestão do que já existe e
+   **cadastro na hora**, sem sair da tela (`cadastrarDestino`, liberada para
+   quem pode apresentar emenda). A lista fechada de antes vinha do seed do
+   protótipo original: "os equipamentos públicos não se limitam aos que constam
+   ali… é melhor deixar o vereador cadastrar e o cadastro vai aumentando com o
+   tempo". Escolher uma sugestão de outra categoria ajusta a pergunta 1 ao que
+   está gravado — o cadastro é a verdade sobre a categoria.
+
+A sugestão não limita a escolha: existe para o mesmo destino não virar três
+("Santa Casa", "Santa casa", "STA CASA") e a rastreabilidade que o TCE cobra não
+se perder. Quando escapar, a mesclagem em Configurações resolve.
+
+## Telas do plano de trabalho (20/08/2026, revistas em 24/08)
 
 | Rota | Quem entra | O que faz |
 | --- | --- | --- |
-| `/legislativo/emendas/[id]/plano-trabalho` | autor da emenda (sessão) | preenche o plano, gera e revoga o link da entidade |
+| `/legislativo/emendas/[id]/plano-trabalho` | autor da emenda (sessão) | volta ao plano de uma emenda já salva, gera e revoga o link da entidade |
 | `/plano-trabalho/[token]` | entidade beneficiária, **sem login** | preenche o plano pelo link que o gabinete enviou |
 
-As duas renderizam o mesmo `PlanoTrabalhoForm`; o que muda é quem salva e se o
-responsável precisa se identificar. O formulário se adapta à categoria do
-beneficiário — terceiro setor vê objetivo, declaração e planilha; administração
-pública vê só a justificativa.
+As duas renderizam o mesmo `PlanoTrabalhoForm`, que hoje é só estado e botão em
+volta de `PlanoTrabalhoCampos` — os mesmos campos que o bloco 3 do formulário da
+emenda usa. O que muda é quem salva e se o responsável precisa se identificar.
+O formulário se adapta à categoria do beneficiário — terceiro setor vê objetivo,
+declaração e planilha; administração pública vê só a justificativa.
 
 O botão de **apoio à redação** (`src/lib/actions/redacao.ts`) aparece na
 justificativa e no objetivo. Ele só escreve: não busca dado externo, não estima

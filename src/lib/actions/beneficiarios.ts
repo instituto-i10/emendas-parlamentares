@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { Role } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
+import { podeCriarEmenda } from "@/lib/authz";
 import { registrarAuditoria } from "@/lib/audit";
+import { rateLimit } from "@/lib/rate-limit";
 import { beneficiarioSchema } from "@/lib/validation/schemas";
 import { categoriaPeloNome } from "@/lib/beneficiarios-classificacao";
 
@@ -54,6 +56,67 @@ export async function criarBeneficiario(input: unknown): Promise<ActionResult> {
     return { ok: true };
   } catch {
     return { ok: false, error: "Não foi possível salvar (nome já cadastrado?)." };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Cadastro do destino a partir do próprio formulário da emenda.
+//
+// Separado de `criarBeneficiario` por causa de QUEM pode chamar: aquele é do
+// cadastro em Configurações e exige perfil de gestão; este é do vereador, no
+// meio do preenchimento. Decisão do jurídico do cliente: "os equipamentos
+// públicos não se limitam aos que constam ali… é melhor deixar o vereador
+// cadastrar e o cadastro vai aumentando com o tempo".
+//
+// Nome já cadastrado não é erro: devolve o que existe. O objetivo é justamente
+// que "Santa Casa" digitada de novo caia no mesmo destino, não vire um segundo.
+// ---------------------------------------------------------------------------
+export type DestinoResult =
+  | { ok: true; id: string; nome: string; tipo: string; jaExistia: boolean }
+  | { ok: false; error: string };
+
+export async function cadastrarDestino(
+  nome: string,
+  tipo: string
+): Promise<DestinoResult> {
+  const u = await getCurrentUser();
+  if (!podeCriarEmenda(u))
+    return { ok: false, error: "Seu perfil não pode cadastrar destinos." };
+
+  const parsed = beneficiarioSchema.safeParse({ nome, tipo });
+  if (!parsed.success)
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+
+  // O campo cadastra sem sair da tela: sem limite, um teclado preso vira um
+  // cadastro de centenas de linhas.
+  if (!rateLimit(`destino:${u.id}`, 30, 60_000))
+    return { ok: false, error: "Muitos cadastros seguidos. Aguarde um minuto." };
+
+  try {
+    // Diferença de caixa não cria destino novo ("Santa Casa" = "SANTA CASA").
+    // Acento ainda distingue — a comparação insensível do Postgres não dobra
+    // acento —, e é para isso que existe a mesclagem em Configurações.
+    const ja = await prisma.beneficiario.findFirst({
+      where: { nome: { equals: parsed.data.nome, mode: "insensitive" } },
+      select: { id: true, nome: true, tipo: true },
+    });
+    if (ja) return { ok: true, ...ja, jaExistia: true };
+
+    const criado = await prisma.beneficiario.create({
+      data: { nome: parsed.data.nome, tipo: parsed.data.tipo as never },
+      select: { id: true, nome: true, tipo: true },
+    });
+    await registrarAuditoria({
+      usuarioId: audUser(u.id),
+      entidade: "Beneficiario",
+      entidadeId: criado.id,
+      acao: "CRIAR_NA_EMENDA",
+      dadosDepois: criado,
+    });
+    revalidatePath("/config");
+    return { ok: true, ...criado, jaExistia: false };
+  } catch {
+    return { ok: false, error: "Não foi possível cadastrar o destino." };
   }
 }
 

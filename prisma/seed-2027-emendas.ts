@@ -182,9 +182,26 @@ async function main() {
 
   const jaExistem = await prisma.emenda.count({ where: { exercicioId } });
   if (jaExistem > 0) {
-    console.log(`Exercício ${ANO} já tem ${jaExistem} emendas — nada a fazer.`);
-    console.log("Para regerar: apague as emendas de 2027 antes.");
-    return;
+    if (process.env.RECRIAR !== "1") {
+      console.log(`Exercício ${ANO} já tem ${jaExistem} emendas — nada a fazer.`);
+      console.log("Para regerar, repita com RECRIAR=1 (apaga só as emendas de");
+      console.log(`${ANO}; a base orçamentária real não é tocada).`);
+      return;
+    }
+    // Apaga SÓ as emendas do exercício e o que pende delas. A base (órgãos,
+    // ações, dotações) fica: recarregá-la seria refazer a extração do Anexo V
+    // por nada, e é ela que leva os R$ 993.305.344,00 conferidos.
+    const doExercicio = { emenda: { exercicioId } };
+    const [itens, planos, validacoes, emendas] = await prisma.$transaction([
+      prisma.itemPlanoTrabalho.deleteMany({ where: { plano: doExercicio } }),
+      prisma.planoTrabalho.deleteMany({ where: doExercicio }),
+      prisma.validacaoEmenda.deleteMany({ where: doExercicio }),
+      prisma.emenda.deleteMany({ where: { exercicioId } }),
+    ]);
+    console.log(
+      `RECRIAR=1: apagadas ${emendas.count} emendas de ${ANO} ` +
+      `(${validacoes.count} validações, ${planos.count} planos, ${itens.count} itens).`,
+    );
   }
 
   // ------------------------------------------------------------------ autores

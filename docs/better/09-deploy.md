@@ -141,17 +141,31 @@ DIRECT_URL='…' DATABASE_URL='…' PERMITIR_BANCO_REMOTO=1 npm run db:deploy
 ```
 
 Os seeds são idempotentes nas partes de catálogo (`upsert`) e pulam o que já
-existe nas partes de volume. Para uma reposição **limpa** das emendas, apagar
-antes o exercício 2027:
+existe nas partes de volume. Para regerar **as emendas** sem tocar na base
+orçamentária real:
 
-```sql
-DELETE FROM "ValidacaoEmenda" v USING "Emenda" m JOIN "Exercicio" e
-  ON e.id = m."exercicioId" WHERE v."emendaId" = m.id AND e.ano = 2027;
-DELETE FROM "Exercicio" WHERE ano = 2027;
+```bash
+DIRECT_URL='…' DATABASE_URL='…' PERMITIR_BANCO_REMOTO=1 RECRIAR=1 \
+  npm run db:2027:emendas
 ```
 
-A geração é determinística: a mesma recarga dá exatamente os mesmos
-R$ 10.596.131,45 em 44 emendas.
+`RECRIAR=1` apaga só as emendas do exercício 2027 (e as validações, planos e
+itens que pendem delas) antes de gerar de novo. Sem a variável, o seed recusa
+mexer no que já existe. A base — 28 órgãos, 183 ações, 1.163 dotações,
+R$ 993.305.344,00 conferidos contra o Anexo V — fica onde está; recarregá-la
+seria refazer a extração por nada.
+
+A geração é determinística: a mesma recarga dá exatamente as mesmas 43 emendas,
+R$ 9.451.766,31 no total.
+
+> Desde 24/08/2026 o seed **não cria beneficiário nenhum** e os objetos das
+> emendas não nomeiam equipamento. O cadastro de beneficiários abre vazio e
+> cresce pelo uso — decisão do jurídico do cliente. Para esvaziá-lo num banco
+> semeado antes dessa data:
+> ```bash
+> DIRECT_URL='…' DATABASE_URL='…' PERMITIR_BANCO_REMOTO=1 \
+>   npm run db:limpar-beneficiarios
+> ```
 
 ## Quem consegue entrar
 

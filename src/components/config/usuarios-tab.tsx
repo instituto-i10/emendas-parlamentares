@@ -27,6 +27,9 @@ type Usuario = {
   poder: string | null;
   perfil: { id: string; nome: string; poder: string | null } | null;
   autor: { id: string; nome: string } | null;
+  // Decidido no servidor com a mesma regra da action: só é editável a linha
+  // cujo perfil ATUAL quem está olhando também poderia conceder.
+  editavel: boolean;
 };
 
 export function UsuariosTab({
@@ -113,11 +116,20 @@ export function UsuariosTab({
                   <TableCell>
                     {/* Reatribuição na própria linha: trocar o perfil de alguém
                         é rotina de secretaria, não merece um formulário. */}
-                    <PerfilSelect
-                      usuarioId={u.id}
-                      perfilAtualId={u.perfil?.id ?? null}
-                      opcoes={opcoesPerfil}
-                    />
+                    {u.editavel ? (
+                      <PerfilSelect
+                        usuarioId={u.id}
+                        perfilAtualId={u.perfil?.id ?? null}
+                        opcoes={opcoesPerfil}
+                      />
+                    ) : (
+                      <span
+                        className="text-muted-foreground"
+                        title="Apenas o Administrador Geral altera este perfil."
+                      >
+                        {u.perfil?.nome ?? "Sem perfil"}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {u.autor?.nome ?? "—"}

@@ -272,6 +272,33 @@ describe("perfil de consulta (sem permissões)", () => {
   });
 });
 
+describe("atalhos de configuração no menu lateral", () => {
+  const ids = (a: Ator) => vistasVisiveis(a).map((v) => v.id);
+
+  it("o Administrador Geral vê Usuários, Perfis e Configurações", () => {
+    expect(ids(A.adminGeral)).toEqual(
+      expect.arrayContaining(["usuarios", "perfis", "configuracoes"])
+    );
+  });
+
+  it("quem administra configurações vê Usuários, mas não Perfis", () => {
+    // Compor perfis é ato exclusivo do Administrador Geral: administrar
+    // configurações abre o cadastro de gente, não a fábrica de perfis.
+    for (const a of [A.presidente, A.executivo]) {
+      expect(ids(a)).toEqual(expect.arrayContaining(["usuarios", "configuracoes"]));
+      expect(ids(a)).not.toContain("perfis");
+    }
+  });
+
+  it("quem não administra configurações não vê nenhum dos três", () => {
+    for (const a of [A.vereador, A.comissao, A.consultaLeg, SEM_PERFIL]) {
+      expect(ids(a)).not.toContain("usuarios");
+      expect(ids(a)).not.toContain("perfis");
+      expect(ids(a)).not.toContain("configuracoes");
+    }
+  });
+});
+
 describe("salvaguardas de atribuição de perfil", () => {
   it("só o Administrador Geral concede o Administrador Geral", () => {
     expect(podeAtribuirPerfil(A.adminGeral, P.adminGeral)).toBe(true);

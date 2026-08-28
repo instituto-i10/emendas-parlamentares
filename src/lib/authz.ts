@@ -173,7 +173,10 @@ export const podeGerirPerfis = ehAdminGeral;
 // Quem não é Administrador Geral só atribui perfis do próprio Poder — nunca o
 // Administrador Geral, nunca um perfil do outro Poder. Sem esta trava, quem
 // administra o Executivo poderia criar uma conta de Presidente da Câmara.
-export function podeAtribuirPerfil(a: Ator, alvo: Perfil): boolean {
+export function podeAtribuirPerfil(
+  a: Ator,
+  alvo: Pick<Perfil, "poder" | "adminGeral">
+): boolean {
   if (ehAdminGeral(a)) return true;
   if (!temPermissao(a, "administrarConfiguracoes")) return false;
   if (alvo.adminGeral) return false;

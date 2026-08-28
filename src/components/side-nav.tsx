@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
   BadgeCheck,
@@ -12,8 +12,11 @@ import {
   Menu,
   Presentation,
   ScanSearch,
+  Settings,
   Settings2,
+  ShieldCheck,
   Trophy,
+  Users,
   UserSquare2,
   Workflow,
 } from "lucide-react";
@@ -30,8 +33,10 @@ import { LogoEmendas360 } from "./logo-emendas360";
 
 export type VistaTab = { id: string; titulo: string; href: string };
 
-// Rotas das ferramentas legadas agrupadas sob o item "Ferramentas".
-const PREFIXOS_FERRAMENTAS = ["/hub", "/legislativo", "/executivo", "/config"];
+// Rotas das ferramentas legadas agrupadas sob o item "Ferramentas". /config saiu
+// da lista: Usuários, Perfis e Configurações têm item próprio no trilho, e sem
+// isso "Ferramentas" acenderia junto com eles.
+const PREFIXOS_FERRAMENTAS = ["/hub", "/legislativo", "/executivo"];
 
 const ICONE: Record<string, LucideIcon> = {
   painel: LayoutDashboard,
@@ -41,6 +46,9 @@ const ICONE: Record<string, LucideIcon> = {
   analise: ScanSearch,
   placar: Trophy,
   conformidade: BadgeCheck,
+  usuarios: Users,
+  perfis: ShieldCheck,
+  configuracoes: Settings,
   ferramentas: Settings2,
   pitch: Presentation,
 };
@@ -51,16 +59,26 @@ const GRUPOS: { titulo: string; ids: string[] }[] = [
   { titulo: "Acompanhar", ids: ["painel", "tramitacao360", "placar"] },
   { titulo: "Operar", ids: ["emendas360", "analise", "vereador360"] },
   { titulo: "Governança", ids: ["conformidade", "pitch"] },
-  { titulo: "Sistema", ids: ["ferramentas"] },
+  { titulo: "Sistema", ids: ["usuarios", "perfis", "configuracoes", "ferramentas"] },
 ];
 
-function itemAtivo(pathname: string, tab: VistaTab): boolean {
+function itemAtivo(pathname: string, aba: string | null, tab: VistaTab): boolean {
   if (tab.href === "/hub") {
     return PREFIXOS_FERRAMENTAS.some(
       (p) => pathname === p || pathname.startsWith(p + "/")
     );
   }
-  return pathname === tab.href || pathname.startsWith(tab.href + "/");
+  // Itens que apontam para a mesma rota e se distinguem pela aba (/config).
+  const [caminho, query] = tab.href.split("?");
+  if (query) {
+    const abaDoItem = new URLSearchParams(query).get("aba");
+    return pathname === caminho && aba === abaDoItem;
+  }
+  if (caminho === "/config") {
+    // "Configurações" acende nas abas que não têm item próprio no trilho.
+    return pathname === "/config" && aba !== "usuarios" && aba !== "perfis";
+  }
+  return pathname === caminho || pathname.startsWith(caminho + "/");
 }
 
 type Usuario = { nome: string; papel: string };
@@ -91,6 +109,7 @@ function ConteudoNav({
   aoNavegar,
 }: PropsNav & { expandido: boolean; aoNavegar?: () => void }) {
   const pathname = usePathname();
+  const aba = useSearchParams().get("aba");
   const [saindo, iniciarSaida] = useTransition();
   const grupos = agrupar(vistas);
 
@@ -146,7 +165,7 @@ function ConteudoNav({
             <div className="flex flex-col gap-0.5">
               {g.itens.map((v) => {
                 const Icon = ICONE[v.id] ?? LayoutDashboard;
-                const ativo = itemAtivo(pathname, v);
+                const ativo = itemAtivo(pathname, aba, v);
                 const n = contadores?.[v.id];
                 return (
                   // O contador é irmão do link, não filho: `abasVisiveis` nos
@@ -279,14 +298,18 @@ export function SideNav(props: PropsNav) {
 export function SideNavMobile(props: PropsNav) {
   const [aberto, setAberto] = useState(false);
   const pathname = usePathname();
-  const [rotaDaAbertura, setRotaDaAbertura] = useState(pathname);
+  // A aba entra na chave: Usuários e Perfis compartilham o caminho /config e se
+  // distinguem só pela query. Sem ela, ir de um ao outro deixaria a gaveta
+  // aberta sobre a tela que a pessoa acabou de pedir.
+  const rota = `${pathname}?${useSearchParams().get("aba") ?? ""}`;
+  const [rotaDaAbertura, setRotaDaAbertura] = useState(rota);
 
   // Fecha a gaveta quando a rota muda — inclusive no voltar/avançar do
   // navegador, que não passa pelo onClick dos links. Ajuste durante a
   // renderização (e não num efeito): é a forma recomendada de derivar estado
   // de uma prop que mudou, sem a renderização em cascata de um useEffect.
-  if (pathname !== rotaDaAbertura) {
-    setRotaDaAbertura(pathname);
+  if (rota !== rotaDaAbertura) {
+    setRotaDaAbertura(rota);
     if (aberto) setAberto(false);
   }
 

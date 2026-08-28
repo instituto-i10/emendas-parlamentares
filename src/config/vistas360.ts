@@ -1,5 +1,11 @@
 import { Poder } from "@/generated/prisma/enums";
-import { podeAcessar, temPermissao, type Ator, type Permissao } from "@/lib/authz";
+import {
+  ehAdminGeral,
+  podeAcessar,
+  temPermissao,
+  type Ator,
+  type Permissao,
+} from "@/lib/authz";
 
 // ============================================================================
 // Vistas do front-end "Emendas 360": itens do menu lateral, filtrados pelo
@@ -20,6 +26,9 @@ export type Vista360 = {
   poder: EscopoVista;
   // Ausente = vista de consulta.
   permissoes?: Permissao[];
+  // Restringe ao Administrador Geral, para além da permissão. Usado pela vista
+  // de Perfis: administrar configurações não dá o direito de compor perfis.
+  adminGeralApenas?: boolean;
 };
 
 // Listar as emendas de todos, uma a uma, não é consulta livre: é a mesa de
@@ -65,6 +74,30 @@ export const VISTAS360: Vista360[] = [
     href: "/conformidade",
     poder: "TRANSVERSAL",
   },
+  // Configurações no trilho lateral: cadastrar gente e compor perfis é rotina
+  // de quem administra, e estava a dois cliques, escondida atrás de Ferramentas.
+  {
+    id: "usuarios",
+    titulo: "Usuários",
+    href: "/config?aba=usuarios",
+    poder: "TRANSVERSAL",
+    permissoes: ["administrarConfiguracoes"],
+  },
+  {
+    id: "perfis",
+    titulo: "Perfis de acesso",
+    href: "/config?aba=perfis",
+    poder: "TRANSVERSAL",
+    permissoes: ["administrarConfiguracoes"],
+    adminGeralApenas: true,
+  },
+  {
+    id: "configuracoes",
+    titulo: "Configurações",
+    href: "/config",
+    poder: "TRANSVERSAL",
+    permissoes: ["administrarConfiguracoes"],
+  },
   { id: "ferramentas", titulo: "Ferramentas", href: "/hub", poder: "TRANSVERSAL" },
   {
     id: "pitch",
@@ -76,9 +109,10 @@ export const VISTAS360: Vista360[] = [
 ];
 
 export function vistasVisiveis(u: Ator): Vista360[] {
-  return VISTAS360.filter((v) =>
-    podeAcessar(u, { poder: v.poder, permissoes: v.permissoes })
-  );
+  return VISTAS360.filter((v) => {
+    if (v.adminGeralApenas && !ehAdminGeral(u)) return false;
+    return podeAcessar(u, { poder: v.poder, permissoes: v.permissoes });
+  });
 }
 
 // Vista inicial após o login. O perfil de gabinete — apresenta as próprias

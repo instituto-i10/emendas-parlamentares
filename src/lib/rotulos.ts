@@ -3,7 +3,6 @@ import {
   EspecieInstrumento,
   ModoValidacao,
   Poder,
-  Role,
   StatusEmenda,
   StatusInstrumento,
   TipoAcao,
@@ -57,15 +56,40 @@ export const ROTULO_PODER: Record<string, string> = {
   [Poder.EXECUTIVO]: "Executivo",
 };
 
-export const ROTULO_ROLE: Record<string, string> = {
-  [Role.SUPER_ADMIN]: "Super Admin",
-  [Role.EXEC_ADMIN]: "Executivo · Admin",
-  [Role.EXEC_PLANEJAMENTO]: "Executivo · Planejamento",
-  [Role.EXEC_CONSULTA]: "Executivo · Consulta",
-  [Role.LEG_ADMIN]: "Legislativo · Mesa",
-  [Role.LEG_TECNICO]: "Legislativo · Técnico",
-  [Role.LEG_AUTOR]: "Legislativo · Vereador(a)",
-  [Role.LEG_CONSULTA]: "Legislativo · Consulta",
+// Rótulos das permissões atômicas de um perfil de acesso (PROMPT 12).
+export const ROTULO_PERMISSAO: Record<string, string> = {
+  apresentarEmendas: "Apresentar emendas",
+  gerirTodasEmendas: "Gerir todas as emendas",
+  tramitarEmendas: "Tramitar emendas",
+  gerirPlanejamento: "Gerir planejamento",
+  gerirExercicios: "Abrir/encerrar exercícios",
+  administrarConfiguracoes: "Administrar configurações",
+  analisarViabilidade: "Analisar viabilidade técnica",
+  registrarExecucao: "Registrar execução",
+};
+
+// O que cada permissão de fato autoriza — texto de apoio do formulário.
+export const AJUDA_PERMISSAO: Record<string, string> = {
+  apresentarEmendas: "Criar emendas e gerir as de própria autoria.",
+  gerirTodasEmendas: "Editar, validar e submeter qualquer emenda do exercício.",
+  tramitarEmendas: "Aprovar ou rejeitar emendas submetidas, com parecer.",
+  gerirPlanejamento: "Instrumentos PPA/LDO/LOA, base de dotações e lei aprovada.",
+  gerirExercicios: "Abrir e encerrar exercícios orçamentários.",
+  administrarConfiguracoes: "Parâmetros, normas, beneficiários e usuários.",
+  analisarViabilidade: "Registrar parecer de viabilidade técnica nas emendas.",
+  registrarExecucao: "Lançar empenho, liquidação e pagamento das emendas.",
+};
+
+export const ROTULO_RESULTADO_VIABILIDADE: Record<string, string> = {
+  VIAVEL: "Viável",
+  VIAVEL_COM_RESSALVA: "Viável com ressalva",
+  INVIAVEL: "Inviável",
+};
+
+export const ROTULO_ETAPA_EXECUCAO: Record<string, string> = {
+  EMPENHO: "Empenho",
+  LIQUIDACAO: "Liquidação",
+  PAGAMENTO: "Pagamento",
 };
 
 export const ROTULO_TIPO_BENEFICIARIO: Record<string, string> = {

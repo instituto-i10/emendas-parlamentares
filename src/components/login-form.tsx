@@ -26,8 +26,8 @@ const PERFIS: { grupo: string; contas: Conta[] }[] = [
     grupo: "Acesso master",
     contas: [
       {
-        nome: "Administrador do Sistema",
-        papel: "atravessa os dois Poderes",
+        nome: "Administrador Geral",
+        papel: "acesso total; compõe os perfis",
         email: "super@municipio.gov.br",
       },
     ],
@@ -35,30 +35,48 @@ const PERFIS: { grupo: string; contas: Conta[] }[] = [
   {
     grupo: "Câmara",
     contas: [
-      { nome: "Mesa Diretora", papel: "vê tudo + configurações", email: "mesa@camara.gov.br" },
-      { nome: "Analista Técnico", papel: "tramita, sem configurações", email: "analista@camara.gov.br" },
+      {
+        nome: "Presidente da Câmara",
+        papel: "apresenta, tramita e administra",
+        email: "presidente@camara.gov.br",
+        apresenta: true,
+      },
+      {
+        nome: "Comissão de Finanças",
+        papel: "gere e tramita; não apresenta",
+        email: "comissao@camara.gov.br",
+      },
       {
         nome: "Vereador Exemplo",
         papel: "gabinete: a própria cota",
         email: "vereador@camara.gov.br",
         apresenta: true,
       },
-      { nome: "Consulta Legislativo", papel: "somente leitura", email: "leg.consulta@camara.gov.br" },
     ],
   },
   {
     grupo: "Prefeitura",
     contas: [
-      { nome: "Executivo Admin", papel: "planejamento + configurações", email: "exec.admin@municipio.gov.br" },
-      { nome: "Planejamento", papel: "instrumentos e base", email: "planejamento@municipio.gov.br" },
-      { nome: "Consulta Executivo", papel: "somente leitura", email: "exec.consulta@municipio.gov.br" },
+      {
+        nome: "Poder Executivo",
+        papel: "planejamento, viabilidade e execução",
+        email: "executivo@municipio.gov.br",
+      },
     ],
   },
 ];
 
 const SENHA_DEMO = "mudar@123";
 
-export function LoginForm({ demo = false }: { demo?: boolean }) {
+export function LoginForm({
+  demo = false,
+  avisoSemPerfil = false,
+}: {
+  demo?: boolean;
+  // A conta autenticou, mas não tem perfil de acesso — ou a sessão é anterior
+  // à implantação dos perfis. Aviso, não erro: não há nada a corrigir aqui.
+  avisoSemPerfil?: boolean;
+}) {
   const [erro, action, pending] = useActionState<LoginState, FormData>(
     entrar,
     null
@@ -84,6 +102,15 @@ export function LoginForm({ demo = false }: { demo?: boolean }) {
 
   return (
     <div className="space-y-5">
+      {avisoSemPerfil && !erro ? (
+        <p
+          role="status"
+          className="rounded-lg bg-[var(--surf-warn)] px-3 py-2.5 text-[12.5px] font-semibold text-[var(--on-warn)]"
+        >
+          Sua conta ainda não tem um perfil de acesso. Procure o administrador
+          do sistema para receber o seu.
+        </p>
+      ) : null}
       <form ref={form} action={action} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="email">E-mail</Label>

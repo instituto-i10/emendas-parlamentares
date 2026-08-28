@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
-import type { Poder, Role } from "@/generated/prisma/enums";
+import type { Ator } from "@/lib/authz";
 import { vistasVisiveis } from "@/config/vistas360";
-import { ROTULO_ROLE } from "@/lib/rotulos";
 import { SideNav, SideNavMobile } from "./side-nav";
 import { ExercicioSelector } from "./exercicio-selector";
 import { AssistenteWidget } from "./assistente/widget";
@@ -19,7 +18,7 @@ export function AppShell({
   contexto,
   children,
 }: {
-  user: { nome: string; poder: Poder | null; role: Role };
+  user: { nome: string } & Ator;
   exercicios: ExercicioOpcao[];
   anoAtivo: number | null;
   /** Pendências por vista, exibidas como contador no menu. */
@@ -28,7 +27,7 @@ export function AppShell({
   contexto?: string;
   children: ReactNode;
 }) {
-  const vistas = vistasVisiveis(user.role).map(({ id, titulo, href }) => ({
+  const vistas = vistasVisiveis(user).map(({ id, titulo, href }) => ({
     id,
     titulo,
     href,
@@ -36,7 +35,7 @@ export function AppShell({
 
   const usuarioNav = {
     nome: user.nome,
-    papel: ROTULO_ROLE[user.role] ?? user.role,
+    papel: user.perfil?.nome ?? "Sem perfil",
   };
 
   return (

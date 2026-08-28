@@ -186,7 +186,7 @@ test.describe("cascata sob volume realista", () => {
   // propósito — o teste passa a documentar a melhoria.
 
   test("a base de teste tem volume de LOA real", async ({ page }) => {
-    await entrarComo(page, "execPlanejamento");
+    await entrarComo(page, "executivo");
     await page.goto("/executivo/planejamento/base");
     // A linha do PL base traz a contagem de dotações numa célula da tabela.
     const linha = page.getByRole("row").filter({ hasText: "PL 45/2024" });

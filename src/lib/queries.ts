@@ -131,6 +131,19 @@ export async function listarBeneficiariosOpcoes() {
   );
 }
 
+// --------------------------------------------------------- Perfis de acesso
+export async function listarPerfis() {
+  return safe(
+    () =>
+      prisma.perfilAcesso.findMany({
+        include: { _count: { select: { usuarios: true } } },
+        // Os de fábrica primeiro: são a referência de quem compõe um perfil novo.
+        orderBy: [{ perfilDoSistema: "desc" }, { nome: "asc" }],
+      }),
+    []
+  );
+}
+
 // ------------------------------------------------------------------- Usuários
 export async function listarUsuarios() {
   return safe(
@@ -141,7 +154,8 @@ export async function listarUsuarios() {
           name: true,
           email: true,
           poder: true,
-          role: true,
+          perfilId: true,
+          perfil: { select: { id: true, nome: true, poder: true, adminGeral: true } },
           autor: { select: { id: true, nome: true } },
         },
         orderBy: { createdAt: "desc" },

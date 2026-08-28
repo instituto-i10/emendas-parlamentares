@@ -2,9 +2,10 @@ import { z } from "zod";
 import {
   EscopoParametro,
   EspecieInstrumento,
+  EtapaExecucao,
   ModoValidacao,
+  ResultadoViabilidade,
   Poder,
-  Role,
   StatusInstrumento,
   TipoBeneficiario,
   TipoEmenda,
@@ -107,8 +108,8 @@ export type LeiAprovadaInput = z.input<typeof leiAprovadaSchema>;
 export const usuarioSchema = z.object({
   nome: z.string().trim().min(1, "Informe o nome."),
   email: z.string().trim().email("E-mail inválido."),
-  poder: enumOpcional(Poder),
-  role: z.enum(valores(Role)),
+  // O Poder do usuário passa a vir do perfil — não é mais escolhido à mão.
+  perfilId: z.string().trim().min(1, "Atribua um perfil de acesso."),
   // Senha opcional (mín. 8). Se ausente, o usuário fica sem credencial até definir.
   senha: z
     .string()
@@ -208,3 +209,78 @@ export const beneficiarioSchema = z.object({
 });
 
 export type BeneficiarioInput = z.input<typeof beneficiarioSchema>;
+
+// ------------------------------------------------- Perfis de acesso (PROMPT 12)
+export const PERMISSOES_PERFIL = [
+  "apresentarEmendas",
+  "gerirTodasEmendas",
+  "tramitarEmendas",
+  "gerirPlanejamento",
+  "gerirExercicios",
+  "administrarConfiguracoes",
+  "analisarViabilidade",
+  "registrarExecucao",
+] as const;
+
+export const perfilSchema = z
+  .object({
+    nome: z.string().trim().min(1, "Informe o nome do perfil."),
+    descricao: z
+      .string()
+      .trim()
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
+    poder: enumOpcional(Poder),
+    apresentarEmendas: z.coerce.boolean().default(false),
+    gerirTodasEmendas: z.coerce.boolean().default(false),
+    tramitarEmendas: z.coerce.boolean().default(false),
+    gerirPlanejamento: z.coerce.boolean().default(false),
+    gerirExercicios: z.coerce.boolean().default(false),
+    administrarConfiguracoes: z.coerce.boolean().default(false),
+    analisarViabilidade: z.coerce.boolean().default(false),
+    registrarExecucao: z.coerce.boolean().default(false),
+  })
+  // Perfil sem nenhuma permissão é perfil de CONSULTA e é legítimo — mas o
+  // formulário exige uma marcação para que a consulta seja escolha explícita,
+  // e não esquecimento de quem estava compondo o perfil.
+  .refine((d) => PERMISSOES_PERFIL.some((p) => d[p]), {
+    message: "Marque ao menos uma permissão.",
+    path: ["apresentarEmendas"],
+  });
+
+export type PerfilInput = z.input<typeof perfilSchema>;
+
+// Reatribuição de perfil na própria linha da tabela de usuários.
+export const reatribuirPerfilSchema = z.object({
+  usuarioId: z.string().trim().min(1),
+  perfilId: z.string().trim().min(1, "Escolha um perfil."),
+});
+
+// ------------------------------- Viabilidade técnica e execução (Executivo)
+export const parecerViabilidadeSchema = z.object({
+  emendaId: z.string().trim().min(1),
+  resultado: z.enum(valores(ResultadoViabilidade)),
+  justificativa: z
+    .string()
+    .trim()
+    .min(20, "Descreva a justificativa (ao menos 20 caracteres)."),
+});
+
+export const andamentoExecucaoSchema = z.object({
+  emendaId: z.string().trim().min(1),
+  etapa: z.enum(valores(EtapaExecucao)),
+  data: z.coerce.date({ message: "Informe a data do lançamento." }),
+  valor: z.coerce
+    .number()
+    .positive("O valor deve ser maior que zero."),
+  numeroDocumento: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  observacao: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+});

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Role } from "@/generated/prisma/enums";
 import { getCurrentUser } from "@/lib/session";
+import { podeVerTodasEmendas } from "@/lib/authz";
 import { getAnoAtivo } from "@/lib/exercicio";
 import {
   getDados360,
@@ -32,9 +32,9 @@ export default async function Vereador360Page({
   const [{ params, emendas, consolidado: c, porAutor }, autores] =
     await Promise.all([getDados360(ano), listarAutores()]);
 
-  // O gabinete (LEG_AUTOR) vê sempre a própria cota; os demais escolhem na lista.
+  // O gabinete vê sempre a própria cota; quem gere/tramita escolhe na lista.
   const autorProprio = autores.find((a) => a.usuarioId === user.id);
-  const travadoNoProprio = user.role === Role.LEG_AUTOR && !!autorProprio;
+  const travadoNoProprio = !podeVerTodasEmendas(user) && !!autorProprio;
   const selecionado = travadoNoProprio
     ? autorProprio
     : (autores.find((a) => a.id === autorParam) ??

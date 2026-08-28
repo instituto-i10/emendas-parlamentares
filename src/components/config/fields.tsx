@@ -107,3 +107,41 @@ export function SelectField({
     </div>
   );
 }
+
+// Caixa de verificação para compor permissões de um perfil de acesso. O rótulo
+// carrega uma linha de apoio: quem monta o perfil precisa saber o que a
+// permissão abre, não só o nome dela.
+export function CheckboxField({
+  name,
+  label,
+  ajuda,
+  defaultChecked,
+}: {
+  name: string;
+  label: string;
+  ajuda?: string;
+  defaultChecked?: boolean;
+}) {
+  return (
+    <label
+      htmlFor={name}
+      className="flex cursor-pointer items-start gap-3 rounded-[10px] border border-input p-3 transition-colors hover:bg-muted/40"
+    >
+      <input
+        id={name}
+        name={name}
+        type="checkbox"
+        defaultChecked={defaultChecked}
+        className="mt-0.5 size-4 shrink-0 accent-primary"
+      />
+      <span className="min-w-0 space-y-0.5">
+        <span className="block text-sm font-medium leading-tight">{label}</span>
+        {ajuda ? (
+          <span className="block text-xs leading-snug text-muted-foreground">
+            {ajuda}
+          </span>
+        ) : null}
+      </span>
+    </label>
+  );
+}

@@ -3,15 +3,13 @@ import { expect, type Page } from "@playwright/test";
 // As contas vêm do seed (src/lib/seed-data.ts). Ver docs/contas-demo.md.
 export const SENHA = "mudar@123";
 
+// As 5 contas de demonstração — uma por perfil base (PROMPT 12).
 export const PERSONAS = {
-  super: { email: "super@municipio.gov.br", nome: "Administrador do Sistema" },
-  execAdmin: { email: "exec.admin@municipio.gov.br", nome: "Executivo · Admin" },
-  execPlanejamento: { email: "planejamento@municipio.gov.br", nome: "Executivo · Planejamento" },
-  execConsulta: { email: "exec.consulta@municipio.gov.br", nome: "Executivo · Consulta" },
-  mesa: { email: "mesa@camara.gov.br", nome: "Legislativo · Mesa" },
-  tecnico: { email: "analista@camara.gov.br", nome: "Legislativo · Técnico" },
-  vereador: { email: "vereador@camara.gov.br", nome: "Legislativo · Vereador(a)" },
-  legConsulta: { email: "leg.consulta@camara.gov.br", nome: "Legislativo · Consulta" },
+  super: { email: "super@municipio.gov.br", nome: "Administrador Geral" },
+  executivo: { email: "executivo@municipio.gov.br", nome: "Poder Executivo" },
+  presidente: { email: "presidente@camara.gov.br", nome: "Presidente da Câmara" },
+  comissao: { email: "comissao@camara.gov.br", nome: "Comissão de Finanças" },
+  vereador: { email: "vereador@camara.gov.br", nome: "Vereador Exemplo" },
 } as const;
 
 export type Persona = keyof typeof PERSONAS;

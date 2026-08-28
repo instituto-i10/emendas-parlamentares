@@ -36,7 +36,7 @@ export default async function DashboardLayout({
   // rótulo; esta linha deixa explícito que 2026 é o ano de elaboração.
   return (
     <AppShell
-      user={{ nome: user.nome, poder: user.poder, role: user.role }}
+      user={{ nome: user.nome, id: user.id, perfil: user.perfil }}
       exercicios={exercicios}
       anoAtivo={anoAtivo}
       contadores={contadores}

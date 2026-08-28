@@ -6,9 +6,9 @@ import { abasVisiveis, entrarComo } from "./personas";
 // URL. Estes testes travam esse contrato antes do redesign — reorganizar a
 // navegação não pode, por descuido, expor uma vista ou uma ação a quem não deve.
 
-test.describe("visibilidade por papel", () => {
-  test("a Mesa vê a visão completa da comissão e as Configurações", async ({ page }) => {
-    await entrarComo(page, "mesa");
+test.describe("visibilidade por perfil", () => {
+  test("o Presidente vê a visão completa e as Configurações", async ({ page }) => {
+    await entrarComo(page, "presidente");
     const abas = await abasVisiveis(page);
     expect(abas).toEqual(
       expect.arrayContaining([
@@ -18,22 +18,41 @@ test.describe("visibilidade por papel", () => {
     );
   });
 
-  test("o vereador não vê Tramitação, Conformidade nem Pitch", async ({ page }) => {
-    await entrarComo(page, "vereador");
+  test("a Comissão vê a Análise Técnica, sem o Pitch da administração", async ({ page }) => {
+    await entrarComo(page, "comissao");
     const abas = await abasVisiveis(page);
-    expect(abas).toEqual(
-      expect.arrayContaining(["Emendas & Beneficiários", "Vereador 360", "Análise Técnica"])
-    );
-    expect(abas).not.toContain("Tramitação");
-    expect(abas).not.toContain("Conformidade");
+    expect(abas).toEqual(expect.arrayContaining(["Análise Técnica", "Vereador 360"]));
     expect(abas).not.toContain("Pitch");
   });
 
-  test("o Executivo não vê o Vereador 360", async ({ page }) => {
-    await entrarComo(page, "execPlanejamento");
+  test("o vereador não vê a Análise Técnica nem o Pitch", async ({ page }) => {
+    await entrarComo(page, "vereador");
+    const abas = await abasVisiveis(page);
+    expect(abas).toEqual(
+      expect.arrayContaining(["Emendas & Beneficiários", "Vereador 360", "Painel"])
+    );
+    expect(abas).not.toContain("Análise Técnica");
+    expect(abas).not.toContain("Pitch");
+  });
+
+  test("o Executivo não vê o Vereador 360 nem a Análise Técnica", async ({ page }) => {
+    await entrarComo(page, "executivo");
     const abas = await abasVisiveis(page);
     expect(abas).toContain("Painel");
     expect(abas).not.toContain("Vereador 360");
+    expect(abas).not.toContain("Análise Técnica");
+  });
+});
+
+test.describe("vista inicial após o login", () => {
+  test("o vereador cai no Vereador 360; os demais no Painel", async ({ page }) => {
+    await entrarComo(page, "vereador");
+    await expect(page).toHaveURL(/\/vereador360/);
+  });
+
+  test("a Comissão cai no Painel", async ({ page }) => {
+    await entrarComo(page, "comissao");
+    await expect(page).toHaveURL(/\/painel/);
   });
 });
 
@@ -46,18 +65,18 @@ test.describe("guards de rota no servidor", () => {
   });
 
   test("o Legislativo não acessa o planejamento do Executivo", async ({ page }) => {
-    await entrarComo(page, "tecnico");
+    await entrarComo(page, "comissao");
     await page.goto("/executivo/planejamento/base");
     await expect(page).toHaveURL(/\/hub\?erro=acesso-negado/);
   });
 
   test("o Executivo não acessa a apresentação de emendas do Legislativo", async ({ page }) => {
-    await entrarComo(page, "execPlanejamento");
+    await entrarComo(page, "executivo");
     await page.goto("/legislativo/emendas/nova");
     await expect(page).toHaveURL(/\/hub\?erro=acesso-negado/);
   });
 
-  test("o SUPER_ADMIN atravessa os dois Poderes", async ({ page }) => {
+  test("o Administrador Geral atravessa os dois Poderes", async ({ page }) => {
     await entrarComo(page, "super");
     await page.goto("/executivo/planejamento/instrumentos");
     await expect(page).not.toHaveURL(/acesso-negado/);
@@ -69,8 +88,8 @@ test.describe("guards de rota no servidor", () => {
 });
 
 test.describe("ações restritas", () => {
-  test("o perfil de consulta não vê o atalho de nova emenda", async ({ page }) => {
-    await entrarComo(page, "legConsulta");
+  test("a Comissão não vê o atalho de nova emenda", async ({ page }) => {
+    await entrarComo(page, "comissao");
     await page.goto("/emendas");
     await expect(page.getByRole("link", { name: "+ Nova emenda" })).toHaveCount(0);
   });
@@ -81,8 +100,8 @@ test.describe("ações restritas", () => {
     await expect(page.getByRole("link", { name: "+ Nova emenda" })).toBeVisible();
   });
 
-  test("o perfil de consulta não pode apresentar emenda pela URL", async ({ page }) => {
-    await entrarComo(page, "legConsulta");
+  test("a Comissão não pode apresentar emenda pela URL", async ({ page }) => {
+    await entrarComo(page, "comissao");
     await page.goto("/legislativo/emendas/nova");
     // Ou redireciona, ou mostra o estado de "sem permissão" — o que não pode é
     // apresentar o formulário.
@@ -90,5 +109,44 @@ test.describe("ações restritas", () => {
     const redirecionou = page.url().includes("acesso-negado");
     if (!redirecionou) await expect(semPermissao).toBeVisible();
     await expect(page.getByLabel("Órgão")).toHaveCount(0);
+  });
+});
+
+test.describe("separação de Poderes e permissões novas", () => {
+  test("o vereador não abre a lista de todas as emendas pela URL", async ({ page }) => {
+    await entrarComo(page, "vereador");
+    await page.goto("/legislativo/emendas/todas");
+    await expect(page).toHaveURL(/\/hub\?erro=acesso-negado/);
+  });
+
+  test("o vereador não abre a Análise Técnica pela URL", async ({ page }) => {
+    await entrarComo(page, "vereador");
+    await page.goto("/analise");
+    await expect(page).toHaveURL(/\/hub\?erro=acesso-negado/);
+  });
+
+  test("a Comissão não abre a viabilidade técnica do Executivo", async ({ page }) => {
+    await entrarComo(page, "comissao");
+    await page.goto("/executivo/acompanhamento/viabilidade");
+    await expect(page).toHaveURL(/\/hub\?erro=acesso-negado/);
+  });
+
+  test("o Executivo abre viabilidade e lançamentos de execução", async ({ page }) => {
+    await entrarComo(page, "executivo");
+    await page.goto("/executivo/acompanhamento/viabilidade");
+    await expect(page).not.toHaveURL(/acesso-negado/);
+    await page.goto("/executivo/acompanhamento/lancamentos");
+    await expect(page).not.toHaveURL(/acesso-negado/);
+  });
+
+  test("a aba Perfis é exclusiva do Administrador Geral", async ({ page }) => {
+    await entrarComo(page, "presidente");
+    await page.goto("/config");
+    await expect(page.getByRole("tab", { name: "Perfis" })).toHaveCount(0);
+
+    await page.getByRole("button", { name: /Sair|Encerrar/ }).first().click().catch(() => {});
+    await entrarComo(page, "super");
+    await page.goto("/config");
+    await expect(page.getByRole("tab", { name: "Perfis" })).toBeVisible();
   });
 });

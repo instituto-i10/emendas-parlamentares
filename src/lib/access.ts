@@ -1,12 +1,18 @@
 import "server-only";
 import { redirect } from "next/navigation";
-import { Poder, Role } from "@/generated/prisma/enums";
+import { Poder } from "@/generated/prisma/enums";
 import { getCurrentUser, type SessionUser } from "./session";
 import { moduloPorId, podeVerModulo } from "@/config/navegacao";
+import {
+  alcancaPoder,
+  temPermissao,
+  type Permissao,
+} from "./authz";
 
 // ============================================================================
-// Guards de rota no servidor. Acessar módulo/Poder não permitido → redirect ao
-// hub (com marcador de erro). SUPER_ADMIN passa por tudo.
+// Guards de rota NO SERVIDOR. Ocultar o item do menu não é controle de acesso:
+// toda rota e toda server action passa por aqui. Acesso negado → volta ao hub
+// com marcador de erro. Quem tem `adminGeral` passa por tudo.
 // ============================================================================
 
 // Exige acesso a um macro-módulo específico (por id do mapa de navegação).
@@ -15,38 +21,40 @@ export async function requireModuloAcesso(
 ): Promise<SessionUser> {
   const user = await getCurrentUser();
   const modulo = moduloPorId(moduloId);
-  if (!modulo || !podeVerModulo({ poder: user.poder, role: user.role }, modulo)) {
+  if (!modulo || !podeVerModulo(user, modulo)) {
     redirect("/hub?erro=acesso-negado");
   }
   return user;
 }
 
-// Exige que o usuário pertença a um Poder (ou seja SUPER_ADMIN).
+// Exige que o perfil alcance um Poder. Separação de Poderes é estrutural.
 export async function requirePoderAcesso(poder: Poder): Promise<SessionUser> {
   const user = await getCurrentUser();
-  if (user.role !== Role.SUPER_ADMIN && user.poder !== poder) {
-    redirect("/hub?erro=acesso-negado");
-  }
+  if (!alcancaPoder(user, poder)) redirect("/hub?erro=acesso-negado");
   return user;
 }
 
-// Exige que o usuário tenha um dos papéis informados (ou seja SUPER_ADMIN).
-export async function requireRole(...roles: Role[]): Promise<SessionUser> {
+// Exige ao menos uma das permissões informadas.
+export async function requirePermissao(
+  ...permissoes: Permissao[]
+): Promise<SessionUser> {
   const user = await getCurrentUser();
-  if (user.role !== Role.SUPER_ADMIN && !roles.includes(user.role)) {
-    redirect("/hub?erro=acesso-negado");
-  }
+  if (!temPermissao(user, ...permissoes)) redirect("/hub?erro=acesso-negado");
   return user;
 }
 
-// Guard unificado por Poder e/ou papéis (Prompt 9). SUPER_ADMIN passa por tudo.
+// Guard unificado: Poder e/ou permissões. As duas condições são conjuntivas —
+// ter a permissão não abre o módulo do outro Poder.
 export async function requireAccess(opts: {
   poder?: Poder;
-  roles?: Role[];
+  permissoes?: Permissao[];
 }): Promise<SessionUser> {
   const user = await getCurrentUser();
-  if (user.role === Role.SUPER_ADMIN) return user;
-  if (opts.poder && user.poder !== opts.poder) redirect("/hub?erro=acesso-negado");
-  if (opts.roles && !opts.roles.includes(user.role)) redirect("/hub?erro=acesso-negado");
+  if (opts.poder && !alcancaPoder(user, opts.poder)) {
+    redirect("/hub?erro=acesso-negado");
+  }
+  if (opts.permissoes?.length && !temPermissao(user, ...opts.permissoes)) {
+    redirect("/hub?erro=acesso-negado");
+  }
   return user;
 }

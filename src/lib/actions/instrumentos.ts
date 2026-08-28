@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { Role } from "@/generated/prisma/enums";
+import { podeGerirPlanejamento } from "@/lib/authz";
 import { registrarAuditoria } from "@/lib/audit";
 
 type R = { ok: true } | { ok: false; error: string };
@@ -21,9 +21,7 @@ const STATUS_VALIDOS = new Set([
 async function gate() {
   const u = await getCurrentUser();
   const ok =
-    u.role === Role.SUPER_ADMIN ||
-    u.role === Role.EXEC_ADMIN ||
-    u.role === Role.EXEC_PLANEJAMENTO;
+    podeGerirPlanejamento(u);
   return { ok, u };
 }
 

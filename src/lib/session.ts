@@ -1,82 +1,74 @@
 import "server-only";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { Poder, Role } from "@/generated/prisma/enums";
+import { Poder } from "@/generated/prisma/enums";
 import { auth } from "./auth";
+import type { Ator, Perfil } from "./authz";
 
 // ============================================================================
-// SESSÃO TEMPORÁRIA (PROMPT 2) — substituída pelo Auth.js real no PROMPT 9.
-// Baseada em cookies de desenvolvimento para permitir demonstrar a filtragem
-// por Poder/role (hub e sidebar). NÃO é autenticação de verdade.
+// Sessão autenticada (Auth.js). O PERFIL DE ACESSO — Poder + permissões — é
+// gravado no token no login (PROMPT 12): alterações de perfil valem no PRÓXIMO
+// login do usuário afetado.
+//
+// Conta sem perfil NÃO acessa o sistema: volta ao login com aviso. Sessões
+// abertas antes da implantação não carregam perfil e caem nesse mesmo caminho,
+// uma única vez, sem erro.
 // ============================================================================
 
-export type SessionUser = {
-  id: string;
+export type SessionUser = Ator & {
   nome: string;
   email: string;
+  // Poder efetivo do usuário — vem do perfil, que é a fonte de verdade.
   poder: Poder | null;
-  role: Role;
 };
 
-export const DEV_COOKIE_ROLE = "dev-role";
-export const DEV_COOKIE_PODER = "dev-poder";
-
-// Deriva o Poder padrão a partir do papel (SUPER_ADMIN é transversal → null).
-export function poderPadraoDoRole(role: Role): Poder | null {
-  if (role === Role.SUPER_ADMIN) return null;
-  if (role.startsWith("EXEC_")) return Poder.EXECUTIVO;
-  if (role.startsWith("LEG_")) return Poder.LEGISLATIVO;
-  return null;
-}
-
-function nomePorRole(role: Role): string {
-  const mapa: Record<Role, string> = {
-    SUPER_ADMIN: "Administrador do Sistema",
-    EXEC_ADMIN: "Administrador (Executivo)",
-    EXEC_PLANEJAMENTO: "Planejamento (Executivo)",
-    EXEC_CONSULTA: "Consulta (Executivo)",
-    LEG_ADMIN: "Mesa Diretora (Legislativo)",
-    LEG_TECNICO: "Analista (Legislativo)",
-    LEG_AUTOR: "Vereador(a)",
-    LEG_CONSULTA: "Consulta (Legislativo)",
-  };
-  return mapa[role];
-}
-
-function ehRole(valor: string | undefined): valor is Role {
-  return !!valor && Object.prototype.hasOwnProperty.call(Role, valor);
-}
+// Perfil sintético usado APENAS fora de produção, quando não há sessão: permite
+// abrir o sistema em desenvolvimento sem semear banco. Nunca vale em produção.
+const PERFIL_DEV: Perfil = {
+  id: "dev-perfil",
+  nome: "Administrador Geral",
+  poder: null,
+  adminGeral: true,
+  perfilDoSistema: true,
+  apresentarEmendas: true,
+  gerirTodasEmendas: true,
+  tramitarEmendas: true,
+  gerirPlanejamento: true,
+  gerirExercicios: true,
+  administrarConfiguracoes: true,
+  analisarViabilidade: true,
+  registrarExecucao: true,
+};
 
 export async function getCurrentUser(): Promise<SessionUser> {
-  // 1) Sessão real do Auth.js (PROMPT 9).
   try {
     const session = await auth();
-    if (session?.user?.role) {
+    if (session?.user) {
+      const perfil = session.user.perfil ?? null;
+      // Autenticado, porém sem perfil atribuído (ou sessão anterior à
+      // implantação): volta ao login com aviso, não com erro.
+      if (!perfil) redirect("/login?erro=sem-perfil");
       return {
         id: session.user.id,
         nome: session.user.name ?? session.user.email ?? "Usuário",
         email: session.user.email ?? "",
-        poder: session.user.poder ?? null,
-        role: session.user.role,
+        poder: perfil.poder,
+        perfil,
       };
     }
-  } catch {
-    // segue para o fallback
+  } catch (e) {
+    // `redirect` sinaliza por exceção — não pode ser engolido pelo fallback.
+    if (e && typeof e === "object" && "digest" in e) throw e;
   }
 
-  // 2) Fallback de desenvolvimento (sessão-cookie) — NUNCA em produção.
   if (process.env.NODE_ENV !== "production") {
-    const jar = await cookies();
-    const roleCookie = jar.get(DEV_COOKIE_ROLE)?.value;
-    const role: Role = ehRole(roleCookie) ? roleCookie : Role.SUPER_ADMIN;
-    const poderCookie = jar.get(DEV_COOKIE_PODER)?.value;
-    const poder: Poder | null =
-      poderCookie === Poder.LEGISLATIVO || poderCookie === Poder.EXECUTIVO
-        ? (poderCookie as Poder)
-        : poderPadraoDoRole(role);
-    return { id: "dev-user", nome: nomePorRole(role), email: "dev@local", poder, role };
+    return {
+      id: "dev-user",
+      nome: "Administrador Geral",
+      email: "dev@local",
+      poder: null,
+      perfil: PERFIL_DEV,
+    };
   }
 
-  // 3) Produção sem sessão → login.
   redirect("/login");
 }

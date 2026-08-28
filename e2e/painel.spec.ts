@@ -8,7 +8,7 @@ import { entrarComo } from "./personas";
 
 test.describe("painel da comissão", () => {
   test.beforeEach(async ({ page }) => {
-    await entrarComo(page, "mesa");
+    await entrarComo(page, "presidente");
     await page.goto("/painel");
   });
 
@@ -98,7 +98,7 @@ test.describe("vereador 360", () => {
 
 test.describe("conformidade institucional", () => {
   test("o checklist do TCE reflete o estado real do sistema", async ({ page }) => {
-    await entrarComo(page, "mesa");
+    await entrarComo(page, "presidente");
     await page.goto("/conformidade");
     await expect(
       page.getByRole("heading", { name: "Conformidade institucional — checklist TCE" })
@@ -111,7 +111,7 @@ test.describe("conformidade institucional", () => {
 
 test.describe("exportação", () => {
   test("a exportação de emendas devolve um CSV", async ({ page }) => {
-    await entrarComo(page, "mesa");
+    await entrarComo(page, "presidente");
     const resposta = await page.request.get("/api/export/emendas?ano=2025&formato=csv");
     expect(resposta.status()).toBe(200);
     expect(resposta.headers()["content-type"]).toContain("text/csv");

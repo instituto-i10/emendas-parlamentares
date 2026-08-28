@@ -16,7 +16,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const senha = String(creds?.senha ?? "");
         if (!email || !senha) return null;
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        // O perfil vem junto: é ele que será gravado no token (PROMPT 12).
+        const user = await prisma.user.findUnique({
+          where: { email },
+          include: { perfil: true },
+        });
         if (!user?.passwordHash) return null;
 
         const ok = await bcrypt.compare(senha, user.passwordHash);
@@ -26,8 +30,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role,
-          poder: user.poder,
+          // Sem perfil o login é aceito, mas o guard de sessão devolve ao
+          // login com o aviso — assim a pessoa sabe o que falta, em vez de
+          // receber "credenciais inválidas" e culpar a senha.
+          perfil: user.perfil,
         };
       },
     }),

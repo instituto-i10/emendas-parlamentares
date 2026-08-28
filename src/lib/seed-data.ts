@@ -209,24 +209,141 @@ export async function semear(prisma: PrismaClient) {
     }
   }
 
+  // --------------------------------------------------- Perfis de acesso (P12)
+  // Os 5 perfis base. Idempotente por nome: reaplicar realinha as permissões
+  // sem trocar o id, então os vínculos de usuário continuam valendo.
+  const perfisBase = [
+    {
+      nome: "Administrador Geral",
+      descricao:
+        "Acesso total ao sistema. Único perfil que compõe novos perfis de acesso.",
+      poder: null,
+      apresentarEmendas: true,
+      gerirTodasEmendas: true,
+      tramitarEmendas: true,
+      gerirPlanejamento: true,
+      gerirExercicios: true,
+      administrarConfiguracoes: true,
+      analisarViabilidade: true,
+      registrarExecucao: true,
+      adminGeral: true,
+    },
+    {
+      nome: "Vereador",
+      descricao:
+        "Gabinete parlamentar: apresenta e gere as emendas de própria autoria, dentro da sua cota.",
+      poder: "LEGISLATIVO",
+      apresentarEmendas: true,
+      gerirTodasEmendas: false,
+      tramitarEmendas: false,
+      gerirPlanejamento: false,
+      gerirExercicios: false,
+      administrarConfiguracoes: false,
+      analisarViabilidade: false,
+      registrarExecucao: false,
+      adminGeral: false,
+    },
+    {
+      nome: "Comissão de Finanças e Orçamento",
+      descricao:
+        "Conduz a análise técnica: gere qualquer emenda do exercício e aprova ou rejeita com parecer.",
+      poder: "LEGISLATIVO",
+      apresentarEmendas: false,
+      gerirTodasEmendas: true,
+      tramitarEmendas: true,
+      gerirPlanejamento: false,
+      gerirExercicios: false,
+      administrarConfiguracoes: false,
+      analisarViabilidade: false,
+      registrarExecucao: false,
+      adminGeral: false,
+    },
+    {
+      nome: "Presidente da Câmara",
+      descricao:
+        "Soma as capacidades do vereador e da comissão, mais a administração do Legislativo.",
+      poder: "LEGISLATIVO",
+      apresentarEmendas: true,
+      gerirTodasEmendas: true,
+      tramitarEmendas: true,
+      gerirPlanejamento: false,
+      gerirExercicios: true,
+      administrarConfiguracoes: true,
+      analisarViabilidade: false,
+      registrarExecucao: false,
+      adminGeral: false,
+    },
+    {
+      nome: "Poder Executivo",
+      descricao:
+        "Instrumentos de planejamento, base de dotações e lei aprovada; analisa a viabilidade técnica e lança a execução orçamentária das emendas.",
+      poder: "EXECUTIVO",
+      apresentarEmendas: false,
+      gerirTodasEmendas: false,
+      tramitarEmendas: false,
+      gerirPlanejamento: true,
+      gerirExercicios: true,
+      administrarConfiguracoes: true,
+      analisarViabilidade: true,
+      registrarExecucao: true,
+      adminGeral: false,
+    },
+  ];
+
+  const perfilPorNome = new Map<string, string>();
+  for (const p of perfisBase) {
+    const dados = { ...p, poder: p.poder as never, perfilDoSistema: true };
+    const salvo = await prisma.perfilAcesso.upsert({
+      where: { nome: p.nome },
+      create: dados,
+      update: dados,
+    });
+    perfilPorNome.set(p.nome, salvo.id);
+  }
+
+  // ------------------------------------------------------- Contas de demonstração
+  // Uma por perfil. As 6 contas do esquema antigo saem de cena: Autor e
+  // AuditLog são SET NULL, então nenhuma emenda ou trilha se perde no caminho.
   const senhaHash = await bcrypt.hash("mudar@123", 10);
-  const usuarios: { nome: string; email: string; poder: "LEGISLATIVO" | "EXECUTIVO" | null; role: string }[] = [
-    { nome: "Administrador", email: "super@municipio.gov.br", poder: null, role: "SUPER_ADMIN" },
-    { nome: "Exec Admin", email: "exec.admin@municipio.gov.br", poder: "EXECUTIVO", role: "EXEC_ADMIN" },
-    { nome: "Planejamento", email: "planejamento@municipio.gov.br", poder: "EXECUTIVO", role: "EXEC_PLANEJAMENTO" },
-    { nome: "Consulta Exec", email: "exec.consulta@municipio.gov.br", poder: "EXECUTIVO", role: "EXEC_CONSULTA" },
-    { nome: "Mesa Diretora", email: "mesa@camara.gov.br", poder: "LEGISLATIVO", role: "LEG_ADMIN" },
-    { nome: "Analista Legislativo", email: "analista@camara.gov.br", poder: "LEGISLATIVO", role: "LEG_TECNICO" },
-    { nome: "Vereador Exemplo", email: "vereador@camara.gov.br", poder: "LEGISLATIVO", role: "LEG_AUTOR" },
-    { nome: "Consulta Legislativo", email: "leg.consulta@camara.gov.br", poder: "LEGISLATIVO", role: "LEG_CONSULTA" },
+  await prisma.user.deleteMany({
+    where: {
+      email: {
+        in: [
+          "exec.admin@municipio.gov.br",
+          "planejamento@municipio.gov.br",
+          "exec.consulta@municipio.gov.br",
+          "mesa@camara.gov.br",
+          "analista@camara.gov.br",
+          "leg.consulta@camara.gov.br",
+        ],
+      },
+    },
+  });
+
+  const usuarios: { nome: string; email: string; perfil: string }[] = [
+    { nome: "Administrador", email: "super@municipio.gov.br", perfil: "Administrador Geral" },
+    { nome: "Poder Executivo", email: "executivo@municipio.gov.br", perfil: "Poder Executivo" },
+    { nome: "Presidente da Câmara", email: "presidente@camara.gov.br", perfil: "Presidente da Câmara" },
+    { nome: "Comissão de Finanças", email: "comissao@camara.gov.br", perfil: "Comissão de Finanças e Orçamento" },
+    { nome: "Vereador Exemplo", email: "vereador@camara.gov.br", perfil: "Vereador" },
   ];
   for (const u of usuarios) {
+    const perfilId = perfilPorNome.get(u.perfil)!;
+    const poder = perfisBase.find((p) => p.nome === u.perfil)!.poder;
+    const dados = {
+      name: u.nome,
+      poder: poder as never,
+      perfilId,
+      passwordHash: senhaHash,
+    };
     await prisma.user.upsert({
       where: { email: u.email },
-      create: { name: u.nome, email: u.email, poder: u.poder as never, role: u.role as never, passwordHash: senhaHash },
-      update: { name: u.nome, poder: u.poder as never, role: u.role as never, passwordHash: senhaHash },
+      create: { email: u.email, ...dados },
+      update: dados,
     });
   }
+
+  // Só o Vereador tem Autor vinculado: é quem apresenta emenda em nome próprio.
   const vereador = await prisma.user.findUnique({ where: { email: "vereador@camara.gov.br" } });
   if (vereador) {
     const autorExistente = await prisma.autor.findFirst({ where: { usuarioId: vereador.id } });

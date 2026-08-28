@@ -41,6 +41,9 @@ export type Emenda360 = {
   orgaoNome: string;
   unidadeNome: string;
   beneficiarioNome: string | null;
+  // Manifestação mais recente do Executivo sobre a viabilidade técnica, quando
+  // houver. Informativa: acompanha a emenda, não altera o seu status.
+  parecerExecutivo: { resultado: string; justificativa: string } | null;
 };
 
 export type AutorResumo = {
@@ -120,6 +123,11 @@ export async function getEmendas360(ano: number | null): Promise<Emenda360[]> {
           objeto: true,
           autor: { select: { id: true, nome: true } },
           beneficiario: { select: { nome: true } },
+          pareceres: {
+            orderBy: { criadoEm: "desc" },
+            take: 1,
+            select: { resultado: true, justificativa: true },
+          },
           dotacao: {
             select: {
               funcao: { select: { codigo: true, nome: true } },
@@ -146,6 +154,12 @@ export async function getEmendas360(ano: number | null): Promise<Emenda360[]> {
     orgaoNome: e.dotacao.orgao.nome,
     unidadeNome: e.dotacao.unidadeOrcamentaria.nome,
     beneficiarioNome: e.beneficiario?.nome ?? null,
+    parecerExecutivo: e.pareceres[0]
+      ? {
+          resultado: e.pareceres[0].resultado as string,
+          justificativa: e.pareceres[0].justificativa,
+        }
+      : null,
   }));
 }
 

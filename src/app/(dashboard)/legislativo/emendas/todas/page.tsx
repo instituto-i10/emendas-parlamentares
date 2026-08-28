@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button";
 import { EmendasLista } from "@/components/emendas/emendas-lista";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { listarEmendas } from "@/lib/queries-orcamento";
+import { requirePermissao } from "@/lib/access";
 
 export default async function TodasEmendasPage() {
+  // Lista completa é a mesa de quem gere ou tramita — não é consulta livre.
+  await requirePermissao("gerirTodasEmendas", "tramitarEmendas");
   const ano = await getAnoAtivo();
   const emendas = await listarEmendas({ exercicioAno: ano });
   const qs = ano ? `?ano=${ano}` : "";

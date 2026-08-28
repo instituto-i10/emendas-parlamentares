@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Role } from "@/generated/prisma/enums";
 import { getCurrentUser } from "@/lib/session";
+import { podeGerirPlanejamento } from "@/lib/authz";
 import { importarBaseDeArquivo } from "@/lib/import/importar";
 import { registrarAuditoria } from "@/lib/audit";
 import { rateLimit } from "@/lib/rate-limit";
@@ -22,9 +22,7 @@ export async function importarBaseAction(
 ): Promise<ImportState> {
   const user = await getCurrentUser();
   const permitido =
-    user.role === Role.SUPER_ADMIN ||
-    user.role === Role.EXEC_ADMIN ||
-    user.role === Role.EXEC_PLANEJAMENTO;
+    podeGerirPlanejamento(user);
   if (!permitido) return { ok: false, mensagem: "Você não tem permissão para gerar a base." };
   if (!rateLimit(`importar:${user.id}`, 10, 60_000))
     return { ok: false, mensagem: "Muitas importações em pouco tempo. Aguarde um instante." };

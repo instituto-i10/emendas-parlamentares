@@ -1,13 +1,12 @@
 import type { ReactNode } from "react";
-import { Role } from "@/generated/prisma/enums";
-import { requireRole } from "@/lib/access";
+import { requirePermissao } from "@/lib/access";
 
-// Guard: Configurações é restrito a SUPER_ADMIN e aos ADMIN de cada Poder.
+// Guard: Configurações exige a permissão de administrar configurações.
 export default async function ConfigLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  await requireRole(Role.EXEC_ADMIN, Role.LEG_ADMIN);
+  await requirePermissao("administrarConfiguracoes");
   return <>{children}</>;
 }

@@ -10,7 +10,7 @@ test.describe("autenticação", () => {
 
   test("credenciais inválidas não autenticam", async ({ page }) => {
     await page.goto("/login");
-    await page.getByLabel("E-mail").fill(PERSONAS.mesa.email);
+    await page.getByLabel("E-mail").fill(PERSONAS.presidente.email);
     await page.getByLabel("Senha").fill("senha-errada");
     await page.getByRole("button", { name: "Entrar" }).click();
 
@@ -20,13 +20,13 @@ test.describe("autenticação", () => {
   });
 
   test("a Mesa entra e cai no painel da comissão", async ({ page }) => {
-    await entrarComo(page, "mesa");
+    await entrarComo(page, "presidente");
     await expect(page).toHaveURL(/\/painel/);
     await expect(page.getByText("Painel da Comissão")).toBeVisible();
   });
 
   test("o Executivo entra e vê o painel do Executivo", async ({ page }) => {
-    await entrarComo(page, "execAdmin");
+    await entrarComo(page, "executivo");
     await expect(page.getByText("Painel do Executivo")).toBeVisible();
   });
 
@@ -39,7 +39,7 @@ test.describe("autenticação", () => {
   });
 
   test("a sessão persiste entre navegações", async ({ page }) => {
-    await entrarComo(page, "mesa");
+    await entrarComo(page, "presidente");
     await page.goto("/emendas");
     await expect(page).not.toHaveURL(/\/login/);
     await page.goto("/placar");

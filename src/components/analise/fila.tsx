@@ -6,7 +6,10 @@ import { ListaPaginada } from "@/components/lista-paginada";
 import { EmptyState } from "@/components/empty-state";
 import { Tag360, tomDoStatus } from "@/components/e360/tag360";
 import { TramitacaoActions } from "@/components/emendas/tramitacao-actions";
-import { ROTULO_STATUS_EMENDA } from "@/lib/rotulos";
+import {
+  ROTULO_RESULTADO_VIABILIDADE,
+  ROTULO_STATUS_EMENDA,
+} from "@/lib/rotulos";
 
 export type ItemFila = {
   id: string;
@@ -16,6 +19,9 @@ export type ItemFila = {
   orgaoNome: string;
   valor: number;
   status: string;
+  // Manifestação mais recente do Executivo, quando houver. Informativa: a
+  // decisão continua sendo da Comissão, que só precisa vê-la ao decidir.
+  parecerExecutivo: { resultado: string; justificativa: string } | null;
 };
 
 const brl = (n: number) =>
@@ -102,6 +108,17 @@ export function FilaAnalise({
               </Tag360>
               {podeAgir && e.status === "SUBMETIDA" ? (
                 <TramitacaoActions id={e.id} />
+              ) : null}
+              {e.parecerExecutivo ? (
+                <p className="w-full break-words border-t pt-2 text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">
+                    Executivo:{" "}
+                    {ROTULO_RESULTADO_VIABILIDADE[
+                      e.parecerExecutivo.resultado
+                    ] ?? e.parecerExecutivo.resultado}
+                  </span>{" "}
+                  — {e.parecerExecutivo.justificativa}
+                </p>
               ) : null}
             </div>
           ))}

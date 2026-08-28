@@ -12,7 +12,7 @@ export default async function HubPage({
 }) {
   const { erro } = await searchParams;
   const user = await getCurrentUser();
-  const modulos = modulosVisiveis({ poder: user.poder, role: user.role });
+  const modulos = modulosVisiveis(user);
 
   return (
     <div className="mx-auto max-w-5xl">

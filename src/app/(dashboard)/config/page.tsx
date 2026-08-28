@@ -1,4 +1,6 @@
 import { PageHeader } from "@/components/page-header";
+import { getCurrentUser } from "@/lib/session";
+import { podeGerirPerfis } from "@/lib/authz";
 import {
   Tabs,
   TabsContent,
@@ -15,16 +17,23 @@ import {
   listarParametros,
   listarProjetosDeLei,
   listarUsuarios,
+  listarPerfis,
   sugerirDuplicadosBeneficiarios,
 } from "@/lib/queries";
 import { ParametrosTab } from "@/components/config/parametros-tab";
 import { NormasTab } from "@/components/config/normas-tab";
 import { InstrumentosTab } from "@/components/config/instrumentos-tab";
 import { UsuariosTab } from "@/components/config/usuarios-tab";
+import { PerfisTab } from "@/components/config/perfis-tab";
 import { AuditoriaTab } from "@/components/config/auditoria-tab";
 import { BeneficiariosTab } from "@/components/config/beneficiarios-tab";
 
 export default async function ConfigPage() {
+  const user = await getCurrentUser();
+  // A aba Perfis é exclusiva do Administrador Geral: oculta aqui E bloqueada
+  // no servidor pelas actions — esconder a aba, sozinho, não é controle.
+  const gerePerfis = podeGerirPerfis(user);
+
   const [
     parametros,
     normas,
@@ -32,6 +41,7 @@ export default async function ConfigPage() {
     instrumentos,
     projetosDeLei,
     usuarios,
+    perfis,
     exercicios,
     auditoria,
     beneficiarios,
@@ -43,6 +53,7 @@ export default async function ConfigPage() {
     listarInstrumentos(),
     listarProjetosDeLei(),
     listarUsuarios(),
+    listarPerfis(),
     listarExercicios(),
     listarAuditoria(),
     listarBeneficiarios(),
@@ -67,7 +78,7 @@ export default async function ConfigPage() {
       />
 
       <Tabs defaultValue="parametros">
-        {/* seis abas não cabem em 375px: a faixa rola na horizontal, como as
+        {/* sete abas não cabem em 375px: a faixa rola na horizontal, como as
             Subtabs do resto do sistema, em vez de estourar a tela. */}
         <div className="-mx-1 overflow-x-auto px-1 pb-1">
           <TabsList className="w-max">
@@ -76,6 +87,7 @@ export default async function ConfigPage() {
             <TabsTrigger value="normas">Normas</TabsTrigger>
             <TabsTrigger value="instrumentos">Instrumentos</TabsTrigger>
             <TabsTrigger value="usuarios">Usuários</TabsTrigger>
+            {gerePerfis ? <TabsTrigger value="perfis">Perfis</TabsTrigger> : null}
             <TabsTrigger value="auditoria">Auditoria</TabsTrigger>
           </TabsList>
         </div>
@@ -101,8 +113,19 @@ export default async function ConfigPage() {
           />
         </TabsContent>
         <TabsContent value="usuarios" className="mt-4">
-          <UsuariosTab usuarios={usuarios} />
+          <UsuariosTab
+            usuarios={usuarios}
+            perfis={perfis}
+            podeAtribuirAdminGeral={gerePerfis}
+          />
         </TabsContent>
+        {gerePerfis ? (
+          <TabsContent value="perfis" className="mt-4">
+            <PerfisTab
+              perfis={perfis.map((p) => ({ ...p, usuarios: p._count.usuarios }))}
+            />
+          </TabsContent>
+        ) : null}
         <TabsContent value="auditoria" className="mt-4">
           <AuditoriaTab logs={logs} />
         </TabsContent>

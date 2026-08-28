@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Role } from "@/generated/prisma/enums";
 import { getCurrentUser } from "@/lib/session";
+import { vistaInicial } from "@/config/vistas360";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { getDados360, brl, brlCompacto } from "@/lib/queries-360";
 import { ClipboardCheck, Landmark, ScanSearch, Wallet } from "lucide-react";
@@ -24,7 +24,8 @@ import { EmptyState } from "@/components/empty-state";
 export default async function PainelPage() {
   const user = await getCurrentUser();
   // Gabinete do vereador cai direto na sua visão 360.
-  if (user.role === Role.LEG_AUTOR) redirect("/vereador360");
+  // Perfil de gabinete entra pela sua cota, não pelo Painel geral.
+  if (vistaInicial(user) !== "/painel") redirect(vistaInicial(user));
 
   const ano = await getAnoAtivo();
   const { params, emendas, consolidado: c, porAutor, porDestino, porStatus } =

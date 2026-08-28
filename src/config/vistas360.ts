@@ -1,93 +1,92 @@
-import { Role } from "@/generated/prisma/enums";
+import { Poder } from "@/generated/prisma/enums";
+import { podeAcessar, temPermissao, type Ator, type Permissao } from "@/lib/authz";
 
 // ============================================================================
 // Vistas do front-end "Emendas 360": itens do menu lateral, filtrados pelo
-// papel do usuário. O assistente saiu daqui — virou widget flutuante,
-// disponível em todas as telas. Cada persona do mockup vira um
-// conjunto de vistas: Comissão (LEG_ADMIN/TECNICO), Gabinete (LEG_AUTOR),
-// Executivo (EXEC_*), Cidadão (/publica) e Pitch (apresentação).
+// perfil de acesso. O assistente saiu daqui — virou widget flutuante,
+// disponível em todas as telas.
+//
+// Mesma regra da navegação (PROMPT 12): o Poder do perfil precisa alcançar o
+// Poder da vista, e a vista só exige permissão quando NÃO é item de consulta.
+// Painéis, resumos e relatórios são consulta — qualquer perfil do Poder vê.
 // ============================================================================
+
+export type EscopoVista = Poder | "TRANSVERSAL";
 
 export type Vista360 = {
   id: string;
   titulo: string;
   href: string;
-  roles: Role[];
+  poder: EscopoVista;
+  // Ausente = vista de consulta.
+  permissoes?: Permissao[];
 };
 
-const LEG_COMISSAO: Role[] = [Role.LEG_ADMIN, Role.LEG_TECNICO, Role.LEG_CONSULTA];
-const EXEC: Role[] = [Role.EXEC_ADMIN, Role.EXEC_PLANEJAMENTO, Role.EXEC_CONSULTA];
-const TODOS: Role[] = [
-  ...LEG_COMISSAO,
-  Role.LEG_AUTOR,
-  ...EXEC,
-  Role.SUPER_ADMIN,
-];
+// Listar as emendas de todos, uma a uma, não é consulta livre: é a mesa de
+// trabalho de quem gere ou tramita. O gabinete acompanha pelos agregados.
+const VER_TODAS_EMENDAS: Permissao[] = ["gerirTodasEmendas", "tramitarEmendas"];
 
 export const VISTAS360: Vista360[] = [
-  {
-    id: "painel",
-    titulo: "Painel",
-    href: "/painel",
-    roles: [...LEG_COMISSAO, ...EXEC, Role.SUPER_ADMIN],
-  },
+  { id: "painel", titulo: "Painel", href: "/painel", poder: "TRANSVERSAL" },
   {
     id: "tramitacao360",
     titulo: "Tramitação",
     href: "/tramitacao",
-    roles: [...LEG_COMISSAO, ...EXEC, Role.SUPER_ADMIN],
+    poder: "TRANSVERSAL",
   },
   {
     id: "emendas360",
     titulo: "Emendas & Beneficiários",
     href: "/emendas",
-    roles: TODOS,
+    poder: "TRANSVERSAL",
   },
   {
     id: "vereador360",
     titulo: "Vereador 360",
     href: "/vereador360",
-    roles: [...LEG_COMISSAO, Role.LEG_AUTOR, Role.SUPER_ADMIN],
+    poder: Poder.LEGISLATIVO,
   },
   {
     id: "analise",
     titulo: "Análise Técnica",
     href: "/analise",
-    roles: [Role.LEG_ADMIN, Role.LEG_TECNICO, Role.LEG_AUTOR, Role.SUPER_ADMIN],
+    poder: Poder.LEGISLATIVO,
+    permissoes: VER_TODAS_EMENDAS,
   },
   {
     id: "placar",
     titulo: "Resumo Consolidado",
     href: "/placar",
-    roles: [...LEG_COMISSAO, ...EXEC, Role.SUPER_ADMIN],
+    poder: "TRANSVERSAL",
   },
   {
     id: "conformidade",
     titulo: "Conformidade",
     href: "/conformidade",
-    roles: [Role.LEG_ADMIN, Role.LEG_TECNICO, Role.EXEC_ADMIN, Role.SUPER_ADMIN],
+    poder: "TRANSVERSAL",
   },
-  {
-    id: "ferramentas",
-    titulo: "Ferramentas",
-    href: "/hub",
-    roles: TODOS,
-  },
+  { id: "ferramentas", titulo: "Ferramentas", href: "/hub", poder: "TRANSVERSAL" },
   {
     id: "pitch",
     titulo: "Pitch",
     href: "/pitch",
-    roles: [Role.SUPER_ADMIN, Role.LEG_ADMIN, Role.EXEC_ADMIN],
+    poder: "TRANSVERSAL",
+    permissoes: ["administrarConfiguracoes"],
   },
 ];
 
-export function vistasVisiveis(role: Role): Vista360[] {
-  if (role === Role.SUPER_ADMIN) return VISTAS360;
-  return VISTAS360.filter((v) => v.roles.includes(role));
+export function vistasVisiveis(u: Ator): Vista360[] {
+  return VISTAS360.filter((v) =>
+    podeAcessar(u, { poder: v.poder, permissoes: v.permissoes })
+  );
 }
 
-// Vista inicial após o login, por papel (o gabinete cai direto no Vereador 360).
-export function vistaInicial(role: Role): string {
-  if (role === Role.LEG_AUTOR) return "/vereador360";
-  return "/painel";
+// Vista inicial após o login. O perfil de gabinete — apresenta as próprias
+// emendas e não gere as dos outros — cai direto na sua cota; os demais no
+// Painel. É comportamento derivado das permissões, não de um nome de perfil.
+export function vistaInicial(u: Ator): string {
+  const soGabinete =
+    temPermissao(u, "apresentarEmendas") &&
+    !temPermissao(u, "gerirTodasEmendas", "tramitarEmendas");
+  return soGabinete ? "/vereador360" : "/painel";
 }

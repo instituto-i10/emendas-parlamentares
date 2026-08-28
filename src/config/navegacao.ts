@@ -16,13 +16,20 @@ import {
   ScrollText,
   Settings,
   BarChart3,
+  ClipboardCheck,
+  Banknote,
 } from "lucide-react";
-import { Poder, Role } from "@/generated/prisma/enums";
+import { Poder } from "@/generated/prisma/enums";
+import { podeAcessar, type Ator, type Permissao } from "@/lib/authz";
 
 // ============================================================================
 // Mapa de navegação central. É a ÚNICA fonte de verdade da casca: hub e sidebar
 // renderizam a partir daqui, filtrando pela sessão. "Mínimo aparente" é regra de
-// dados — o usuário só vê o que seu Poder/role permite.
+// dados — o usuário só vê o que seu perfil permite.
+//
+// PROMPT 12: um item aparece quando o Poder do perfil alcança o Poder do item
+// (ou o item é transversal) E o perfil tem ao menos uma das permissões exigidas.
+// Item SEM `permissoes` é item de consulta: basta pertencer ao Poder.
 // ============================================================================
 
 export type EscopoPoder = Poder | "TRANSVERSAL";
@@ -33,8 +40,9 @@ export type Ferramenta = {
   descricao?: string;
   href: string;
   icon: LucideIcon;
-  // Se ausente, herda os papéis do macro-módulo.
-  roles?: Role[];
+  // Se ausente, herda as permissões do macro-módulo (que também podem ser
+  // nenhuma — nesse caso é ferramenta de consulta).
+  permissoes?: Permissao[];
 };
 
 export type MacroModulo = {
@@ -44,26 +52,17 @@ export type MacroModulo = {
   href: string;
   icon: LucideIcon;
   poder: EscopoPoder;
-  roles: Role[];
+  // Ausente/vazio = macro-módulo de consulta do seu Poder.
+  permissoes?: Permissao[];
   ferramentas: Ferramenta[];
 };
 
-export type UsuarioNav = {
-  poder: Poder | null;
-  role: Role;
-};
+// A navegação decide com o mesmo ator das regras de autorização.
+export type UsuarioNav = Ator;
 
-const LEG_TODOS: Role[] = [
-  Role.LEG_ADMIN,
-  Role.LEG_TECNICO,
-  Role.LEG_AUTOR,
-  Role.LEG_CONSULTA,
-];
-const EXEC_TODOS: Role[] = [
-  Role.EXEC_ADMIN,
-  Role.EXEC_PLANEJAMENTO,
-  Role.EXEC_CONSULTA,
-];
+// Ver a lista completa de emendas do exercício não é consulta livre: quem só
+// apresenta acompanha os agregados (painéis, relatórios), não a lista alheia.
+const VER_TODAS_EMENDAS: Permissao[] = ["gerirTodasEmendas", "tramitarEmendas"];
 
 export const NAVEGACAO: MacroModulo[] = [
   // ---------------------------------------------------------------- LEGISLATIVO
@@ -75,7 +74,6 @@ export const NAVEGACAO: MacroModulo[] = [
     href: "/legislativo/emendas",
     icon: FileEdit,
     poder: Poder.LEGISLATIVO,
-    roles: LEG_TODOS,
     ferramentas: [
       {
         id: "leg-emendas-nova",
@@ -83,7 +81,7 @@ export const NAVEGACAO: MacroModulo[] = [
         descricao: "Apresentar uma emenda com seleção assistida da dotação.",
         href: "/legislativo/emendas/nova",
         icon: FilePlus2,
-        roles: [Role.LEG_ADMIN, Role.LEG_TECNICO, Role.LEG_AUTOR],
+        permissoes: ["apresentarEmendas"],
       },
       {
         id: "leg-emendas-minhas",
@@ -91,7 +89,7 @@ export const NAVEGACAO: MacroModulo[] = [
         descricao: "Emendas de sua autoria e seus status.",
         href: "/legislativo/emendas/minhas",
         icon: FileText,
-        roles: [Role.LEG_ADMIN, Role.LEG_TECNICO, Role.LEG_AUTOR],
+        permissoes: ["apresentarEmendas"],
       },
       {
         id: "leg-emendas-todas",
@@ -99,7 +97,7 @@ export const NAVEGACAO: MacroModulo[] = [
         descricao: "Todas as emendas do exercício, com filtros.",
         href: "/legislativo/emendas/todas",
         icon: FileStack,
-        roles: [Role.LEG_ADMIN, Role.LEG_TECNICO, Role.LEG_CONSULTA],
+        permissoes: VER_TODAS_EMENDAS,
       },
     ],
   },
@@ -111,7 +109,6 @@ export const NAVEGACAO: MacroModulo[] = [
     href: "/legislativo/tramitacao",
     icon: GitBranch,
     poder: Poder.LEGISLATIVO,
-    roles: LEG_TODOS,
     ferramentas: [
       {
         id: "leg-tram-status",
@@ -142,7 +139,6 @@ export const NAVEGACAO: MacroModulo[] = [
     href: "/executivo/planejamento",
     icon: Landmark,
     poder: Poder.EXECUTIVO,
-    roles: EXEC_TODOS,
     ferramentas: [
       {
         id: "exec-plan-instrumentos",
@@ -157,7 +153,7 @@ export const NAVEGACAO: MacroModulo[] = [
         descricao: "Gerar e gerir a base estruturada a partir do PL.",
         href: "/executivo/planejamento/base",
         icon: Database,
-        roles: [Role.EXEC_ADMIN, Role.EXEC_PLANEJAMENTO],
+        permissoes: ["gerirPlanejamento"],
       },
       {
         id: "exec-plan-lei",
@@ -165,7 +161,7 @@ export const NAVEGACAO: MacroModulo[] = [
         descricao: "Subir a lei aprovada e conduzir o ciclo de vida.",
         href: "/executivo/planejamento/lei-aprovada",
         icon: FileCheck2,
-        roles: [Role.EXEC_ADMIN, Role.EXEC_PLANEJAMENTO],
+        permissoes: ["gerirPlanejamento"],
       },
     ],
   },
@@ -177,7 +173,6 @@ export const NAVEGACAO: MacroModulo[] = [
     href: "/executivo/acompanhamento",
     icon: LineChart,
     poder: Poder.EXECUTIVO,
-    roles: EXEC_TODOS,
     ferramentas: [
       {
         id: "exec-acomp-comparacao",
@@ -191,6 +186,24 @@ export const NAVEGACAO: MacroModulo[] = [
         href: "/executivo/acompanhamento/execucao",
         icon: Activity,
       },
+      {
+        id: "exec-acomp-viabilidade",
+        titulo: "Viabilidade técnica",
+        descricao:
+          "Manifestar-se sobre a viabilidade das emendas. Parecer informativo: não trava a tramitação.",
+        href: "/executivo/acompanhamento/viabilidade",
+        icon: ClipboardCheck,
+        permissoes: ["analisarViabilidade"],
+      },
+      {
+        id: "exec-acomp-lancamentos",
+        titulo: "Execução das emendas",
+        descricao:
+          "Lançar empenho, liquidação e pagamento de cada emenda aprovada.",
+        href: "/executivo/acompanhamento/lancamentos",
+        icon: Banknote,
+        permissoes: ["registrarExecucao"],
+      },
     ],
   },
   // ----------------------------------------------------------------- TRANSVERSAL
@@ -202,7 +215,7 @@ export const NAVEGACAO: MacroModulo[] = [
     href: "/config",
     icon: Settings,
     poder: "TRANSVERSAL",
-    roles: [Role.SUPER_ADMIN, Role.EXEC_ADMIN, Role.LEG_ADMIN],
+    permissoes: ["administrarConfiguracoes"],
     // Ferramentas de config são abas dentro de /config (PROMPT 3).
     ferramentas: [],
   },
@@ -213,9 +226,7 @@ export const NAVEGACAO: MacroModulo[] = [
 // ---------------------------------------------------------------------------
 
 export function podeVerModulo(u: UsuarioNav, m: MacroModulo): boolean {
-  if (u.role === Role.SUPER_ADMIN) return true;
-  const poderOk = m.poder === "TRANSVERSAL" || m.poder === u.poder;
-  return poderOk && m.roles.includes(u.role);
+  return podeAcessar(u, { poder: m.poder, permissoes: m.permissoes });
 }
 
 export function podeVerFerramenta(
@@ -224,9 +235,10 @@ export function podeVerFerramenta(
   f: Ferramenta
 ): boolean {
   if (!podeVerModulo(u, m)) return false;
-  if (u.role === Role.SUPER_ADMIN) return true;
-  const roles = f.roles ?? m.roles;
-  return roles.includes(u.role);
+  return podeAcessar(u, {
+    poder: m.poder,
+    permissoes: f.permissoes ?? m.permissoes,
+  });
 }
 
 export function modulosVisiveis(u: UsuarioNav): MacroModulo[] {

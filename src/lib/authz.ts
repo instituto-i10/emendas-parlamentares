@@ -1,54 +1,181 @@
-import { Poder, Role } from "@/generated/prisma/enums";
+import { Poder } from "@/generated/prisma/enums";
 
+// ============================================================================
 // Regras de autorização PURAS (sem I/O) — testáveis. As server actions carregam
-// o ator/recurso e decidem com estas funções. SUPER_ADMIN passa por tudo.
+// o ator/recurso e decidem com estas funções.
+//
+// PROMPT 12: o papel fixo saiu de cena. O ator carrega o PERFIL DE ACESSO —
+// Poder de atuação + permissões atômicas — lido do banco no login. Quem tem
+// `adminGeral` passa por tudo; quem está sem perfil não passa por nada.
+// ============================================================================
+
+// As permissões atômicas que compõem um perfil. Um perfil é a combinação delas
+// com um Poder de atuação; sem nenhuma marcada, é perfil de consulta.
+export type Permissao =
+  | "apresentarEmendas"
+  | "gerirTodasEmendas"
+  | "tramitarEmendas"
+  | "gerirPlanejamento"
+  | "gerirExercicios"
+  | "administrarConfiguracoes"
+  | "analisarViabilidade"
+  | "registrarExecucao";
+
+export const PERMISSOES: Permissao[] = [
+  "apresentarEmendas",
+  "gerirTodasEmendas",
+  "tramitarEmendas",
+  "gerirPlanejamento",
+  "gerirExercicios",
+  "administrarConfiguracoes",
+  "analisarViabilidade",
+  "registrarExecucao",
+];
+
+export type Perfil = {
+  id: string;
+  nome: string;
+  // Poder de atuação; nulo = transversal (atravessa os dois Poderes).
+  poder: Poder | null;
+  adminGeral: boolean;
+  perfilDoSistema: boolean;
+} & Record<Permissao, boolean>;
 
 export type Ator = {
   id: string;
-  role: Role;
-  poder: Poder | null;
+  // Nulo enquanto a conta não tem perfil atribuído — não acessa o sistema.
+  perfil: Perfil | null;
 };
 
-export const ehSuper = (a: Ator) => a.role === Role.SUPER_ADMIN;
+export const ehAdminGeral = (a: Ator): boolean => a.perfil?.adminGeral === true;
 
-export const ehConsulta = (a: Ator) =>
-  a.role === Role.EXEC_CONSULTA || a.role === Role.LEG_CONSULTA;
+// Perfil de consulta: existe, pertence a um Poder, mas não escreve nada.
+export const ehConsulta = (a: Ator): boolean =>
+  !!a.perfil && !a.perfil.adminGeral && PERMISSOES.every((p) => !a.perfil![p]);
 
-// Admin responsável por um Poder (para gerir configurações/usuários daquele Poder).
-export function ehAdminDoPoder(a: Ator, poder: Poder): boolean {
-  if (ehSuper(a)) return true;
-  return poder === Poder.EXECUTIVO
-    ? a.role === Role.EXEC_ADMIN
-    : a.role === Role.LEG_ADMIN;
+// Verificação de permissão. O Administrador Geral ignora a checagem.
+export function temPermissao(a: Ator, ...permissoes: Permissao[]): boolean {
+  if (!a.perfil) return false;
+  if (a.perfil.adminGeral) return true;
+  return permissoes.some((p) => a.perfil![p]);
 }
 
-const CRIADORES = new Set<Role>([Role.LEG_ADMIN, Role.LEG_TECNICO, Role.LEG_AUTOR]);
-const TRAMITADORES = new Set<Role>([Role.LEG_ADMIN, Role.LEG_TECNICO]);
-const GESTORES_LEG = new Set<Role>([Role.LEG_ADMIN, Role.LEG_TECNICO]);
+// Separação de Poderes — estrutural, verificada ANTES da permissão: um módulo
+// do Legislativo é inacessível a perfil do Executivo e vice-versa, ainda que a
+// permissão exista no perfil. Perfil transversal e Administrador Geral passam.
+export function alcancaPoder(a: Ator, poder: Poder | "TRANSVERSAL"): boolean {
+  if (!a.perfil) return false;
+  if (a.perfil.adminGeral) return true;
+  if (poder === "TRANSVERSAL") return true;
+  // Perfil transversal (sem Poder) atravessa os dois lados.
+  return a.perfil.poder === null || a.perfil.poder === poder;
+}
 
-// Pode apresentar (criar) emendas.
+// Regra geral de acesso a um item: o Poder tem de alcançar E o perfil precisa
+// de ao menos uma das permissões exigidas. Item sem permissão exigida é item de
+// consulta — basta o Poder coincidir.
+export function podeAcessar(
+  a: Ator,
+  item: { poder: Poder | "TRANSVERSAL"; permissoes?: Permissao[] }
+): boolean {
+  if (!alcancaPoder(a, item.poder)) return false;
+  if (!item.permissoes || item.permissoes.length === 0) return !!a.perfil;
+  return temPermissao(a, ...item.permissoes);
+}
+
+// -------------------------------------------------------------------- Emendas
+
+// Pode apresentar (criar) emendas. Exige também estar no Legislativo: emenda
+// parlamentar é ato do Poder Legislativo.
 export function podeCriarEmenda(a: Ator): boolean {
-  return ehSuper(a) || CRIADORES.has(a.role);
+  return (
+    alcancaPoder(a, Poder.LEGISLATIVO) && temPermissao(a, "apresentarEmendas")
+  );
 }
 
-// Pode aprovar/rejeitar emendas submetidas.
+// Pode aprovar/rejeitar emendas submetidas (função de comissão).
 export function podeTramitar(a: Ator): boolean {
-  return ehSuper(a) || TRAMITADORES.has(a.role);
+  return (
+    alcancaPoder(a, Poder.LEGISLATIVO) && temPermissao(a, "tramitarEmendas")
+  );
 }
 
 // Pode editar/validar/submeter uma emenda:
-//  - SUPER_ADMIN e Mesa/Técnico do Legislativo: qualquer emenda;
-//  - LEG_AUTOR: apenas as próprias (autor vinculado ao seu usuário).
+//  - `gerirTodasEmendas`: qualquer emenda do exercício;
+//  - `apresentarEmendas`: apenas as de própria autoria.
 export function podeGerirEmenda(
   a: Ator,
   emenda: { autorUsuarioId: string | null }
 ): boolean {
-  if (ehSuper(a) || GESTORES_LEG.has(a.role)) return true;
-  if (a.role === Role.LEG_AUTOR) return emenda.autorUsuarioId === a.id;
+  if (!alcancaPoder(a, Poder.LEGISLATIVO)) return false;
+  if (temPermissao(a, "gerirTodasEmendas")) return true;
+  if (temPermissao(a, "apresentarEmendas")) {
+    return emenda.autorUsuarioId === a.id;
+  }
   return false;
 }
 
-// Pode abrir/encerrar exercícios (ADMINs).
+// Vê a lista completa de emendas do exercício (não apenas as próprias). Quem só
+// apresenta fica no seu gabinete: acompanha os agregados, não a lista alheia.
+export function podeVerTodasEmendas(a: Ator): boolean {
+  return (
+    alcancaPoder(a, Poder.LEGISLATIVO) &&
+    temPermissao(a, "gerirTodasEmendas", "tramitarEmendas")
+  );
+}
+
+// -------------------------------------------------------- Executivo no processo
+
+// Pode registrar parecer de viabilidade técnica sobre uma emenda. É ato do
+// Executivo, e informativo: não altera a emenda nem trava a tramitação.
+export function podeAnalisarViabilidade(a: Ator): boolean {
+  return (
+    alcancaPoder(a, Poder.EXECUTIVO) && temPermissao(a, "analisarViabilidade")
+  );
+}
+
+// Pode lançar andamento da execução orçamentária (empenho/liquidação/pagamento).
+export function podeRegistrarExecucao(a: Ator): boolean {
+  return (
+    alcancaPoder(a, Poder.EXECUTIVO) && temPermissao(a, "registrarExecucao")
+  );
+}
+
+// ------------------------------------------------------ Planejamento e gestão
+
+// Pode operar instrumentos PPA/LDO/LOA, base de dotações e lei aprovada.
+export function podeGerirPlanejamento(a: Ator): boolean {
+  return (
+    alcancaPoder(a, Poder.EXECUTIVO) && temPermissao(a, "gerirPlanejamento")
+  );
+}
+
+// Pode abrir/encerrar exercícios orçamentários.
 export function podeGerirExercicio(a: Ator): boolean {
-  return ehSuper(a) || a.role === Role.EXEC_ADMIN || a.role === Role.LEG_ADMIN;
+  return temPermissao(a, "gerirExercicios");
+}
+
+// Pode administrar parâmetros, normas, beneficiários e usuários.
+export function podeAdministrarConfiguracoes(a: Ator): boolean {
+  return temPermissao(a, "administrarConfiguracoes");
+}
+
+// Administra configurações dentro de um Poder — a separação vale aqui também.
+export function ehAdminDoPoder(a: Ator, poder: Poder): boolean {
+  return alcancaPoder(a, poder) && temPermissao(a, "administrarConfiguracoes");
+}
+
+// ------------------------------------------------------------ Perfis e usuários
+
+// Compor/excluir perfis de acesso é ato exclusivo do Administrador Geral.
+export const podeGerirPerfis = ehAdminGeral;
+
+// Quem não é Administrador Geral só atribui perfis do próprio Poder — nunca o
+// Administrador Geral, nunca um perfil do outro Poder. Sem esta trava, quem
+// administra o Executivo poderia criar uma conta de Presidente da Câmara.
+export function podeAtribuirPerfil(a: Ator, alvo: Perfil): boolean {
+  if (ehAdminGeral(a)) return true;
+  if (!temPermissao(a, "administrarConfiguracoes")) return false;
+  if (alvo.adminGeral) return false;
+  return alvo.poder !== null && alvo.poder === a.perfil?.poder;
 }

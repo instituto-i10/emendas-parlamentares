@@ -185,3 +185,64 @@ export async function compararPLxLei(leiId: string) {
     })),
   };
 }
+
+// ------------------------------- Viabilidade técnica e execução (PROMPT 12)
+
+// Emendas já submetidas, com o parecer de viabilidade mais recente de cada uma.
+export async function emendasParaViabilidade(ano: number | null) {
+  if (ano == null) return [];
+  return prisma.emenda.findMany({
+    where: {
+      exercicio: { ano },
+      status: { in: ["SUBMETIDA", "EM_TRAMITACAO", "APROVADA", "REJEITADA"] },
+    },
+    select: {
+      id: true,
+      numero: true,
+      objeto: true,
+      valor: true,
+      status: true,
+      autor: { select: { nome: true } },
+      pareceres: {
+        orderBy: { criadoEm: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          resultado: true,
+          justificativa: true,
+          criadoEm: true,
+          usuario: { select: { name: true, email: true } },
+        },
+      },
+    },
+    orderBy: { numero: "asc" },
+  });
+}
+
+// Emendas aprovadas com os lançamentos de execução já registrados.
+export async function emendasParaExecucao(ano: number | null) {
+  if (ano == null) return [];
+  return prisma.emenda.findMany({
+    where: { exercicio: { ano }, status: "APROVADA" },
+    select: {
+      id: true,
+      numero: true,
+      objeto: true,
+      valor: true,
+      autor: { select: { nome: true } },
+      beneficiario: { select: { nome: true } },
+      andamentos: {
+        orderBy: [{ data: "desc" }, { criadoEm: "desc" }],
+        select: {
+          id: true,
+          etapa: true,
+          data: true,
+          valor: true,
+          numeroDocumento: true,
+          observacao: true,
+        },
+      },
+    },
+    orderBy: { numero: "asc" },
+  });
+}

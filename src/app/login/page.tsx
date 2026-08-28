@@ -9,7 +9,12 @@ import { IlustracaoConferencia } from "@/components/e360/ilustracoes";
 // ar com DEMO_LOGIN=false.
 const DEMO = process.env.DEMO_LOGIN !== "false";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ erro?: string }>;
+}) {
+  const { erro } = await searchParams;
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
       {/* painel da marca — só a partir de lg, para o formulário mandar no mobile */}
@@ -78,7 +83,7 @@ export default function LoginPage() {
             Gestão de emendas parlamentares ao orçamento municipal.
           </p>
 
-          <LoginForm demo={DEMO} />
+          <LoginForm demo={DEMO} avisoSemPerfil={erro === "sem-perfil"} />
         </div>
       </main>
     </div>

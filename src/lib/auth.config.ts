@@ -1,5 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
-import type { Poder, Role } from "@/generated/prisma/enums";
+import type { Perfil } from "./authz";
 
 // Configuração EDGE-SAFE (sem Prisma/adapter) — usada pelo middleware e
 // estendida em auth.ts com o provedor de credenciais.
@@ -32,18 +32,20 @@ export const authConfig = {
       return !!auth?.user;
     },
     jwt({ token, user }) {
+      // Só no login: o perfil é fotografado aqui e não é relido a cada
+      // requisição. Mudança de perfil vale no PRÓXIMO login do afetado.
       if (user) {
         token.id = user.id;
-        token.role = user.role;
-        token.poder = user.poder ?? null;
+        token.perfil = user.perfil ?? null;
       }
       return token;
     },
     session({ session, token }) {
       if (session.user) {
         session.user.id = (token.id as string) ?? token.sub ?? "";
-        if (token.role) session.user.role = token.role as Role;
-        session.user.poder = (token.poder as Poder | null) ?? null;
+        // Token anterior à implantação não traz perfil: fica nulo e o guard de
+        // sessão devolve ao login com aviso, uma única vez.
+        session.user.perfil = (token.perfil as Perfil | null) ?? null;
       }
       return session;
     },

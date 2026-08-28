@@ -12,8 +12,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { listarInstrumentos } from "@/lib/queries";
 import { ROTULO_STATUS_INSTRUMENTO } from "@/lib/rotulos";
+import { requirePermissao } from "@/lib/access";
 
 export default async function LeiAprovadaPage() {
+  await requirePermissao("gerirPlanejamento");
   const leis = (await listarInstrumentos()).filter(
     (i) => i.especie === "LEI_APROVADA"
   );

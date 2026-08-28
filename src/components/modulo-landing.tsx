@@ -11,7 +11,7 @@ export async function ModuloLanding({ moduloId }: { moduloId: string }) {
   const modulo = moduloPorId(moduloId);
   if (!modulo) return null;
 
-  const nav = { poder: user.poder, role: user.role };
+  const nav = user;
   const ferramentas = modulo.ferramentas.filter((f) =>
     podeVerFerramenta(nav, modulo, f)
   );

@@ -30,16 +30,21 @@ enum Poder {
   EXECUTIVO
 }
 
-// Papéis de acesso (controle por Poder + transversal SUPER_ADMIN).
-enum Role {
-  SUPER_ADMIN
-  EXEC_ADMIN
-  EXEC_PLANEJAMENTO
-  EXEC_CONSULTA
-  LEG_ADMIN
-  LEG_TECNICO
-  LEG_AUTOR
-  LEG_CONSULTA
+// Resultado da análise de viabilidade técnica feita pelo Executivo.
+// Registro informativo: não altera a emenda nem trava a tramitação.
+enum ResultadoViabilidade {
+  VIAVEL
+  VIAVEL_COM_RESSALVA
+  INVIAVEL
+}
+
+// Etapas da despesa pública brasileira (Lei 4.320/1964, arts. 58 a 65).
+// Vocabulário padrão para que uma futura integração com o sistema financeiro
+// do município encontre os campos já prontos.
+enum EtapaExecucao {
+  EMPENHO
+  LIQUIDACAO
+  PAGAMENTO
 }
 
 // Situação do exercício orçamentário (motor exige exercício ABERTO).
@@ -530,6 +535,8 @@ model Emenda {
   dotacaoDestino  Dotacao?                @relation("EmendaDotacaoDestino", fields: [dotacaoDestinoId], references: [id])
   validacoes      ValidacaoEmenda[]
   planoTrabalho   PlanoTrabalho?
+  pareceres       ParecerViabilidade[]
+  andamentos      AndamentoExecucao[]
 
   // Regra estrutural: dotacaoId e instrumentoBaseId obrigatórios e do mesmo
   // exercício (coerência de exercício é reforçada no motor/API — PROMPT 5/6).
@@ -557,12 +564,98 @@ model ValidacaoEmenda {
 }
 
 // ============================================================================
+// PARTICIPAÇÃO DO EXECUTIVO — viabilidade técnica e execução orçamentária
+// ============================================================================
+
+// Parecer de viabilidade técnica do Executivo sobre uma emenda.
+//
+// INFORMATIVO, NÃO BLOQUEANTE: registra a manifestação sem alterar a emenda e
+// sem travar a tramitação — a Comissão decide vendo o parecer, não presa a ele.
+// Disponível da submissão em diante, o que o faz servir aos dois momentos: como
+// subsídio à Comissão antes da votação e como impedimento técnico depois de
+// aprovada (CF art. 166 §11). O histórico é preservado: vale o mais recente.
+model ParecerViabilidade {
+  id            String               @id @default(cuid())
+  emendaId      String
+  resultado     ResultadoViabilidade
+  justificativa String
+  usuarioId     String?
+  criadoEm      DateTime             @default(now())
+
+  emenda  Emenda @relation(fields: [emendaId], references: [id], onDelete: Cascade)
+  usuario User?  @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  @@index([emendaId])
+  @@index([criadoEm])
+}
+
+// Andamento da execução orçamentária de uma emenda, lançado pelo Executivo.
+//
+// Uma linha por etapa da despesa (empenho, liquidação, pagamento), com data,
+// valor e número do documento. Lançamento manual nesta versão; os campos seguem
+// o vocabulário da Lei 4.320/1964 para que uma integração futura com o sistema
+// financeiro do município substitua a digitação sem trocar o modelo.
+model AndamentoExecucao {
+  id              String        @id @default(cuid())
+  emendaId        String
+  etapa           EtapaExecucao
+  data            DateTime
+  valor           Decimal       @db.Decimal(18, 2)
+  numeroDocumento String?
+  observacao      String?
+  usuarioId       String?
+  criadoEm        DateTime      @default(now())
+
+  emenda  Emenda @relation(fields: [emendaId], references: [id], onDelete: Cascade)
+  usuario User?  @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  @@index([emendaId])
+  @@index([etapa])
+  @@index([data])
+}
+
+// ============================================================================
 // ACESSO E AUDITORIA — Auth.js (modelos técnicos em inglês) + AuditLog
 // ============================================================================
 
 // Usuário do sistema. Modelo `User` por exigência do @auth/prisma-adapter.
 // Campos de domínio: poder, role, passwordHash (credenciais — PROMPT 9) e o
 // vínculo opcional a Autor (back-relation do 1:1).
+// Perfil de acesso — substitui o enum fixo de papéis (PROMPT 12). O Administrador
+// Geral compõe perfis novos pela interface, sem alteração de código: o perfil é
+// a combinação de um Poder de atuação com as permissões atômicas abaixo.
+//
+// `poder` nulo = transversal (atravessa os dois Poderes).
+// `perfilDoSistema` marca os 5 perfis base, que não podem ser excluídos.
+// `adminGeral` ignora todas as verificações — é o único que gere perfis.
+model PerfilAcesso {
+  id        String  @id @default(cuid())
+  nome      String  @unique
+  descricao String?
+  poder     Poder?
+
+  // Permissões atômicas. Um perfil sem nenhuma delas é perfil de consulta:
+  // enxerga painéis e relatórios do seu Poder, sem botões de ação.
+  apresentarEmendas        Boolean @default(false)
+  gerirTodasEmendas        Boolean @default(false)
+  tramitarEmendas          Boolean @default(false)
+  gerirPlanejamento        Boolean @default(false)
+  gerirExercicios          Boolean @default(false)
+  administrarConfiguracoes Boolean @default(false)
+  analisarViabilidade      Boolean @default(false)
+  registrarExecucao        Boolean @default(false)
+
+  perfilDoSistema Boolean @default(false)
+  adminGeral      Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usuarios User[]
+
+  @@index([poder])
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -571,16 +664,20 @@ model User {
   image         String?
   passwordHash  String?
   poder         Poder?
-  role          Role      @default(LEG_CONSULTA)
+  // Sem perfil o usuário NÃO acessa o sistema: é devolvido ao login com aviso.
+  perfilId      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts  Account[]
-  sessions  Session[]
-  autor     Autor?
-  auditLogs AuditLog[]
+  perfil     PerfilAcesso?        @relation(fields: [perfilId], references: [id], onDelete: SetNull)
+  accounts   Account[]
+  sessions   Session[]
+  autor      Autor?
+  auditLogs  AuditLog[]
+  pareceres  ParecerViabilidade[]
+  andamentos AndamentoExecucao[]
 
-  @@index([role])
+  @@index([perfilId])
   @@index([poder])
 }
 
@@ -662,8 +759,8 @@ model PlanoTrabalho {
   id       String @id @default(cuid())
   emendaId String @unique
 
-  justificativa String @default("")
-  objetivo      String @default("")
+  justificativa    String  @default("")
+  objetivo         String  @default("")
   // Declaração de que a entidade atende aos requisitos para receber repasse
   // público. Só se aplica ao terceiro setor.
   declaracaoAceita Boolean @default(false)

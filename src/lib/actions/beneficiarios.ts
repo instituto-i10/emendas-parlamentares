@@ -1,10 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Role } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
-import { podeCriarEmenda } from "@/lib/authz";
+import { podeCriarEmenda, temPermissao } from "@/lib/authz";
 import { registrarAuditoria } from "@/lib/audit";
 import { rateLimit } from "@/lib/rate-limit";
 import { beneficiarioSchema } from "@/lib/validation/schemas";
@@ -14,11 +13,11 @@ export type ActionResult =
   | { ok: true; message?: string }
   | { ok: false; error: string };
 
-const PAPEIS_GESTAO: Role[] = [Role.LEG_ADMIN, Role.LEG_TECNICO, Role.EXEC_ADMIN];
+// Gerir o cadastro de beneficiários é ato de configuração — dos dois Poderes.
 
 async function exigirGestao() {
   const user = await getCurrentUser();
-  if (user.role !== Role.SUPER_ADMIN && !PAPEIS_GESTAO.includes(user.role)) {
+  if (!temPermissao(user, "administrarConfiguracoes")) {
     return { erro: "Você não tem permissão para esta ação." as const, user: null };
   }
   return { erro: null, user };

@@ -6,51 +6,71 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/empty-state";
 import { FormDialog } from "./form-dialog";
 import { SelectField, TextField } from "./fields";
+import { PerfilSelect } from "./perfil-select";
 import { criarUsuario } from "@/lib/actions/config";
-import { ROTULO_PODER, ROTULO_ROLE, opcoes } from "@/lib/rotulos";
+import { ROTULO_PODER } from "@/lib/rotulos";
+
+type PerfilOpcao = {
+  id: string;
+  nome: string;
+  poder: string | null;
+  adminGeral: boolean;
+};
 
 type Usuario = {
   id: string;
   name: string | null;
   email: string | null;
   poder: string | null;
-  role: string;
+  perfil: { id: string; nome: string; poder: string | null } | null;
   autor: { id: string; nome: string } | null;
 };
 
-export function UsuariosTab({ usuarios }: { usuarios: Usuario[] }) {
+export function UsuariosTab({
+  usuarios,
+  perfis,
+  podeAtribuirAdminGeral,
+}: {
+  usuarios: Usuario[];
+  perfis: PerfilOpcao[];
+  // Atribuir o Administrador Geral é ato exclusivo de quem já o possui.
+  podeAtribuirAdminGeral: boolean;
+}) {
+  const atribuiveis = perfis.filter(
+    (p) => podeAtribuirAdminGeral || !p.adminGeral
+  );
+  const opcoesPerfil = atribuiveis.map((p) => ({
+    value: p.id,
+    label: p.poder
+      ? `${p.nome} · ${ROTULO_PODER[p.poder] ?? p.poder}`
+      : `${p.nome} · Transversal`,
+  }));
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
         {/* break-words: os nomes de chave/código são palavras únicas e longas;
             sem isto elas fixam a largura mínima e estouram a tela no celular. */}
         <p className="min-w-0 max-w-2xl break-words text-sm text-muted-foreground">
-          Usuários, Poder e papel. As credenciais (senha) são definidas no fluxo
-          de autenticação (PROMPT 9).
+          Usuários e seus perfis de acesso. O Poder acompanha o perfil. Trocar o
+          perfil de alguém vale no próximo login dessa pessoa.
         </p>
         <FormDialog
           triggerLabel="Novo usuário"
           title="Novo usuário"
-          description="Atribua Poder e papel. O papel controla o acesso aos módulos."
+          description="Todo usuário precisa de um perfil: sem perfil a conta não acessa o sistema."
           action={criarUsuario}
         >
           <TextField name="nome" label="Nome" required />
           <TextField name="email" label="E-mail" required type="email" />
           <SelectField
-            name="poder"
-            label="Poder"
-            options={opcoes(ROTULO_PODER)}
-            placeholder="— (transversal)"
-          />
-          <SelectField
-            name="role"
-            label="Papel"
+            name="perfilId"
+            label="Perfil de acesso"
             required
-            options={opcoes(ROTULO_ROLE)}
+            options={opcoesPerfil}
           />
           <TextField
             name="senha"
@@ -64,7 +84,7 @@ export function UsuariosTab({ usuarios }: { usuarios: Usuario[] }) {
       {usuarios.length === 0 ? (
         <EmptyState
           titulo="Nenhum usuário cadastrado"
-          descricao="Cadastre os usuários de cada Poder e seus papéis."
+          descricao="Cadastre os usuários e atribua a cada um o seu perfil de acesso."
         />
       ) : (
         <div className="rounded-xl bg-card p-4 shadow-card">
@@ -74,7 +94,7 @@ export function UsuariosTab({ usuarios }: { usuarios: Usuario[] }) {
                 <TableHead>Nome</TableHead>
                 <TableHead>E-mail</TableHead>
                 <TableHead>Poder</TableHead>
-                <TableHead>Papel</TableHead>
+                <TableHead>Perfil de acesso</TableHead>
                 <TableHead>Autor vinculado</TableHead>
               </TableRow>
             </TableHeader>
@@ -84,12 +104,20 @@ export function UsuariosTab({ usuarios }: { usuarios: Usuario[] }) {
                   <TableCell className="font-medium">{u.name ?? "—"}</TableCell>
                   <TableCell>{u.email ?? "—"}</TableCell>
                   <TableCell>
-                    {u.poder ? ROTULO_PODER[u.poder] : (
+                    {u.poder ? (
+                      ROTULO_PODER[u.poder]
+                    ) : (
                       <span className="text-muted-foreground">Transversal</span>
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{ROTULO_ROLE[u.role] ?? u.role}</Badge>
+                    {/* Reatribuição na própria linha: trocar o perfil de alguém
+                        é rotina de secretaria, não merece um formulário. */}
+                    <PerfilSelect
+                      usuarioId={u.id}
+                      perfilAtualId={u.perfil?.id ?? null}
+                      opcoes={opcoesPerfil}
+                    />
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {u.autor?.nome ?? "—"}

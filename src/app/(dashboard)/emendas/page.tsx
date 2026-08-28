@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
+import { podeCriarEmenda } from "@/lib/authz";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { getDados360, brl, brlCompacto } from "@/lib/queries-360";
 import { ROTULO_STATUS_EMENDA } from "@/lib/rotulos";
@@ -10,7 +11,6 @@ import { Farol, type FarolItemDado } from "@/components/e360/farol";
 import { Banner } from "@/components/e360/banner";
 import { Subtabs } from "@/components/e360/subtabs";
 import { Tag360 } from "@/components/e360/tag360";
-import { Role } from "@/generated/prisma/enums";
 import { ClipboardList } from "lucide-react";
 
 const ABAS = [
@@ -36,9 +36,7 @@ export default async function EmendasVistaPage({
     porStatus,
   } = await getDados360(ano);
 
-  const podeApresentar = (
-    [Role.LEG_ADMIN, Role.LEG_TECNICO, Role.LEG_AUTOR, Role.SUPER_ADMIN] as Role[]
-  ).includes(user.role);
+  const podeApresentar = podeCriarEmenda(user);
 
   const pctSaude = c.valor > 0 ? Math.round((c.valorSaude / c.valor) * 100) : 0;
   const invalidas = porStatus.find((s) => s.status === "INVALIDA");

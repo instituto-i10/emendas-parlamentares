@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
 import { podeTramitar } from "@/lib/authz";
+import { requirePermissao } from "@/lib/access";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { getDados360, brl } from "@/lib/queries-360";
 import { SecTitle } from "@/components/e360/sec-title";
@@ -12,6 +13,8 @@ import { Download, Scale } from "lucide-react";
 import { FilaAnalise } from "@/components/analise/fila";
 
 export default async function AnalisePage() {
+  // A fila mostra as emendas de todos os gabinetes: exige gerir ou tramitar.
+  await requirePermissao("gerirTodasEmendas", "tramitarEmendas");
   const user = await getCurrentUser();
   const ano = await getAnoAtivo();
   const { params, emendas, consolidado: c, porStatus } = await getDados360(ano);

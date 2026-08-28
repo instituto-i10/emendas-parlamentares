@@ -6,7 +6,7 @@ import { entrarComo } from "./personas";
 
 test.describe("lista de emendas", () => {
   test.beforeEach(async ({ page }) => {
-    await entrarComo(page, "mesa");
+    await entrarComo(page, "presidente");
     await page.goto("/legislativo/emendas/todas");
   });
 

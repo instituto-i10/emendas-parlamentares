@@ -11,6 +11,7 @@ import { Banner } from "@/components/e360/banner";
 import { PrintButton } from "@/components/emendas/print-button";
 import { Download, Scale } from "lucide-react";
 import { FilaAnalise } from "@/components/analise/fila";
+import { SemEmendasNoExercicio } from "@/components/sem-emendas";
 
 export default async function AnalisePage() {
   // A fila mostra as emendas de todos os gabinetes: exige gerir ou tramitar.
@@ -19,6 +20,17 @@ export default async function AnalisePage() {
   const ano = await getAnoAtivo();
   const { params, emendas, consolidado: c, porStatus } = await getDados360(ano);
   const podeAgir = podeTramitar(user);
+
+  // Fila de conferência num ciclo sem emenda: quatro KPIs zerados e uma fila
+  // vazia leem como sistema quebrado, não como ciclo que não começou.
+  if (c.qtd === 0) {
+    return (
+      <div>
+        <SecTitle titulo="Conferência & Análise Técnica" />
+        <SemEmendasNoExercicio ano={ano} />
+      </div>
+    );
+  }
 
   const qtd = (s: string) => porStatus.find((x) => x.status === s)?.qtd ?? 0;
   const conferidas = emendas.filter((e) => e.status !== "RASCUNHO").length;

@@ -20,6 +20,7 @@ import { Tag360, tomDoStatus } from "@/components/e360/tag360";
 import { Avatar360 } from "@/components/e360/avatar";
 import { Ring } from "@/components/e360/graficos";
 import { EmptyState } from "@/components/empty-state";
+import { SemEmendasNoExercicio } from "@/components/sem-emendas";
 import { AtalhosRapidos } from "@/components/atalhos-rapidos";
 
 export default async function Vereador360Page({
@@ -41,6 +42,19 @@ export default async function Vereador360Page({
     : (autores.find((a) => a.id === autorParam) ??
       autores.find((a) => porAutor.some((r) => r.autorId === a.id)) ??
       autores[0]);
+
+  // Ciclo sem emenda nenhuma: o farol do autor acenderia verde em tudo —
+  // "dentro da cota", "reserva preservada" — sobre R$ 0,00. É conformidade
+  // declarada sobre o nada. Antes disso, dizer que o ciclo não começou.
+  if (ano && c.qtd === 0) {
+    return (
+      <div>
+        <AtalhosRapidos />
+        <SecTitle titulo="Vereador 360" />
+        <SemEmendasNoExercicio ano={ano} />
+      </div>
+    );
+  }
 
   if (!selecionado) {
     return (

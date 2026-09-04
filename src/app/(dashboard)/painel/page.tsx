@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/session";
 import { vistaInicial } from "@/config/vistas360";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { getDados360, brl, brlCompacto } from "@/lib/queries-360";
-import { ClipboardCheck, Landmark, ScanSearch, Wallet } from "lucide-react";
+import { Landmark, ScanSearch, Wallet } from "lucide-react";
 import { SecTitle } from "@/components/e360/sec-title";
 import { Hero } from "@/components/e360/hero";
 import { KpiTile } from "@/components/e360/kpi-tile";
@@ -19,7 +19,7 @@ import {
 } from "@/components/e360/graficos";
 import { Farol, type FarolItemDado } from "@/components/e360/farol";
 import { Tag360 } from "@/components/e360/tag360";
-import { EmptyState } from "@/components/empty-state";
+import { SemEmendasNoExercicio } from "@/components/sem-emendas";
 import { AtalhosRapidos } from "@/components/atalhos-rapidos";
 
 export default async function PainelPage() {
@@ -40,18 +40,7 @@ export default async function PainelPage() {
       <div>
         <AtalhosRapidos />
         <SecTitle titulo={tituloPainel} />
-        <EmptyState
-          icon={ClipboardCheck}
-          titulo="Sem emendas no exercício"
-          acao={
-            <Link
-              href="/legislativo/emendas/nova"
-              className="text-sm font-bold text-accent-foreground hover:underline"
-            >
-              Apresentar emenda →
-            </Link>
-          }
-        />
+        <SemEmendasNoExercicio ano={ano} />
       </div>
     );
   }

@@ -21,7 +21,7 @@
     "db:2027:emendas": "tsx prisma/seed-2027-emendas.ts",
     "db:limpar-beneficiarios": "tsx prisma/limpar-beneficiarios.ts",
     "db:limpar-2027": "tsx prisma/limpar-2027.ts",
-    "db:deploy": "tsx prisma/seed.ts && tsx prisma/seed-2027.ts && tsx prisma/seed-2027-emendas.ts"
+    "db:deploy": "tsx prisma/seed.ts && tsx prisma/seed-volume.ts && tsx prisma/seed-demo.ts && tsx prisma/seed-2027.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

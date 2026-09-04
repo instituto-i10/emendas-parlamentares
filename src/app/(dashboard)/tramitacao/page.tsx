@@ -34,10 +34,7 @@ export default async function TramitacaoPage() {
     return (
       <div>
         <SecTitle titulo={`Tramitação — exercício ${ano ?? ""}`} />
-        <SemEmendasNoExercicio
-          ano={ano}
-          descricao="O projeto de lei está em tramitação e o período de emendas, aberto. A primeira emenda apresentada aparece aqui."
-        />
+        <SemEmendasNoExercicio ano={ano} />
       </div>
     );
   }

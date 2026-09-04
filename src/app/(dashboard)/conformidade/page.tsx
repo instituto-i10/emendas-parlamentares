@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { safe } from "@/lib/queries";
 import { getAnoAtivo } from "@/lib/exercicio";
+import { rotuloCiclo } from "@/lib/ciclo";
 import { getParametros360 } from "@/lib/queries-360";
 import { SecTitle } from "@/components/e360/sec-title";
 import { KpiCard } from "@/components/e360/kpi-card";
@@ -87,12 +88,21 @@ export default async function ConformidadePage() {
       texto: "Toda emenda tem autor vinculado por FK — sem anonimato.",
       href: "/emendas",
     },
+    // Ciclo ainda sem emenda: 0 de 0 daria 0% e acenderia o vermelho de falha.
+    // Não há falha nenhuma — não há o que rastrear ainda. Âmbar de pendência,
+    // com o texto dizendo por quê.
     {
-      tom: pctRastreio === 100 ? "g" : pctRastreio >= 80 ? "a" : "r",
-      titulo: `Rastreabilidade ponta a ponta — ${pctRastreio}% com beneficiário final`,
-      texto: `${comBeneficiario} de ${totalEmendas} emendas do exercício ${ano ?? "—"} têm beneficiário identificado.`,
+      tom: totalEmendas === 0 ? "a" : pctRastreio === 100 ? "g" : pctRastreio >= 80 ? "a" : "r",
+      titulo:
+        totalEmendas === 0
+          ? "Rastreabilidade ponta a ponta — sem emendas para conferir"
+          : `Rastreabilidade ponta a ponta — ${pctRastreio}% com beneficiário final`,
+      texto:
+        totalEmendas === 0
+          ? `Nenhuma emenda apresentada no ciclo ${ano ? rotuloCiclo(ano) : "—"} ainda. O item acende assim que a primeira for apresentada.`
+          : `${comBeneficiario} de ${totalEmendas} emendas do exercício ${ano ?? "—"} têm beneficiário identificado.`,
       fix:
-        pctRastreio < 100
+        totalEmendas > 0 && pctRastreio < 100
           ? "Use Configurações → Beneficiários → 'Derivar dos objetos' e revise os casos restantes."
           : undefined,
       href: "/config",

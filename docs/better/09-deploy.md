@@ -60,7 +60,7 @@ precisar. Montado em 19/08/2026.
 | Build passando na Vercel | ✅ |
 | Banco Neon criado (São Paulo, PG 17) | ✅ |
 | Migrações aplicadas (24 tabelas) | ✅ |
-| Base 2027 + 44 emendas carregadas | ✅ |
+| Base 2027 carregada, **sem emendas** · histórico em 2024/2025 | ✅ |
 | Branch de produção no painel da Vercel | ⏳ ainda `main` — ver abaixo |
 
 Sem banco o app **não quebra**: degrada para estado vazio ("Exercício —",
@@ -118,11 +118,25 @@ PERMITIR_BANCO_REMOTO=1 npm run db:deploy
 | | O quê | Natureza |
 | --- | --- | --- |
 | `seed.ts` | exercício 2025, 8 usuários, parâmetros gerais | base do protótipo |
-| `seed-2027.ts` | 28 órgãos, 45 unidades, 183 ações, 1.163 dotações, R$ 993,3 mi | **base real** + dotações simuladas |
-| `seed-2027-emendas.ts` | 44 emendas de 13 vereadores | demonstração |
+| `seed-volume.ts` | ~2.290 dotações e o PPA do exercício 2025 | base do protótipo |
+| `seed-demo.ts` | 41 emendas de 12 vereadores no **ciclo 2024/2025** | demonstração |
+| `seed-2027.ts` | 28 órgãos, 45 unidades, 183 ações, 1.163 dotações, R$ 993,3 mi | **base real**, **sem emenda nenhuma** |
 
 O `seed-2027` confere a soma lendo de volta do banco e **aborta** se não fechar
 com os R$ 993.305.344,00 do Anexo V da LDO.
+
+> **Onde ficam as emendas, e por quê.** O histórico vai no ciclo **2024/2025**;
+> o **2026/2027 abre vazio**, com estado vazio explicando que as emendas de 2027
+> são apresentadas ao longo de 2026, depois que o Executivo manda a PLOA. É o
+> que a Câmara vai ver no primeiro dia — o ciclo-alvo pronto e esperando a
+> primeira emenda, e não um sistema que "já vem com dados dentro".
+>
+> Por isso `seed-2027-emendas.ts` **saiu** do `db:deploy` (ele enchia justamente
+> o ciclo que precisa estar vazio) e continua disponível à parte, para trabalho
+> de layout sobre a base real:
+> ```bash
+> npm run db:2027:emendas     # popula 2027 · npm run db:limpar-2027 esvazia
+> ```
 
 ### 5. Um clique no painel (opcional, mas recomendado)
 
@@ -141,8 +155,17 @@ DIRECT_URL='…' DATABASE_URL='…' PERMITIR_BANCO_REMOTO=1 npm run db:deploy
 ```
 
 Os seeds são idempotentes nas partes de catálogo (`upsert`) e pulam o que já
-existe nas partes de volume. Para regerar **as emendas** sem tocar na base
-orçamentária real:
+existe nas partes de volume.
+
+Se o **2026/2027** aparecer com emendas (uma apresentação de demonstração, ou um
+`db:2027:emendas` rodado antes), devolva-o ao estado vazio — a base real de
+1.163 dotações não é tocada:
+
+```bash
+DATABASE_URL='…' npm run db:limpar-2027
+```
+
+Para regerar as emendas de 2027 de propósito, sem tocar na base orçamentária:
 
 ```bash
 DIRECT_URL='…' DATABASE_URL='…' PERMITIR_BANCO_REMOTO=1 RECRIAR=1 \

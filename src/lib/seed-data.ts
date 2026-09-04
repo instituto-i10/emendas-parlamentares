@@ -2,8 +2,11 @@ import bcrypt from "bcryptjs";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { nomeNatureza } from "./naturezas-nomes";
 
-// Dados de um município fictício (exercício 2025). Compartilhado entre o script
-// `npm run seed` e a rota de bootstrap. Prisma aceita number em campos Decimal.
+// Dados de um município fictício (exercício 2026 — ciclo "2025/2026": emendas
+// elaboradas em 2025 sobre a proposta orçamentária de 2026). É a base herdada
+// do protótipo original, mantida como o ciclo já encerrado ao lado do 2026/2027
+// real de Mogi Guaçu. Compartilhado entre o script `npm run seed` e a rota de
+// bootstrap. Prisma aceita number em campos Decimal.
 
 const orgaos = [
   { codigo: "02", nome: "Governo Municipal", uo: { codigo: "02.01", nome: "Gabinete do Prefeito" } },
@@ -48,20 +51,20 @@ const fontes = [
 
 export async function semear(prisma: PrismaClient) {
   const exercicio = await prisma.exercicio.upsert({
-    where: { ano: 2025 },
-    create: { ano: 2025, status: "ABERTO" },
+    where: { ano: 2026 },
+    create: { ano: 2026, status: "ABERTO" },
     update: { status: "ABERTO" },
   });
   const exercicioId = exercicio.id;
 
   const instrumento = await prisma.instrumentoPlanejamento.upsert({
-    where: { id: "seed-pl-loa-2025" },
+    where: { id: "seed-pl-loa-2026" },
     create: {
-      id: "seed-pl-loa-2025",
+      id: "seed-pl-loa-2026",
       tipo: "LOA",
       especie: "PROJETO_LEI",
-      numero: "PL 45/2024",
-      ementa: "Estima a receita e fixa a despesa do Município para o exercício de 2025.",
+      numero: "PL 45/2025",
+      ementa: "Estima a receita e fixa a despesa do Município para o exercício de 2026.",
       exercicioId,
       status: "EM_TRAMITACAO",
     },
@@ -352,5 +355,5 @@ export async function semear(prisma: PrismaClient) {
     }
   }
 
-  return { exercicio: 2025, dotacoes: totalDot, usuarios: usuarios.length };
+  return { exercicio: 2026, dotacoes: totalDot, usuarios: usuarios.length };
 }

@@ -42,7 +42,7 @@ if (/neon\.tech|vercel/.test(url) && process.env.PERMITIR_BANCO_REMOTO !== "1") 
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
 
-const ANO = 2025;
+const ANO = 2026;
 
 // --------------------------------------------------------------------- dados
 
@@ -378,7 +378,7 @@ async function main() {
         modoReservaSaude: "ALERTA",
         emendaEhSaude: item.ehSaude,
         somaAutorDemaisExistente: somaDemais,
-        // Base de 2025, anterior ao plano de trabalho simplificado: sem
+        // Base de 2025/2026, anterior ao plano de trabalho simplificado: sem
         // categoria, o motor registra ALERTA em vez de reprovar retroativamente.
         modeloPlano: null,
         pendenciasPlanoTrabalho: [],

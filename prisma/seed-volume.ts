@@ -47,7 +47,7 @@ if (/neon\.tech|vercel/.test(url) && process.env.PERMITIR_BANCO_REMOTO !== "1") 
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
 
-const ANO = 2025;
+const ANO = 2026;
 
 // ---------------------------------------------------------------------------
 // Classificação funcional (Portaria MOG 42/1999) — as funções e subfunções que
@@ -689,13 +689,13 @@ async function main() {
   // PPA com uma linha por programa — menos dois, de propósito, para que exista
   // o caso de falha real (emenda em programa fora do PPA).
   const ppa = await prisma.instrumentoPlanejamento.upsert({
-    where: { id: "seed-ppa-2025" },
+    where: { id: "seed-ppa-2026" },
     create: {
-      id: "seed-ppa-2025",
+      id: "seed-ppa-2026",
       tipo: "PPA",
       especie: "PROJETO_LEI",
-      numero: "PL 12/2021",
-      ementa: "Institui o Plano Plurianual do Município para o quadriênio 2022-2025.",
+      numero: "PL 12/2025",
+      ementa: "Institui o Plano Plurianual do Município para o quadriênio 2026-2029.",
       exercicioId,
       status: "VIGENTE",
     },

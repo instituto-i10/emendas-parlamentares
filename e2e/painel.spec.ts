@@ -112,7 +112,7 @@ test.describe("conformidade institucional", () => {
 test.describe("exportação", () => {
   test("a exportação de emendas devolve um CSV", async ({ page }) => {
     await entrarComo(page, "presidente");
-    const resposta = await page.request.get("/api/export/emendas?ano=2025&formato=csv");
+    const resposta = await page.request.get("/api/export/emendas?ano=2026&formato=csv");
     expect(resposta.status()).toBe(200);
     expect(resposta.headers()["content-type"]).toContain("text/csv");
     const corpo = await resposta.text();

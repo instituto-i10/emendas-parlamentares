@@ -10,7 +10,7 @@ test.describe("tramitação", () => {
     await page.goto("/legislativo/tramitacao/status");
     // "Situação das emendas" aparece também na trilha de navegação.
     await expect(page.getByRole("heading", { name: "Situação das emendas" })).toBeVisible();
-    await expect(page.getByText(/EM \d{3}\/2025/).first()).toBeVisible();
+    await expect(page.getByText(/EM \d{3}\/2026/).first()).toBeVisible();
   });
 
   test("cancelar o parecer não decide a emenda", async ({ page }) => {

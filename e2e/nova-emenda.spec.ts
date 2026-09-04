@@ -189,11 +189,11 @@ test.describe("cascata sob volume realista", () => {
     await entrarComo(page, "executivo");
     await page.goto("/executivo/planejamento/base");
     // A linha do PL base traz a contagem de dotações numa célula da tabela.
-    const linha = page.getByRole("row").filter({ hasText: "PL 45/2024" });
+    const linha = page.getByRole("row").filter({ hasText: "PL 45/2025" });
     await expect(linha).toBeVisible();
     const celulas = await linha.getByRole("cell").allTextContents();
     const dotacoes = Number(celulas[3]);
-    console.log(`  base do PL 45/2024: ${dotacoes} dotações`);
+    console.log(`  base do PL 45/2025: ${dotacoes} dotações`);
     expect(dotacoes).toBeGreaterThan(2000);
   });
 

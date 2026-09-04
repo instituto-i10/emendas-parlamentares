@@ -7,6 +7,7 @@ import { Card360, Eyebrow } from "@/components/e360/card360";
 import { MiniBar } from "@/components/e360/minibar";
 import { TabelaAutores } from "@/components/e360/tabela-autores";
 import { PrintButton } from "@/components/emendas/print-button";
+import { SemEmendasNoExercicio } from "@/components/sem-emendas";
 
 export default async function PlacarPage() {
   const ano = await getAnoAtivo();
@@ -17,6 +18,18 @@ export default async function PlacarPage() {
     porDestino,
     porTipo,
   } = await getDados360(ano);
+
+  // Exercício sem emenda nenhuma: o consolidado seria um teto de milhões ao
+  // lado de R$ 0,00 e dois gráficos vazios — parece defeito, não começo de
+  // ciclo.
+  if (c.qtd === 0) {
+    return (
+      <div>
+        <SecTitle titulo={`Resumo Consolidado — exercício ${ano ?? ""}`} />
+        <SemEmendasNoExercicio ano={ano} />
+      </div>
+    );
+  }
 
   const pctSaude = c.valor > 0 ? Math.round((c.valorSaude / c.valor) * 100) : 0;
 

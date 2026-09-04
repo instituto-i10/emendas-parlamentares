@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { cadastrarDestino } from "@/lib/actions/beneficiarios";
 import { AJUDA_TIPO_BENEFICIARIO, ROTULO_TIPO_BENEFICIARIO } from "@/lib/rotulos";
+import { Obrigatorio } from "@/components/ui/obrigatorio";
 
 // ---------------------------------------------------------------------------
 // Beneficiário final em DUAS PERGUNTAS — categoria e destino.
@@ -172,6 +173,7 @@ export function CampoBeneficiario({
       <fieldset className="min-w-0">
         <legend className="mb-1.5 text-sm font-medium">
           Beneficiário final — que tipo de destino?
+          <Obrigatorio />
         </legend>
         <div className="grid gap-2 sm:grid-cols-3">
           {CATEGORIAS.map(({ valor, Icone }) => (
@@ -216,7 +218,12 @@ export function CampoBeneficiario({
 
       {/* ---------------------------------------------------- 2ª pergunta */}
       <div className="min-w-0 space-y-1.5" ref={caixa}>
-        <Label htmlFor={`${idBase}-destino`}>Para onde vai</Label>
+        <Label htmlFor={`${idBase}-destino`}>
+          <span>
+            Para onde vai
+            <Obrigatorio />
+          </span>
+        </Label>
         <div className="relative">
           <input
             id={`${idBase}-destino`}
@@ -224,6 +231,7 @@ export function CampoBeneficiario({
             aria-expanded={aberto}
             aria-controls={idLista}
             aria-autocomplete="list"
+            aria-required
             autoComplete="off"
             disabled={!categoria}
             className="flex h-9 w-full rounded-[10px] border border-input bg-card px-3 py-1 pr-9 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"

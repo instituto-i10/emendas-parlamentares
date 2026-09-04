@@ -20,6 +20,7 @@ import {
 import { Farol, type FarolItemDado } from "@/components/e360/farol";
 import { Tag360 } from "@/components/e360/tag360";
 import { EmptyState } from "@/components/empty-state";
+import { AtalhosRapidos } from "@/components/atalhos-rapidos";
 
 export default async function PainelPage() {
   const user = await getCurrentUser();
@@ -37,6 +38,7 @@ export default async function PainelPage() {
   if (!ano || emendas.length === 0) {
     return (
       <div>
+        <AtalhosRapidos />
         <SecTitle titulo={tituloPainel} />
         <EmptyState
           icon={ClipboardCheck}
@@ -222,6 +224,7 @@ export default async function PainelPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <AtalhosRapidos />
       {/* Abertura no padrão `.hero` da referência: saudação + tiles */}
       <Hero
         data={`Exercício ${ano}`}

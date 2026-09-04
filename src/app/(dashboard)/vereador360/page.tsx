@@ -20,6 +20,7 @@ import { Tag360, tomDoStatus } from "@/components/e360/tag360";
 import { Avatar360 } from "@/components/e360/avatar";
 import { Ring } from "@/components/e360/graficos";
 import { EmptyState } from "@/components/empty-state";
+import { AtalhosRapidos } from "@/components/atalhos-rapidos";
 
 export default async function Vereador360Page({
   searchParams,
@@ -44,6 +45,7 @@ export default async function Vereador360Page({
   if (!selecionado) {
     return (
       <div>
+        <AtalhosRapidos />
         <SecTitle titulo="Vereador 360" />
         <EmptyState titulo="Nenhum autor cadastrado" />
       </div>
@@ -123,6 +125,7 @@ export default async function Vereador360Page({
 
   return (
     <div>
+      <AtalhosRapidos />
       <SecTitle titulo="Vereador 360" />
 
       <div

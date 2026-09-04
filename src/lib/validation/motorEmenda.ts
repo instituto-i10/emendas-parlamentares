@@ -6,11 +6,9 @@ import {
   type DotacaoCtx,
   type ResultadoMotor,
 } from "./motor";
-import {
-  pendenciasDoPlano,
-  planoEfetivo,
-  type CategoriaBeneficiario,
-} from "@/lib/plano-trabalho";
+import { pendenciasDoPlano } from "@/lib/plano-trabalho";
+import { planoDoBanco } from "@/lib/plano-db";
+import { derivarModeloPlano } from "@/lib/plano-modelo";
 
 export { avaliarEmenda } from "./motor";
 export type { ResultadoMotor, ItemValidacao } from "./motor";
@@ -67,7 +65,11 @@ export async function validarEmenda(emendaId: string): Promise<ResultadoMotor> {
         include: {
           acao: { select: { programaId: true } },
           funcao: { select: { codigo: true } },
-          naturezaDespesa: { select: { grupo: true } },
+          // `modalidadeAplicacao` e `elemento` entram porque é deles que sai o
+          // modelo do plano — ver `derivarModeloPlano`.
+          naturezaDespesa: {
+            select: { grupo: true, modalidadeAplicacao: true, elemento: true },
+          },
         },
       },
       dotacaoOrigem: {
@@ -83,7 +85,13 @@ export async function validarEmenda(emendaId: string): Promise<ResultadoMotor> {
         },
       },
       beneficiario: { select: { tipo: true } },
-      planoTrabalho: { include: { itens: true } },
+      planoTrabalho: {
+        include: {
+          metas: { orderBy: { ordem: "asc" } },
+          itens: { orderBy: { ordem: "asc" } },
+          parcelas: { orderBy: { ordem: "asc" } },
+        },
+      },
     },
   });
   if (!emenda) throw new Error("Emenda não encontrada.");
@@ -186,35 +194,18 @@ export async function validarEmenda(emendaId: string): Promise<ResultadoMotor> {
     ? Number(somaDemais._sum.valor)
     : 0;
 
-  // Plano de trabalho simplificado: o que ele exige depende da categoria do
-  // beneficiário final.
-  const beneficiarioCategoria =
-    (emenda.beneficiario?.tipo as CategoriaBeneficiario | undefined) ?? null;
-  const plano = emenda.planoTrabalho;
-  // `planoEfetivo` é o que faz a justificativa da EMENDA valer como a do plano
-  // na administração pública — a regra vive aqui, no motor, e não só na tela.
-  const pendenciasPlanoTrabalho = beneficiarioCategoria
-    ? pendenciasDoPlano(
-        planoEfetivo(
-          plano
-            ? {
-                justificativa: plano.justificativa,
-                objetivo: plano.objetivo,
-                declaracaoAceita: plano.declaracaoAceita,
-                itens: plano.itens.map((i) => ({
-                  descricao: i.descricao,
-                  quantidade: Number(i.quantidade),
-                  valorUnitario: Number(i.valorUnitario),
-                })),
-              }
-            : null,
-          beneficiarioCategoria,
-          emenda.justificativa
-        ),
-        beneficiarioCategoria,
-        Number(emenda.valor)
-      )
-    : [];
+  // Plano de trabalho: qual dos quatro modelos vale sai da DOTAÇÃO, não da
+  // escolha do autor. Sem dotação não há modelo, e sem modelo não há o que
+  // cobrar — a checagem vira alerta, não falha.
+  const modeloPlano = derivarModeloPlano(
+    emenda.dotacao?.naturezaDespesa ?? null,
+    emenda.beneficiario?.tipo ?? null
+  );
+  const pendenciasPlanoTrabalho = pendenciasDoPlano(
+    planoDoBanco(emenda.planoTrabalho),
+    modeloPlano,
+    Number(emenda.valor)
+  );
 
   const ctx: ContextoEmenda = {
     emenda: {
@@ -242,7 +233,7 @@ export async function validarEmenda(emendaId: string): Promise<ResultadoMotor> {
     modoReservaSaude,
     emendaEhSaude,
     somaAutorDemaisExistente,
-    beneficiarioCategoria,
+    modeloPlano,
     pendenciasPlanoTrabalho,
   };
 

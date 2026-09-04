@@ -348,9 +348,9 @@ async function main() {
         modoReservaSaude: "BLOQUEANTE",
         emendaEhSaude: item.ehSaude,
         somaAutorDemaisExistente: somaDemais,
-        // Sem beneficiário informado, a checagem do plano fica em ALERTA e o
+        // Sem modelo definido, a checagem do plano fica em ALERTA e o
         // resultado da emenda não muda — ver motor.ts, item PLANO_TRABALHO.
-        beneficiarioCategoria: null,
+        modeloPlano: null,
         pendenciasPlanoTrabalho: [],
       };
 
@@ -457,7 +457,7 @@ async function main() {
       tetoValorAutor: TETO, somaAutorExistente: 0,
       reservaSaudePct: RESERVA_PCT, modoReservaSaude: "BLOQUEANTE",
       emendaEhSaude: false, somaAutorDemaisExistente: 0,
-      beneficiarioCategoria: null,
+      modeloPlano: null,
       pendenciasPlanoTrabalho: [],
     });
 

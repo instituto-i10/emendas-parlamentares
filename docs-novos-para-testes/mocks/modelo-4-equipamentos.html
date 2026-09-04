@@ -1,0 +1,1070 @@
+<meta charset="utf-8">
+<title>Emenda de Equipamento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* ==========================================================================
+   Tokens portados de src/app/globals.css — a mesma identidade do produto.
+
+   TEMA ÚNICO, CLARO. O produto roda em claro e é assim que a tela precisa ser
+   validada; seguir o modo escuro do sistema de quem abre o link mostraria uma
+   tela que ninguém vê no uso real. Por isso não há bloco `prefers-color-scheme`
+   nem `[data-theme]` — e por isso todo fundo e toda cor são pintados
+   explicitamente, para a página não pegar emprestado o fundo do hospedeiro.
+   ========================================================================== */
+:root{
+  --brand-navy:#0a2463; --brand-deep:#061840; --brand-cyan:#00b4d8; --brand-mint:#00e5a0;
+  --surf-ok:#e7f0e9;   --on-ok:#15603c;
+  --surf-info:#e4f7fc; --on-info:#0779a8;
+  --surf-warn:#f7edd9; --on-warn:#8a5a0b;
+  --surf-bad:#f8e3e3;  --on-bad:#9c1f24;
+  --bg:#f4f7fb; --fg:#0a2463; --card:#ffffff;
+  --secondary:#eff4fb; --muted-fg:#5a6b8c; --accent:#e4f7fc; --accent-fg:#0779a8;
+  --border:#e3e9f2; --input:#d8e2f0; --ring:#00b4d8;
+  --sidebar:#0a2463; --sidebar-fg:#c2d3ee;
+  --elev-card:0 1px 2px rgba(6,24,64,.04), 0 8px 24px -14px rgba(6,24,64,.22);
+  --r-card:18px; --r-int:13px; --r-btn:10px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:"Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size:13px; line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{letter-spacing:-.02em; line-height:1.2; margin:0; text-wrap:balance}
+code,.mono{font-family:"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace}
+:focus-visible{outline:2px solid var(--ring); outline-offset:2px; border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+
+/* ------------------------------------------------------------ moldura ---- */
+.topo{
+  background:var(--sidebar); color:var(--sidebar-fg);
+  padding:14px 22px; display:flex; flex-wrap:wrap; align-items:center; gap:14px;
+}
+.marca{display:flex; align-items:baseline; gap:7px; font-weight:800; letter-spacing:-.03em; font-size:16px; color:#fff}
+.marca span{color:var(--brand-mint)}
+.marca small{font-weight:600; font-size:9px; letter-spacing:1.6px; text-transform:uppercase; color:var(--sidebar-fg); opacity:.75}
+.ctx{display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; opacity:.9}
+.ctx i{width:6px; height:6px; border-radius:50%; background:var(--brand-mint); display:inline-block}
+.ciclo{margin-left:auto; font-size:12px; font-weight:700; background:rgba(255,255,255,.1); padding:6px 12px; border-radius:var(--r-btn)}
+
+.pagina{max-width:1320px; margin:0 auto; padding:26px 22px 64px}
+.trilha{font-size:11.5px; font-weight:700; color:var(--muted-fg); margin-bottom:6px}
+.trilha b{color:var(--fg); font-weight:700}
+h1{font-size:27px; font-weight:800}
+
+.aviso{
+  margin:20px 0 24px; padding:15px 17px; border-radius:var(--r-int);
+  background:var(--surf-warn); border:1px dashed color-mix(in srgb, var(--on-warn) 40%, transparent);
+}
+.aviso p:first-child{
+  margin:0 0 5px; font-size:10.5px; font-weight:800; letter-spacing:1.3px;
+  text-transform:uppercase; color:var(--on-warn);
+}
+.aviso p:last-child{margin:0; font-size:12.5px; line-height:1.55; color:var(--muted-fg)}
+.aviso code{background:var(--secondary); padding:1px 6px; border-radius:5px; font-size:11.5px}
+
+/* ------------------------------------------------------------- grade ----- */
+.grade{display:grid; gap:22px; grid-template-columns:1fr}
+@media (min-width:1080px){ .grade{grid-template-columns:2fr 1fr; align-items:start} }
+.coluna{display:flex; flex-direction:column; gap:20px; min-width:0}
+
+.chips{display:flex; flex-wrap:wrap; gap:8px}
+.chip{
+  display:inline-flex; align-items:center; gap:7px; padding:7px 12px; border-radius:var(--r-btn);
+  background:var(--secondary); font-size:12px; font-weight:700;
+}
+.chip.contorno{background:transparent; border:1px solid var(--input)}
+
+/* ------------------------------------------------------------- cartão ---- */
+.bloco{background:var(--card); border-radius:var(--r-card); box-shadow:var(--elev-card); padding:20px 22px 22px}
+.bloco > header{display:flex; align-items:center; gap:10px; margin-bottom:16px}
+.num{
+  flex:none; width:24px; height:24px; border-radius:50%; background:var(--secondary);
+  display:grid; place-items:center; font-size:12px; font-weight:800; font-variant-numeric:tabular-nums;
+}
+.bloco h2{font-size:16px; font-weight:700; flex:1; min-width:0}
+.selo{
+  flex:none; font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px;
+  background:var(--secondary); color:var(--muted-fg);
+}
+.selo.ok{background:var(--surf-ok); color:var(--on-ok)}
+.selo.falta{background:var(--surf-warn); color:var(--on-warn)}
+
+/* seções internas: filete, não outro cartão */
+.secao{padding-top:18px; margin-top:18px; border-top:1px solid var(--border)}
+.secao > h3{
+  font-size:10.5px; font-weight:800; letter-spacing:1.25px; text-transform:uppercase;
+  color:var(--muted-fg); margin-bottom:12px;
+}
+.secao > h3 em{font-style:normal; color:var(--brand-cyan)}
+.nota{font-size:12px; line-height:1.6; color:var(--muted-fg); margin:0 0 12px}
+.nota.lei{
+  background:var(--surf-info); color:var(--on-info); padding:10px 13px;
+  border-radius:var(--r-btn); font-weight:600;
+}
+
+/* ------------------------------------------------------------- campos ---- */
+.linha{display:grid; gap:14px; grid-template-columns:1fr}
+@media (min-width:620px){ .linha.duas{grid-template-columns:1fr 1fr} .linha.tres{grid-template-columns:1fr 1fr 1fr} }
+.campo{display:flex; flex-direction:column; gap:6px; min-width:0}
+label{font-size:13px; font-weight:600}
+label small{display:block; font-weight:500; font-size:11.5px; color:var(--muted-fg); margin-top:2px}
+input[type=text], input[type=number], select, textarea{
+  width:100%; font:inherit; font-size:13px; color:var(--fg);
+  background:var(--card); border:1px solid var(--input); border-radius:var(--r-btn);
+  padding:8px 11px; transition:border-color .12s, box-shadow .12s;
+}
+textarea{min-height:78px; resize:vertical; line-height:1.55}
+input:focus, select:focus, textarea:focus{outline:none; border-color:var(--ring); box-shadow:0 0 0 3px color-mix(in srgb, var(--ring) 35%, transparent)}
+select{appearance:none; padding-right:34px;
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235a6b8c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 12px center; background-size:15px;
+}
+/* Dígitos alinhados à direita só onde formam coluna: dentro das tabelas.
+   Campo solto segue o Input do produto, alinhado à esquerda. */
+input.num{font-variant-numeric:tabular-nums}
+td input.num{text-align:right}
+
+/* campos que o sistema já respondeu */
+.sabido{background:var(--secondary); border-radius:var(--r-int); padding:14px 16px}
+.sabido .titulo{
+  font-size:10.5px; font-weight:800; letter-spacing:1.25px; text-transform:uppercase;
+  color:var(--accent-fg); margin-bottom:10px; display:flex; align-items:center; gap:7px;
+}
+.sabido dl{margin:0; display:grid; gap:9px 18px; grid-template-columns:1fr}
+@media (min-width:620px){ .sabido dl{grid-template-columns:1fr 1fr} }
+.sabido div{display:flex; flex-direction:column; gap:1px; min-width:0}
+.sabido dt{font-size:11px; font-weight:600; color:var(--muted-fg)}
+.sabido dd{margin:0; font-size:12.5px; font-weight:700}
+.sabido dd.mono{font-size:12px; letter-spacing:-.2px}
+
+/* cartão da dotação (o "por extenso" da classificação) */
+.dotacao{background:color-mix(in srgb, var(--secondary) 70%, transparent); border-radius:var(--r-int); padding:16px 18px}
+.dotacao dl{margin:0; display:grid; gap:7px 16px; grid-template-columns:1fr}
+@media (min-width:620px){ .dotacao dl{grid-template-columns:minmax(0,158px) 1fr} }
+.dotacao dt{font-size:11.5px; font-weight:700; color:var(--muted-fg)}
+.dotacao dd{margin:0; font-size:12.5px; font-weight:600}
+.dotacao .fecho{
+  margin:13px 0 0; padding-top:11px; border-top:1px solid var(--border);
+  font-size:12.5px; line-height:1.6; color:var(--muted-fg);
+}
+
+/* apontador: é a dotação que escolhe o modelo */
+.derivado{
+  margin-top:14px; padding:13px 16px; border-radius:var(--r-int);
+  background:var(--surf-info); color:var(--on-info);
+  display:flex; gap:11px; align-items:flex-start;
+}
+.derivado svg{flex:none; margin-top:1px}
+.derivado p{margin:0; font-size:12.5px; line-height:1.6; font-weight:600}
+.derivado b{font-weight:800}
+
+/* ------------------------------------------------------------- tabelas --- */
+.rolagem{overflow-x:auto; margin:0 -4px; padding:0 4px}
+table{width:100%; border-collapse:collapse; min-width:560px}
+th{
+  text-align:left; font-size:10.5px; font-weight:800; letter-spacing:1.1px; text-transform:uppercase;
+  color:var(--muted-fg); padding:0 8px 8px; white-space:nowrap;
+}
+th.dir{text-align:right}
+td{padding:4px 8px; vertical-align:middle}
+td.dir{text-align:right; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap}
+tfoot td{
+  padding-top:12px; border-top:1px solid var(--border);
+  font-weight:800; font-size:14px; font-variant-numeric:tabular-nums;
+}
+.remover{
+  border:none; background:transparent; color:var(--muted-fg); cursor:pointer;
+  width:30px; height:30px; border-radius:8px; display:grid; place-items:center;
+}
+.remover:hover{background:var(--secondary); color:var(--on-bad)}
+.remover:disabled{opacity:.3; cursor:not-allowed}
+
+/* ------------------------------------------------------------- botões ---- */
+button{font:inherit}
+.btn{
+  display:inline-flex; align-items:center; gap:7px; padding:9px 15px; border-radius:var(--r-btn);
+  font-size:13px; font-weight:700; cursor:pointer; border:1px solid transparent;
+  background:var(--brand-navy); color:#fff; transition:filter .12s, background .12s;
+}
+.btn:hover{filter:brightness(1.12)}
+.btn.contorno{background:transparent; border-color:var(--input); color:var(--fg)}
+.btn.contorno:hover{background:var(--secondary); filter:none}
+.btn.fantasma{background:var(--secondary); color:var(--fg)}
+.btn.pequeno{padding:6px 12px; font-size:12px}
+.btn:disabled{opacity:.45; cursor:not-allowed; filter:none}
+.acoes{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+.acoes .dica{font-size:12px; font-weight:600; color:var(--muted-fg)}
+
+/* ------------------------------------------------- marcações e escolhas -- */
+.escolhas{display:grid; gap:9px; grid-template-columns:1fr}
+@media (min-width:620px){ .escolhas.duas{grid-template-columns:1fr 1fr} .escolhas.tres{grid-template-columns:repeat(3,1fr)} }
+.escolha{
+  position:relative; display:flex; gap:10px; align-items:flex-start; cursor:pointer;
+  padding:12px 14px; border:1px solid var(--input); border-radius:var(--r-int);
+  background:var(--card); transition:border-color .12s, background .12s;
+}
+.escolha:hover{background:var(--accent)}
+.escolha:has(:checked){border-color:var(--ring); background:var(--accent)}
+.escolha input{position:absolute; inset:0; opacity:0; cursor:pointer; margin:0}
+.escolha .txt{min-width:0}
+.escolha .txt b{display:block; font-size:13px; font-weight:700; line-height:1.3}
+.escolha .txt small{display:block; margin-top:3px; font-size:11.5px; line-height:1.45; color:var(--muted-fg)}
+
+.declaracoes{display:flex; flex-direction:column; gap:9px}
+/* Oito itens curtos: em coluna única a seção fica alta à toa, e o que se lê é
+   o rótulo, não a frase. Duas colunas a partir de 720px. */
+.declaracoes.compacta{display:grid; grid-template-columns:1fr; gap:9px}
+@media (min-width:720px){ .declaracoes.compacta{grid-template-columns:1fr 1fr} }
+.declaracoes.compacta .declaracao{padding:11px 13px; align-items:center}
+.declaracao span b{display:block; font-size:12.5px; line-height:1.35}
+.declaracao span i{
+  display:block; font-style:normal; font-size:11.5px; line-height:1.45;
+  color:var(--muted-fg); margin-top:2px;
+}
+.declaracao:has(:checked) span i{color:color-mix(in srgb, var(--on-ok) 78%, transparent)}
+.declaracao{
+  display:flex; gap:11px; align-items:flex-start; cursor:pointer;
+  padding:12px 14px; border:1px solid var(--input); border-radius:var(--r-int);
+}
+.declaracao:has(:checked){border-color:color-mix(in srgb, var(--on-ok) 45%, transparent); background:var(--surf-ok)}
+.declaracao input{flex:none; margin:2px 0 0; width:15px; height:15px; accent-color:var(--brand-navy)}
+.declaracao span{font-size:12.5px; line-height:1.55}
+.declaracao span b{font-weight:700}
+
+/* verificações linha a linha (modelos II e IV) */
+.verificacoes{display:flex; flex-direction:column; gap:2px}
+.verificacao{
+  display:grid; gap:8px 16px; grid-template-columns:1fr; align-items:center;
+  padding:11px 0; border-bottom:1px solid var(--border);
+}
+.verificacao:last-child{border-bottom:none}
+@media (min-width:720px){ .verificacao{grid-template-columns:1fr minmax(0,300px)} }
+.verificacao > p{margin:0; font-size:12.5px; font-weight:600; line-height:1.45}
+.verificacao > p small{display:block; font-weight:500; font-size:11.5px; color:var(--muted-fg); margin-top:2px}
+.opcoes{display:flex; flex-wrap:wrap; gap:6px}
+.opcao{
+  position:relative; cursor:pointer; padding:6px 12px; border-radius:999px;
+  border:1px solid var(--input); font-size:12px; font-weight:700; white-space:nowrap;
+}
+.opcao:has(:checked){border-color:var(--ring); background:var(--accent); color:var(--accent-fg)}
+.opcao input{position:absolute; inset:0; opacity:0; cursor:pointer; margin:0}
+.condicional{grid-column:1/-1; padding:2px 0 4px}
+.condicional[hidden]{display:none}
+
+/* fecho da soma */
+.soma{
+  display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:10px;
+  margin-top:12px; padding-top:12px; border-top:1px solid var(--border);
+}
+.soma .rot{font-size:13px; font-weight:700}
+.soma .val{font-size:19px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+.confere{margin:8px 0 0; font-size:12.5px; font-weight:700}
+.confere.ok{color:var(--on-ok)}
+.confere.nao{color:var(--on-bad)}
+
+/* --------------------------------------------------------- pré-checagem -- */
+.relatorio{background:var(--card); border-radius:var(--r-card); box-shadow:var(--elev-card); padding:19px 20px}
+@media (min-width:1080px){ .relatorio{position:sticky; top:20px; max-height:calc(100vh - 40px); overflow-y:auto} }
+.relatorio > header{display:flex; align-items:center; gap:9px; margin-bottom:15px}
+.relatorio h2{font-size:14px; font-weight:700}
+.veredito{font-size:11.5px; font-weight:800; padding:4px 11px; border-radius:999px}
+.veredito.ok{background:var(--surf-ok); color:var(--on-ok)}
+.veredito.nao{background:var(--surf-bad); color:var(--on-bad)}
+.itens{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:12px}
+.itens li{display:grid; grid-template-columns:16px 1fr; gap:9px; align-items:start}
+.itens svg{margin-top:2px}
+.itens b{display:block; font-size:12.5px; font-weight:700; line-height:1.35}
+.itens span{display:block; font-size:12px; line-height:1.5; color:var(--muted-fg); margin-top:2px}
+.rodape-relatorio{
+  margin:16px 0 0; padding-top:13px; border-top:1px solid var(--border);
+  font-size:11.5px; line-height:1.6; font-weight:600; color:var(--muted-fg);
+}
+
+/* bloco do Executivo: previsto, mas não é do vereador */
+.executivo{
+  margin-top:20px; padding:18px 20px; border-radius:var(--r-card);
+  border:1px dashed var(--input); background:transparent;
+}
+.executivo h2{
+  font-size:10.5px; font-weight:800; letter-spacing:1.25px; text-transform:uppercase;
+  color:var(--muted-fg); margin-bottom:6px;
+}
+.executivo p{margin:0 0 13px; font-size:12.5px; line-height:1.6; color:var(--muted-fg)}
+.executivo dl{margin:0; display:grid; gap:10px 18px; grid-template-columns:1fr; opacity:.62}
+@media (min-width:620px){ .executivo dl{grid-template-columns:1fr 1fr} }
+.executivo div{display:flex; flex-direction:column; gap:3px}
+.executivo dt{font-size:11px; font-weight:700; color:var(--muted-fg)}
+.executivo dd{margin:0; font-size:12.5px; padding:7px 11px; border-radius:var(--r-btn); background:var(--secondary)}
+
+/* ------------------------------------------------- consulta ao PNCP ------ */
+/* Só o Modelo IV usa. O estado de "consultando" é explícito de propósito: a
+   busca é numa API externa e o silêncio de um segundo passa por travamento. */
+.pncp{background:var(--surf-info); border-radius:var(--r-int); padding:16px 18px; margin-bottom:16px}
+.pncp .titulo{
+  font-size:10.5px; font-weight:800; letter-spacing:1.25px; text-transform:uppercase;
+  color:var(--on-info); margin-bottom:6px;
+}
+.pncp > p{margin:0 0 12px; font-size:12px; line-height:1.6; color:var(--on-info)}
+.busca{display:flex; gap:9px; flex-wrap:wrap}
+.busca input{flex:1 1 240px; min-width:0; background:var(--card)}
+.estado-busca{
+  display:none; align-items:center; gap:9px; margin-top:12px;
+  font-size:12.5px; font-weight:700; color:var(--on-info);
+}
+.estado-busca[data-ativo="1"]{display:flex}
+.girando{
+  width:15px; height:15px; flex:none; border-radius:50%;
+  border:2px solid color-mix(in srgb, var(--on-info) 30%, transparent);
+  border-top-color:var(--on-info); animation:girar .7s linear infinite;
+}
+@keyframes girar{to{transform:rotate(360deg)}}
+.resultados{list-style:none; margin:12px 0 0; padding:0; display:flex; flex-direction:column; gap:8px}
+.resultado{
+  background:var(--card); border-radius:var(--r-btn); padding:12px 14px;
+  display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+}
+.resultado .info{flex:1 1 240px; min-width:0}
+.resultado .info b{display:block; font-size:12.5px; font-weight:700; line-height:1.4}
+.faixa{display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:5px; font-size:11.5px; color:var(--muted-fg)}
+.faixa b{color:var(--fg); font-weight:700}
+.faixa .media{color:var(--on-info)}
+.sem-resultado{margin:12px 0 0; font-size:12.5px; font-weight:600; color:var(--on-warn)}
+
+/* ----------------------------------------- link e visão da entidade ------ */
+/* O plano do terceiro setor é preenchido por quem tem a informação: a própria
+   entidade, por link, sem conta no sistema. O botão de visão troca a página
+   para o que ELA vê — blocos 1 e 2 somem, porque não são dela. */
+.link-entidade{background:var(--secondary); border-radius:var(--r-int); padding:16px 18px}
+.link-entidade > p{margin:0 0 12px; font-size:12.5px; line-height:1.6; color:var(--muted-fg)}
+.link-url{display:flex; gap:9px; align-items:center; flex-wrap:wrap}
+.link-url code{
+  flex:1 1 260px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  background:var(--card); padding:9px 12px; border-radius:var(--r-btn); font-size:12px;
+}
+.link-estado{margin:10px 0 0; font-size:12px; color:var(--muted-fg)}
+
+.so-entidade{display:none}
+body[data-visao="entidade"] .so-entidade{display:block}
+body[data-visao="entidade"] .so-vereador{display:none !important}
+.cabecalho-entidade{
+  margin:20px 0 24px; padding:16px 18px; border-radius:var(--r-int);
+  background:var(--surf-info); color:var(--on-info);
+}
+.cabecalho-entidade b{display:block; font-size:13.5px; margin-bottom:4px}
+.cabecalho-entidade span{display:block; font-size:12.5px; line-height:1.6; font-weight:600}
+.barra-visao{
+  display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+  margin-bottom:20px; padding:12px 16px; border-radius:var(--r-int);
+  border:1px dashed var(--input);
+}
+.barra-visao span{flex:1 1 240px; min-width:0; font-size:12.5px; font-weight:600; color:var(--muted-fg)}
+
+/* ------------------------------- devolutiva da entidade (Modelo III) ----- */
+/* O vereador não preenche o plano do terceiro setor: ele acompanha. Estes
+   blocos são de LEITURA — o que a entidade mandou pelo link. */
+.estado-plano{
+  display:flex; gap:11px; align-items:flex-start; padding:13px 16px;
+  border-radius:var(--r-int); font-size:12.5px; line-height:1.6; font-weight:600;
+}
+.estado-plano.vazio{background:var(--surf-bad); color:var(--on-bad)}
+.estado-plano.espera{background:var(--surf-warn); color:var(--on-warn)}
+.estado-plano.pronto{background:var(--surf-ok); color:var(--on-ok)}
+.resumo[hidden]{display:none}
+.resumo table{width:100%; border-collapse:collapse; min-width:520px}
+.resumo th{padding:0 10px 8px}
+.resumo td{padding:9px 10px; border-top:1px solid var(--border); font-size:12.5px}
+.resumo td.dir{text-align:right; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap}
+.resumo-totais{display:grid; gap:10px 14px; grid-template-columns:1fr; margin:14px 0 0}
+@media (min-width:620px){ .resumo-totais{grid-template-columns:1fr 1fr} }
+.resumo-totais div{background:var(--secondary); border-radius:var(--r-btn); padding:11px 14px}
+.resumo-totais dt{font-size:11px; font-weight:700; color:var(--muted-fg)}
+.resumo-totais dd{margin:3px 0 0; font-size:16px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+.resumo-totais dd small{display:block; font-size:11.5px; font-weight:600; margin-top:3px; letter-spacing:0}
+.resumo-totais dd small.ok{color:var(--on-ok)}
+.resumo-totais dd small.nao{color:var(--on-bad)}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+
+/* Barra de endereço simulada: aparece só na visão da entidade e mostra o link
+   que ela recebeu. Existe porque o endereço de verdade não pode ser aberto no
+   protótipo — sem servidor por trás, e dentro do visualizador de artifacts a
+   URL é recanonizada e o fragmento se perde. A barra entrega a mesma ideia sem
+   depender do navegador. */
+.barra-endereco{
+  display:none; align-items:center; gap:11px; flex-wrap:wrap;
+  margin:0 0 18px; padding:10px 14px; border-radius:var(--r-btn);
+  background:var(--secondary); border:1px solid var(--border);
+}
+body[data-visao="entidade"] .barra-endereco{display:flex}
+.barra-endereco .rot{
+  flex:none; font-size:10px; font-weight:800; letter-spacing:1.1px;
+  text-transform:uppercase; color:var(--muted-fg);
+}
+.barra-endereco code{
+  flex:1 1 260px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  font-size:12px; color:var(--muted-fg);
+}
+.barra-endereco svg{flex:none; color:var(--on-ok)}
+
+/* Campo que a entidade lê mas não muda: o valor da emenda é do vereador. */
+input[readonly]{background:var(--secondary); color:var(--muted-fg); cursor:default}
+input[readonly]:focus{border-color:var(--input); box-shadow:none}
+
+/* Confirmação depois do envio, na tela da entidade. */
+.enviado{background:var(--card); border-radius:var(--r-card); box-shadow:var(--elev-card); padding:26px 24px}
+.enviado h2{font-size:19px; font-weight:800; margin-bottom:8px}
+.enviado > p{margin:0 0 18px; font-size:13px; line-height:1.65; color:var(--muted-fg); max-width:62ch}
+
+/* ------------------------------------------------------------- moeda ----- */
+/* Campo de dinheiro: o "R$" é do campo, não do texto digitado. Fica fora do
+   fluxo (pointer-events:none) para não roubar o clique do input. */
+.moeda{position:relative; display:block; min-width:0}
+.moeda .cifrao{
+  position:absolute; left:11px; top:50%; transform:translateY(-50%);
+  font-size:12px; font-weight:700; color:var(--muted-fg); pointer-events:none;
+}
+.moeda input{padding-left:33px; text-align:right; font-variant-numeric:tabular-nums}
+td .moeda .cifrao{left:9px; font-size:11px}
+td .moeda input{padding-left:28px}
+
+.rodape{
+  margin-top:34px; padding-top:16px; border-top:1px solid var(--border);
+  display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between;
+  font-size:11.5px; font-weight:600; color:var(--muted-fg);
+}
+</style>
+
+<style>
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  #torrada{
+    position:fixed; top:16px; right:16px; z-index:50; opacity:0; transform:translateY(-8px);
+    transition:opacity .2s, transform .2s; pointer-events:none;
+    background:var(--brand-deep); color:#fff; font-size:12.5px; font-weight:700;
+    padding:11px 16px; border-radius:var(--r-btn); box-shadow:0 10px 30px -12px rgba(0,0,0,.5);
+  }
+</style>
+
+<div id="torrada" role="status" aria-live="polite"></div>
+
+<header class="topo">
+  <div class="marca">Emendas<span>360</span> <small>orçamento impositivo</small></div>
+  <div class="ctx"><i></i> Elaborando em 2026 as emendas de 2027 · base LOA 45/2026</div>
+  <div class="ciclo">2026/2027</div>
+</header>
+
+<div class="pagina">
+  <p class="trilha so-vereador">Hub &rsaquo; Laboratório &rsaquo; <b>Nova emenda · Modelo IV</b></p>
+  <h1 id="titulo-pagina">Nova emenda</h1>
+
+  
+
+  <div class="aviso so-vereador">
+    <p>Protótipo — Modelo IV, Aquisição de equipamentos e material permanente</p>
+    <p>Cópia da tela de nova emenda com o plano de trabalho no formato do <b>Modelo IV — equipamentos e material permanente</b>. O equipamento é buscado no <b>PNCP</b> e o preço vem das contratações já feitas por outros órgãos. Nada é gravado, e a consulta ao PNCP é simulada com um catálogo fixo.</p>
+  </div>
+
+  <div class="grade">
+    <div class="coluna">
+      <div class="chips so-vereador">
+        <span class="chip">Exercício 2027</span>
+        <span class="chip contorno">Base: LOA 45/2026</span>
+        <span class="chip contorno">Modelo IV — Aquisição de equipamentos e material permanente</span>
+      </div>
+
+      <!-- ------------------------------------------------------- bloco 1 -->
+      <section class="bloco so-vereador">
+        <header><span class="num" aria-hidden="true">1</span><h2>Onde o dinheiro entra</h2></header>
+        <div class="linha duas">
+          <div class="campo"><label for="f-orgao">Órgão</label>
+            <select id="f-orgao"><option>02 — Secretaria Municipal de Saúde</option></select></div>
+          <div class="campo"><label for="f-unidade">Unidade orçamentária</label>
+            <select id="f-unidade"><option>02.01 — Fundo Municipal de Saúde</option></select></div>
+          <div class="campo"><label for="f-programa">Programa</label>
+            <select id="f-programa"><option>0012 — Atenção Primária à Saúde</option></select></div>
+          <div class="campo"><label for="f-acao">Ação</label>
+            <select id="f-acao"><option>1.102 — Equipamentos para a Rede Básica</option></select></div>
+        </div>
+        <div class="linha" style="margin-top:14px">
+          <div class="campo"><label for="f-dotacao">Dotação</label>
+            <select id="f-dotacao"><option>4.4.90.52 — Equipamentos e Material Permanente · fonte 1.500 · saldo R$ 950.000,00</option></select></div>
+        </div>
+        <div style="margin-top:16px">
+        <div class="dotacao">
+          <dl><dt>Órgão</dt><dd>02 — Secretaria Municipal de Saúde</dd><dt>Unidade orçamentária</dt><dd>02.01 — Fundo Municipal de Saúde</dd><dt>Função / Subfunção</dt><dd>10 Saúde · 301 Atenção Básica</dd><dt>Programa</dt><dd>0012 — Atenção Primária à Saúde</dd><dt>Ação</dt><dd>1.102 — Equipamentos para a Rede Básica</dd><dt>Despesa</dt><dd>4.4.90.52 — Equipamentos e Material Permanente</dd><dt>Fonte de recurso</dt><dd>1.500 — Recursos não vinculados de impostos</dd><dt>Saldo disponível</dt><dd>R$ 950.000,00</dd></dl>
+          <p class="fecho">Em outras palavras: recurso da <b>Fundo Municipal de Saúde</b> para <b>equipamentos e material permanente</b> na ação <b>Equipamentos para a Rede Básica</b>.</p>
+        </div>
+        <div class="derivado">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20"/><path d="m19 15-7 7-7-7"/></svg>
+          <p>É esta dotação que escolhe o modelo do plano. Natureza <b>4.4.90.52 (GND 4)</b> &rarr; <b>Modelo IV — Equipamentos</b>. Trocar a dotação no bloco&nbsp;1 troca o formulário do bloco&nbsp;3.</p>
+        </div></div>
+      </section>
+
+      <!-- ------------------------------------------------------- bloco 2 -->
+      <section class="bloco so-vereador">
+        <header><span class="num" aria-hidden="true">2</span><h2>A emenda</h2></header>
+        
+        <div class="sabido">
+          <div class="titulo">O sistema já respondeu — o autor não digita nada disto</div>
+          <dl><div><dt>Emenda nº / ano</dt><dd>018 / 2027</dd></div><div><dt>Autor</dt><dd>Ver. Marta Nogueira</dd></div><div><dt>Partido</dt><dd>PSDB</dd></div><div><dt>Tipo de despesa</dt><dd>Investimento — GND 4, bem permanente</dd></div><div><dt>Área da saúde (ASPS)</dt><dd>Sim — função 10 Saúde</dd></div></dl>
+        </div>
+        <div class="linha duas" style="margin-top:16px">
+          <div class="campo"><label for="valor">Valor da emenda</label>
+            <span class="moeda"><span class="cifrao" aria-hidden="true">R$</span>
+            <input type="text" id="valor" inputmode="numeric" data-moeda value="320.000,00"></span></div>
+          <div class="campo"><label for="ben-quem">Beneficiário final<small>Quem será atendido pelo recurso</small></label>
+            <input type="text" id="ben-quem" value="Usuários da UBS Central e das unidades de referência"></div>
+        </div>
+        <div class="linha duas" style="margin-top:14px">
+          <div class="campo"><label for="ben-qtd">Quantidade estimada<small>Pessoas atendidas</small></label>
+            <input type="text" id="ben-qtd" class="num" inputmode="numeric" value="18000"></div>
+          <div class="campo"><label for="equip-local">Local de instalação<small>Unidade e endereço onde o bem vai ficar</small></label><input type="text" id="equip-local" value="UBS Central — Rua XV de Novembro, 812"></div>
+        </div>
+        <div class="linha duas" style="margin-top:14px">
+          <div class="campo"><label for="objeto">Objeto<small>O quê, onde e para quem — uma ou duas frases</small></label>
+            <textarea id="objeto">Aquisição de 2 aparelhos de ultrassom para a UBS Central e 4 eletrocardiógrafos para as unidades de referência.</textarea></div>
+          <div class="campo"><label for="justificativa">Justificativa<small>O problema, quantas pessoas e o que acontece se não for feito</small></label>
+            <textarea id="justificativa">O Município não tem ultrassom próprio na atenção básica: todo exame é comprado de prestador, com fila de 90 dias e custo de R$ 118 por exame. Com equipamento próprio o exame passa a ser feito na própria UBS. Os eletrocardiógrafos substituem aparelhos com mais de 12 anos, sem peça de reposição no mercado.</textarea></div>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------------- bloco 3 -->
+      <section class="bloco">
+        <header>
+          <span class="num" aria-hidden="true">3</span>
+          <h2>Plano de trabalho — Modelo IV</h2>
+          <span class="selo" id="selo-plano">—</span>
+        </header>
+        <p class="nota">O <b>Modelo IV</b> descreve uma compra de bem permanente: para onde vai o bem, o que será entregue em número, por que preço — buscado no PNCP — e em quantas parcelas.</p>
+
+        <section class="secao"><h3>Quem vai comprar e para onde vai o bem</h3><p class="nota">A compra é do Município, na dotação escolhida no bloco 1. O local de instalação está no bloco 2.</p><div class="sabido" style="margin-bottom:4px"><div class="titulo">Órgão executor — vem do bloco 1</div><dl><div><dt>Órgão / fundo</dt><dd class="mono">02.01 — Fundo Municipal de Saúde</dd></div><div><dt>Ação orçamentária</dt><dd class="mono">1.102 — Equipamentos para a Rede Básica</dd></div></dl></div><div class="verificacoes" style="margin-top:8px"><div class="verificacao"><p>Destinatário do bem<small>Bem doado a entidade exige instrumento próprio e cláusula de reversão ao patrimônio público.</small></p><div class="opcoes"><label class="opcao"><input type="radio" name="v-destino" value="prefeitura" checked data-revela="c-entidade" data-revela-quando="entidade"> Órgão da Prefeitura</label><label class="opcao"><input type="radio" name="v-destino" value="entidade" data-revela="c-entidade" data-revela-quando="entidade"> Entidade do terceiro setor</label></div><div class="condicional" id="c-entidade" hidden><div class="linha duas"><div class="campo"><label for="dest-entidade">Entidade destinatária</label><input type="text" id="dest-entidade" value=""></div><div class="campo"><label for="dest-cnpj">CNPJ</label><input type="text" id="dest-cnpj" class="mono" value=""></div></div></div></div></div></section><section class="secao"><h3>Metas</h3><p class="nota">Quem será atendido e quanto será entregue. Sem meta física e sem forma de comprovação a linha não serve para prestar contas.</p>
+          <div class="rolagem">
+            <table>
+              <thead><tr><th>Beneficiários</th><th>Unidade</th><th class="dir">Meta física</th><th>Como será comprovada</th><th></th></tr></thead>
+              <tbody id="metas-corpo"></tbody>
+            </table>
+          </div>
+          <button type="button" class="btn contorno pequeno" id="add-meta">Adicionar linha</button></section><section class="secao"><h3>Memória de cálculo</h3><p class="nota">Mesmas linhas das metas, agora com preço. O preço do equipamento vem do PNCP — é estimativa, e continua editável.</p><div class="pncp"><div class="titulo">Consulta ao PNCP</div><p>Digite o equipamento. O sistema consulta o <b>Portal Nacional de Contratações Públicas</b> e traz o que outros órgãos já compraram, com o preço praticado. Escolher um resultado cria a linha da memória de cálculo já preenchida com o <b>valor médio</b> e com a origem do preço.</p><div class="busca"><input type="text" id="pncp-termo" placeholder="ultrassom, eletrocardiógrafo, cadeira odontológica…" aria-label="Equipamento a buscar no PNCP"><button type="button" class="btn" id="pncp-buscar">Buscar no PNCP</button></div><div class="estado-busca" id="pncp-estado"><span class="girando" aria-hidden="true"></span><span id="pncp-estado-texto">Consultando o PNCP…</span></div><ul class="resultados" id="pncp-resultados"></ul><p class="sem-resultado" id="pncp-vazio" hidden></p></div>
+          <div class="rolagem">
+            <table>
+              <thead><tr><th>Beneficiários</th><th class="dir">Meta física</th><th class="dir">Valor unitário</th><th class="dir">Valor total</th><th>Origem do preço</th><th></th></tr></thead>
+              <tbody id="memoria-corpo"></tbody>
+            </table>
+          </div>
+          <button type="button" class="btn contorno pequeno" id="add-item">Adicionar linha</button>
+          <div class="soma"><span class="rot">Total da memória de cálculo</span><span class="val" id="memoria-total">R$ 0,00</span></div>
+          <p class="confere" id="memoria-confere"></p></section><section class="secao"><h3>Cronograma de desembolso previsto</h3><p class="nota">Previsão de pagamento, em parcelas. A soma tem de bater com o valor da emenda. As datas são definidas na execução, não aqui.</p>
+          <div class="rolagem">
+            <table style="min-width:380px">
+              <thead><tr><th>Parcela</th><th class="dir">Valor final</th><th></th></tr></thead>
+              <tbody id="crono-corpo"></tbody>
+            </table>
+          </div>
+          <button type="button" class="btn contorno pequeno" id="add-parcela">Adicionar parcela</button>
+          <div class="soma"><span class="rot">Total do cronograma</span><span class="val" id="crono-total">R$ 0,00</span></div>
+          <p class="confere" id="crono-confere"></p></section>
+
+
+
+        <section class="secao so-vereador">
+          <h3>Classificação orçamentária <em>— preenchida pelo bloco 1</em></h3>
+          <p class="nota">No formulário em papel este quadro é devolvido ao setor de orçamento para preencher à mão. Aqui ele já está respondido desde a escolha da dotação.</p>
+          <div class="sabido">
+            <dl><div><dt>Órgão / unidade</dt><dd class="mono">02.01 — Fundo Municipal de Saúde</dd></div><div><dt>Funcional programática</dt><dd class="mono">10.301.0012.1102</dd></div><div><dt>Natureza da despesa</dt><dd class="mono">4.4.90.52 — Equipamentos e Material Permanente</dd></div><div><dt>Fonte de recurso</dt><dd class="mono">1.500 — Recursos não vinculados de impostos</dd></div></dl>
+          </div>
+        </section>
+      </section>
+
+      <div class="acoes so-vereador">
+        <button type="button" class="btn" id="btn-salvar">Salvar rascunho</button>
+        <button type="button" class="btn contorno" id="btn-validar">Validar</button>
+        <button type="button" class="btn fantasma" id="btn-submeter">Submeter</button>
+        <span class="dica" id="dica-submeter"></span>
+      </div>
+
+      
+        <section class="executivo so-vereador">
+          <h2>Campos de uso exclusivo do Poder Executivo</h2>
+          <p>Estão aqui só para mostrar onde o plano continua depois da remessa. O autor não vê estes campos abertos — quem preenche é o Executivo, e o resultado volta para a tela da emenda.</p>
+          <dl>
+            <div><dt>Análise de impedimento técnico</dt><dd>Aguardando análise — art. 10 da LC 210/2024</dd></div>
+            <div><dt>Aprovação do plano de trabalho</dt><dd>Aguardando</dd></div>
+            <div><dt>Responsável pela aprovação</dt><dd>—</dd></div>
+            <div><dt>Publicação no portal · Audesp</dt><dd>—</dd></div>
+          </dl>
+        </section>
+    </div>
+
+    <!-- ------------------------------------------------------ relatório -->
+    <aside class="relatorio so-vereador">
+      <header><h2>Pré-checagem</h2><span class="veredito" id="veredito">—</span></header>
+      <ul class="itens" id="relatorio-itens"></ul>
+      <p class="rodape-relatorio">Conferência automática das condições de validade. Não substitui a análise técnica nem o parecer jurídico — o mérito e a assinatura são do parlamentar.</p>
+    </aside>
+
+    
+  </div>
+
+  <p class="rodape"><span>Emendas360 · orçamento impositivo</span><span>Mock do Modelo IV — Aquisição de equipamentos e material permanente</span></p>
+</div>
+
+<script>
+/* ==========================================================================
+   Motor comum aos quatro mocks.
+   Nada aqui vai ao servidor: as tabelas vivem em memória e a pré-checagem é
+   recalculada a cada tecla, para a validação ser vista acontecendo.
+   ========================================================================== */
+const el = id => document.getElementById(id);
+const brl = n => n.toLocaleString("pt-BR", {style:"currency", currency:"BRL"});
+const num = v => { const n = Number(String(v).replace(/\./g,"").replace(",",".")); return Number.isFinite(n) ? n : 0; };
+const marcado = nome => document.querySelector('input[name="'+nome+'"]:checked')?.value ?? null;
+
+/* ---------------------------------------------------------------- moeda ---
+   Máscara de dinheiro: os dígitos entram pelos CENTAVOS e empurram para a
+   esquerda — é como se digita no caixa e no internet banking. Sem isso o campo
+   aceita "150000,00", "150.000" e "150000.00", e cada um vira um número
+   diferente na hora de somar. Com a máscara só existe um estado válido.      */
+const moedaFmt = centavos =>
+  (centavos / 100).toLocaleString("pt-BR", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+const moedaCentavos = texto => {
+  const digitos = String(texto).replace(/\D/g, "");
+  return digitos ? parseInt(digitos, 10) : 0;
+};
+
+function mascararMoeda(campo){
+  campo.value = moedaFmt(moedaCentavos(campo.value));
+  if (campo.readOnly) return;
+  const aoFim = () => campo.setSelectionRange(campo.value.length, campo.value.length);
+  campo.addEventListener("input", () => { campo.value = moedaFmt(moedaCentavos(campo.value)); aoFim(); });
+  // O cursor vive no fim: clicar no meio e digitar produziria um valor que não
+  // é o que a pessoa quis.
+  campo.addEventListener("focus", () => requestAnimationFrame(aoFim));
+  campo.addEventListener("click", aoFim);
+}
+
+const ligarMoedas = escopo => escopo.querySelectorAll("[data-moeda]").forEach(mascararMoeda);
+const TOL = 0.01;
+
+const ICONES = {
+  ok:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--on-ok)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
+  alerta:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--on-warn)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.6 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+  falha:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--on-bad)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>',
+};
+const LIXO = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6"/></svg>';
+const MAIS = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+
+/* ------------------------------------------------------------- tabelas --- */
+function ligarCampos(escopo, lista, aoMudar){
+  // A máscara entra ANTES do gravador: assim o que vai para o array já está
+  // formatado, e o total nunca diverge do que está na tela.
+  escopo.querySelectorAll("[data-moeda]").forEach(campo => {
+    mascararMoeda(campo);
+    lista[Number(campo.dataset.i)][campo.dataset.k] = campo.value;
+  });
+  escopo.querySelectorAll("[data-i]").forEach(campo => {
+    campo.addEventListener("input", e => {
+      lista[Number(e.target.dataset.i)][e.target.dataset.k] = e.target.value;
+      if (aoMudar) aoMudar();
+      revalidar();
+    });
+  });
+  escopo.querySelectorAll("[data-remover]").forEach(botao => {
+    botao.addEventListener("click", e => {
+      lista.splice(Number(e.currentTarget.dataset.remover), 1);
+      desenharTudo();
+    });
+  });
+}
+
+function desenharMetas(){
+  const corpo = el("metas-corpo");
+  corpo.innerHTML = METAS.map((m,i) => `
+    <tr>
+      <td><input type="text" data-i="${i}" data-k="beneficiarios" value="${m.beneficiarios.replace(/"/g,"&quot;")}" aria-label="Beneficiários da linha ${i+1}" placeholder="Quem será atendido"></td>
+      <td><input type="text" data-i="${i}" data-k="unidade" value="${m.unidade}" aria-label="Unidade da linha ${i+1}" placeholder="unidade"></td>
+      <td><input type="text" class="num" data-i="${i}" data-k="metaFisica" value="${m.metaFisica}" aria-label="Meta física da linha ${i+1}"></td>
+      <td><input type="text" data-i="${i}" data-k="comprovacao" value="${m.comprovacao.replace(/"/g,"&quot;")}" aria-label="Comprovação da linha ${i+1}" placeholder="Como será comprovada"></td>
+      <td><button class="remover" data-remover="${i}" ${METAS.length===1?"disabled":""} aria-label="Remover linha ${i+1}">${LIXO}</button></td>
+    </tr>`).join("");
+  ligarCampos(corpo, METAS);
+}
+
+// A memória de cálculo fala a MESMA língua das metas — beneficiários e meta
+// física —, de modo que cada linha daqui é a linha de lá com preço.
+function desenharMemoria(){
+  const corpo = el("memoria-corpo");
+  corpo.innerHTML = MEMORIA.map((it,i) => `
+    <tr>
+      <td><input type="text" data-i="${i}" data-k="beneficiarios" value="${it.beneficiarios.replace(/"/g,"&quot;")}" aria-label="Beneficiários do item ${i+1}" placeholder="Quem será atendido"></td>
+      <td><input type="text" class="num" data-i="${i}" data-k="metaFisica" value="${it.metaFisica}" aria-label="Meta física do item ${i+1}"></td>
+      <td><span class="moeda"><span class="cifrao" aria-hidden="true">R$</span><input type="text" inputmode="numeric" data-moeda data-i="${i}" data-k="unitario" value="${it.unitario}" aria-label="Valor unitário do item ${i+1}"></span></td>
+      <td class="dir">${brl(num(it.metaFisica)*num(it.unitario))}</td>
+      <td><input type="text" data-i="${i}" data-k="origem" value="${it.origem.replace(/"/g,"&quot;")}" aria-label="Origem do preço do item ${i+1}" placeholder="Ata, banco de preços, orçamento…"></td>
+      <td><button class="remover" data-remover="${i}" ${MEMORIA.length===1?"disabled":""} aria-label="Remover item ${i+1}">${LIXO}</button></td>
+    </tr>`).join("");
+  ligarCampos(corpo, MEMORIA, desenharTotais);
+  el("memoria-total").textContent = brl(totalMemoria());
+}
+
+// O cronograma ficou com duas colunas: a parcela (que é a própria ordem da
+// linha) e o valor. Mês e meta correspondente saíram — é PREVISÃO, e prever mês
+// na apresentação da emenda era precisão fingida.
+function desenharCronograma(){
+  const corpo = el("crono-corpo");
+  corpo.innerHTML = CRONOGRAMA.map((p,i) => `
+    <tr>
+      <td style="font-weight:700;white-space:nowrap">${i+1}ª parcela</td>
+      <td><span class="moeda"><span class="cifrao" aria-hidden="true">R$</span><input type="text" inputmode="numeric" data-moeda data-i="${i}" data-k="valor" value="${p.valor}" aria-label="Valor final da parcela ${i+1}"></span></td>
+      <td><button class="remover" data-remover="${i}" ${CRONOGRAMA.length===1?"disabled":""} aria-label="Remover parcela ${i+1}">${LIXO}</button></td>
+    </tr>`).join("");
+  ligarCampos(corpo, CRONOGRAMA, desenharTotais);
+  el("crono-total").textContent = brl(totalCronograma());
+}
+
+const totalMemoria = () => MEMORIA.reduce((s,i) => s + num(i.metaFisica)*num(i.unitario), 0);
+const totalCronograma = () => CRONOGRAMA.reduce((s,p) => s + num(p.valor), 0);
+
+function desenharTotais(){
+  const valor = num(el("valor").value);
+  el("memoria-total").textContent = brl(totalMemoria());
+  el("crono-total").textContent = brl(totalCronograma());
+
+  const dm = totalMemoria() - valor;
+  const cm = el("memoria-confere");
+  cm.className = "confere " + (Math.abs(dm) <= TOL ? "ok" : "nao");
+  cm.textContent = valor <= 0
+    ? "Informe o valor da emenda para conferir a memória de cálculo."
+    : Math.abs(dm) <= TOL
+      ? "Fecha com o valor da emenda (" + brl(valor) + ")."
+      : "A emenda é de " + brl(valor) + " — " + (dm > 0 ? "sobram " : "faltam ") + brl(Math.abs(dm)) + " para fechar.";
+
+  const dc = totalCronograma() - valor;
+  const cc = el("crono-confere");
+  cc.className = "confere " + (Math.abs(dc) <= TOL ? "ok" : "nao");
+  cc.textContent = valor <= 0
+    ? "Informe o valor da emenda para conferir o cronograma."
+    : Math.abs(dc) <= TOL
+      ? "As parcelas somam o valor da emenda."
+      : "As parcelas somam " + brl(totalCronograma()) + " — " + (dc > 0 ? "excedem " : "faltam ") + brl(Math.abs(dc)) + ".";
+}
+
+/* ------------------------------------------------------ checagens comuns - */
+const ok     = (t,d) => ({titulo:t, status:"ok", detalhe:d});
+const alerta = (t,d) => ({titulo:t, status:"alerta", detalhe:d});
+const falha  = (t,d) => ({titulo:t, status:"falha", detalhe:d});
+
+function chkEmenda(){
+  const faltam = [
+    !el("objeto").value.trim() && "objeto",
+    !el("justificativa").value.trim() && "justificativa",
+    !(num(el("valor").value) > 0) && "valor",
+  ].filter(Boolean);
+  return faltam.length
+    ? falha("Emenda preenchida", "Falta preencher: " + faltam.join(", ") + ".")
+    : ok("Emenda preenchida", "Objeto, justificativa e valor preenchidos.");
+}
+
+function chkBeneficiario(){
+  const quem = el("ben-quem").value.trim();
+  const qtd  = num(el("ben-qtd").value);
+  if (!quem) return falha("Beneficiário final identificado", "Diga quem será atendido pelo recurso.");
+  if (!(qtd > 0)) return falha("Beneficiário final identificado", "Falta a quantidade estimada de pessoas atendidas.");
+  return ok("Beneficiário final identificado", quem + " — " + qtd.toLocaleString("pt-BR") + " pessoas.");
+}
+
+function chkMetas(){
+  const boas = METAS.filter(m => m.beneficiarios.trim() && num(m.metaFisica) > 0 && m.comprovacao.trim());
+  if (!boas.length){
+    const meia = METAS.some(m => m.beneficiarios.trim());
+    return falha("Metas mensuráveis", meia
+      ? "Toda linha precisa de meta física e de como será comprovada."
+      : "Informe ao menos uma linha: quem será atendido e quanto será entregue.");
+  }
+  return ok("Metas mensuráveis", boas.length === 1
+    ? "1 linha com beneficiários, meta física e forma de comprovação."
+    : boas.length + " linhas com beneficiários, meta física e forma de comprovação.");
+}
+
+function chkMemoria(){
+  const itens = MEMORIA.filter(i => i.beneficiarios.trim());
+  const valor = num(el("valor").value);
+  if (!itens.length) return falha("Memória de cálculo fecha com a emenda", "Nenhuma linha lançada na memória de cálculo.");
+  if (!(valor > 0)) return alerta("Memória de cálculo fecha com a emenda", "Sem valor da emenda não dá para conferir o fechamento.");
+  const d = totalMemoria() - valor;
+  return Math.abs(d) <= TOL
+    ? ok("Memória de cálculo fecha com a emenda", "A memória soma " + brl(totalMemoria()) + ".")
+    : falha("Memória de cálculo fecha com a emenda", "A memória soma " + brl(totalMemoria()) + " e a emenda é de " + brl(valor) + ".");
+}
+
+function chkOrigem(){
+  const itens = MEMORIA.filter(i => i.beneficiarios.trim());
+  if (!itens.length) return falha("Origem do preço informada", "Sem linhas na memória de cálculo.");
+  const sem = itens.filter(i => !i.origem.trim());
+  return sem.length
+    ? falha("Origem do preço informada", sem.length === 1 ? "1 linha sem a origem do preço." : sem.length + " linhas sem a origem do preço.")
+    : ok("Origem do preço informada", "Toda linha aponta ata, banco de preços, PNCP ou orçamento de fornecedor.");
+}
+
+function chkCronograma(){
+  const valor = num(el("valor").value);
+  const parcelas = CRONOGRAMA.filter(p => num(p.valor) > 0);
+  if (!parcelas.length) return falha("Cronograma de desembolso previsto", "Informe em quantas parcelas o recurso será pago.");
+  if (!(valor > 0)) return alerta("Cronograma de desembolso previsto", "Sem valor da emenda não dá para conferir a soma.");
+  const d = totalCronograma() - valor;
+  return Math.abs(d) <= TOL
+    ? ok("Cronograma de desembolso previsto", parcelas.length + (parcelas.length === 1 ? " parcela somando " : " parcelas somando ") + brl(totalCronograma()) + ".")
+    : falha("Cronograma de desembolso previsto", "As parcelas somam " + brl(totalCronograma()) + " e a emenda é de " + brl(valor) + ".");
+}
+
+// Só a tela da entidade tem declarações: é ela quem assina o que preencheu.
+function chkDeclaracoes(){
+  const caixas = [...document.querySelectorAll(".declaracao input")];
+  const faltam = caixas.filter(c => !c.checked).length;
+  return faltam === 0
+    ? ok("Declarações da entidade", "Todas assinadas — inclusive a vedação da ADPF 854.")
+    : falha("Declarações da entidade", faltam === 1 ? "Falta assinar 1 declaração." : "Faltam assinar " + faltam + " declarações.");
+}
+
+/* --------------------------------------------------------- pré-checagem -- */
+function revalidar(){
+  desenharTotais();
+
+  // `CHECKS` pode ser função: no Modelo III a lista muda conforme a entidade já
+  // tenha devolvido o plano ou não.
+  const itens = (typeof CHECKS === "function" ? CHECKS() : CHECKS).map(f => f());
+  const invalida = itens.some(i => i.status === "falha");
+
+  el("veredito").className = "veredito " + (invalida ? "nao" : "ok");
+  el("veredito").textContent = invalida ? "com pendências" : "sem pendências";
+  el("relatorio-itens").innerHTML = itens.map(i =>
+    `<li>${ICONES[i.status]}<div><b>${i.titulo}</b><span>${i.detalhe}</span></div></li>`
+  ).join("");
+
+  // Guardas: a tela da entidade reaproveita este motor, mas não tem botão de
+  // remeter nem selo de bloco — só as tabelas e a conferência.
+  if (el("btn-submeter")) el("btn-submeter").disabled = invalida;
+  if (el("dica-submeter")) el("dica-submeter").textContent = invalida
+    ? "Resolva as pendências ao lado para liberar a remessa."
+    : "Pré-checagem sem pendências — a emenda pode ser remetida.";
+
+  // Painel próprio de quem preenche pelo link: ela não tem por que ver a
+  // pré-checagem do vereador, que fala de ADPF 854 e de teto por autor.
+  let itensSelo = itens;
+  if (typeof CHECKS_ENTIDADE !== "undefined" && el("entidade-itens")){
+    const seus = CHECKS_ENTIDADE.map(f => f());
+    const pendente = seus.some(i => i.status === "falha");
+    el("entidade-itens").innerHTML = seus.map(i =>
+      `<li>${ICONES[i.status]}<div><b>${i.titulo}</b><span>${i.detalhe}</span></div></li>`
+    ).join("");
+    el("entidade-veredito").className = "veredito " + (pendente ? "nao" : "ok");
+    el("entidade-veredito").textContent = pendente ? "falta preencher" : "pronto para enviar";
+    if (el("btn-enviar-camara")) el("btn-enviar-camara").disabled = pendente;
+    if (document.body.dataset.visao === "entidade") itensSelo = seus;
+  }
+
+  const faltando = itensSelo.filter(i => i.status === "falha").length;
+  const selo = el("selo-plano");
+  if (selo){
+    selo.className = "selo " + (faltando ? "falta" : "ok");
+    selo.textContent = faltando ? (faltando === 1 ? "Falta 1 item" : "Faltam " + faltando + " itens") : "Completo";
+  }
+}
+
+function desenharTudo(){
+  desenharMetas();
+  desenharMemoria();
+  desenharCronograma();
+  revalidar();
+}
+
+/* ------------------------------------------------------------- ligações -- */
+document.addEventListener("DOMContentLoaded", () => {
+  el("add-meta").innerHTML = MAIS + " Adicionar linha";
+  el("add-item").innerHTML = MAIS + " Adicionar linha";
+  el("add-parcela").innerHTML = MAIS + " Adicionar parcela";
+
+  el("add-meta").addEventListener("click", () => { METAS.push({beneficiarios:"", unidade:"", metaFisica:"", comprovacao:""}); desenharTudo(); });
+  el("add-item").addEventListener("click", () => { MEMORIA.push({beneficiarios:"", metaFisica:"1", unitario:"0", origem:""}); desenharTudo(); });
+  el("add-parcela").addEventListener("click", () => { CRONOGRAMA.push({valor:"0"}); desenharTudo(); });
+
+  // A máscara de moeda entra ANTES do ouvinte que revalida: ouvintes disparam
+  // na ordem em que foram registrados, e se `revalidar` lesse o campo antes da
+  // formatação ele veria "25.000,000" — um valor que não existe na tela.
+  ligarMoedas(document);
+
+  document.querySelectorAll("input, select, textarea").forEach(c => {
+    if (!c.dataset.i) c.addEventListener("input", revalidar);
+  });
+
+  /* Campos que só fazem sentido depois de uma resposta (modelos II e IV). */
+  document.querySelectorAll("[data-revela]").forEach(gatilho => {
+    gatilho.addEventListener("change", () => {
+      const alvo = el(gatilho.dataset.revela);
+      if (alvo) alvo.hidden = gatilho.dataset.revelaQuando !== gatilho.value;
+    });
+  });
+
+  el("btn-salvar")?.addEventListener("click", () => aviso("Rascunho salvo. No protótipo nada é gravado."));
+  el("btn-validar")?.addEventListener("click", () => { revalidar(); aviso("Pré-checagem refeita."); });
+  el("btn-submeter")?.addEventListener("click", () => aviso("Emenda remetida ao Executivo (simulação)."));
+
+  if (typeof aoIniciar === "function") aoIniciar();
+  desenharTudo();
+});
+
+let sumir;
+function aviso(texto){
+  const t = el("torrada");
+  t.textContent = texto;
+  t.style.opacity = "1";
+  t.style.transform = "translateY(0)";
+  clearTimeout(sumir);
+  sumir = setTimeout(() => { t.style.opacity = "0"; t.style.transform = "translateY(-8px)"; }, 2600);
+}
+</script>
+
+
+<script>
+/* Dados e checagens deste modelo. Depende do motor acima — por isso vem depois. */
+const METAS = [
+  {
+    "beneficiarios": "Usuários da UBS Central — exames de ultrassom na própria unidade",
+    "unidade": "unidade",
+    "metaFisica": "2",
+    "comprovacao": "Nota fiscal, termo de recebimento e nº de tombamento"
+  },
+  {
+    "beneficiarios": "Usuários das unidades de referência — eletrocardiograma",
+    "unidade": "unidade",
+    "metaFisica": "4",
+    "comprovacao": "Termo de recebimento e baixa patrimonial dos antigos"
+  }
+];
+const MEMORIA = [
+  {
+    "beneficiarios": "Usuários da UBS Central — ultrassom diagnóstico, transdutores convexo e linear, doppler colorido",
+    "metaFisica": "2",
+    "unitario": "128.000,00",
+    "origem": "PNCP — média de 14 contratações (jan–ago/2026)"
+  },
+  {
+    "beneficiarios": "Usuários das unidades de referência — eletrocardiógrafo de 12 derivações com laudo digital",
+    "metaFisica": "4",
+    "unitario": "16.000,00",
+    "origem": "PNCP — média de 31 contratações (jan–ago/2026)"
+  }
+];
+const CRONOGRAMA = [
+  {
+    "valor": "256.000,00"
+  },
+  {
+    "valor": "64.000,00"
+  }
+];
+
+function chkDestino(){
+  if (marcado("v-destino") === "prefeitura")
+    return ok("Destinatário do bem", "Bem tombado em órgão da Prefeitura.");
+  const nome = el("dest-entidade").value.trim();
+  const cnpj = el("dest-cnpj").value.replace(/\D/g, "");
+  if (!nome || cnpj.length !== 14)
+    return falha("Destinatário do bem", "Entidade destinatária exige razão social e CNPJ completos.");
+  return alerta("Destinatário do bem", nome + " — a doação exige instrumento próprio e cláusula de reversão ao patrimônio público.");
+}
+function chkPreco(){
+  const doPncp = MEMORIA.filter(i => i.beneficiarios.trim() && /pncp/i.test(i.origem)).length;
+  const total = MEMORIA.filter(i => i.beneficiarios.trim()).length;
+  if (!total) return falha("Preço de referência do equipamento", "Sem linhas na memória de cálculo.");
+  if (!doPncp) return alerta("Preço de referência do equipamento", "Nenhuma linha veio do PNCP — o preço digitado à mão é o que o Executivo mais devolve.");
+  return ok("Preço de referência do equipamento",
+    doPncp + (doPncp === 1 ? " linha com preço do PNCP" : " linhas com preço do PNCP") + " — média das contratações já feitas.");
+}
+const CHECKS = [chkEmenda, chkBeneficiario, chkDestino,
+                chkMetas, chkMemoria, chkOrigem, chkPreco, chkCronograma];
+
+/* --------------------------------------------------------- consulta PNCP -- */
+/* Catálogo fixo no lugar da API. O que a integração de verdade traria por item:
+   descrição, quantas contratações, período, e a faixa de preço praticada.
+   A MÉDIA é o que preenche o valor unitário — mas a faixa fica visível de
+   propósito, porque média esconde outlier (a mediana provavelmente serviria
+   melhor; é decisão em aberto). */
+const CATALOGO_PNCP = [
+  { nome:"Ultrassom diagnóstico, transdutores convexo e linear, doppler colorido",
+    contratacoes:14, periodo:"jan–ago/2026", menor:112000, media:128000, maior:149900 },
+  { nome:"Eletrocardiógrafo de 12 derivações com laudo digital",
+    contratacoes:31, periodo:"jan–ago/2026", menor:11800, media:16000, maior:22400 },
+  { nome:"Cadeira odontológica completa com refletor e equipo",
+    contratacoes:22, periodo:"fev–ago/2026", menor:18900, media:24700, maior:33500 },
+  { nome:"Autoclave horizontal 54 litros, câmara em aço inox",
+    contratacoes:19, periodo:"jan–jul/2026", menor:14200, media:18300, maior:26800 },
+  { nome:"Veículo utilitário 0 km, motor 1.0, cinco lugares",
+    contratacoes:47, periodo:"jan–ago/2026", menor:78900, media:92400, maior:112000 },
+  { nome:"Desfibrilador externo automático (DEA) com bateria e eletrodos",
+    contratacoes:26, periodo:"mar–ago/2026", menor:6400, media:8900, maior:13200 },
+];
+
+const semAcento = t => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+function aoIniciar(){
+  el("pncp-buscar").addEventListener("click", buscarNoPncp);
+  el("pncp-termo").addEventListener("keydown", e => { if (e.key === "Enter") buscarNoPncp(); });
+}
+
+function buscarNoPncp(){
+  const termo = semAcento(el("pncp-termo").value.trim());
+  if (!termo){ aviso("Digite o equipamento que você quer buscar."); return; }
+
+  // O estado de espera é explícito: é uma chamada a uma API externa, e o
+  // silêncio de um segundo passa por tela travada.
+  el("pncp-estado").dataset.ativo = "1";
+  el("pncp-estado-texto").textContent = 'Consultando o PNCP por “' + el("pncp-termo").value.trim() + '”…';
+  el("pncp-resultados").innerHTML = "";
+  el("pncp-vazio").hidden = true;
+  el("pncp-buscar").disabled = true;
+
+  setTimeout(() => {
+    const achados = CATALOGO_PNCP.filter(c => semAcento(c.nome).includes(termo));
+    el("pncp-estado").dataset.ativo = "0";
+    el("pncp-buscar").disabled = false;
+
+    if (!achados.length){
+      el("pncp-vazio").hidden = false;
+      el("pncp-vazio").textContent =
+        "O PNCP não devolveu contratação para “" + el("pncp-termo").value.trim() +
+        "”. Lance a linha à mão e informe a origem do preço.";
+      return;
+    }
+    el("pncp-resultados").innerHTML = achados.map((c, i) => `
+      <li class="resultado">
+        <div class="info">
+          <b>${c.nome}</b>
+          <div class="faixa">
+            <span>${c.contratacoes} contratações · ${c.periodo}</span>
+            <span>menor <b>${brl(c.menor)}</b></span>
+            <span class="media">média <b>${brl(c.media)}</b></span>
+            <span>maior <b>${brl(c.maior)}</b></span>
+          </div>
+        </div>
+        <button type="button" class="btn pequeno" data-usar="${i}">Usar valor médio</button>
+      </li>`).join("");
+
+    el("pncp-resultados").querySelectorAll("[data-usar]").forEach(botao => {
+      botao.addEventListener("click", e => {
+        const c = achados[Number(e.currentTarget.dataset.usar)];
+        MEMORIA.push({
+          beneficiarios: (el("ben-quem").value.trim() || "Beneficiários") + " — " + c.nome,
+          metaFisica: "1",
+          unitario: c.media.toLocaleString("pt-BR", {minimumFractionDigits:2, maximumFractionDigits:2}),
+          origem: "PNCP — média de " + c.contratacoes + " contratações (" + c.periodo + ")",
+        });
+        desenharTudo();
+        aviso("Linha criada com o valor médio do PNCP. Ajuste a meta física.");
+      });
+    });
+  }, 1200);
+}
+
+</script>

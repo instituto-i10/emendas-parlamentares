@@ -77,9 +77,8 @@ export function LinkEntidade({
   return (
     <div className="space-y-3">
       <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-        Boa parte do que o plano pede é informação que só a entidade tem. Gere um
-        link e envie para ela preencher — não precisa de conta no sistema. Você
-        pode preencher aqui do mesmo jeito.
+        Gere o link e envie para a entidade preencher — ela não precisa de conta
+        no sistema. É ela quem assina o plano ao enviar.
       </p>
 
       {url ? (

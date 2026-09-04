@@ -380,7 +380,7 @@ async function main() {
         somaAutorDemaisExistente: somaDemais,
         // Base de 2025, anterior ao plano de trabalho simplificado: sem
         // categoria, o motor registra ALERTA em vez de reprovar retroativamente.
-        beneficiarioCategoria: null,
+        modeloPlano: null,
         pendenciasPlanoTrabalho: [],
       };
 
@@ -494,7 +494,7 @@ async function main() {
       modoReservaSaude: "ALERTA",
       emendaEhSaude: false,
       somaAutorDemaisExistente: 0,
-      beneficiarioCategoria: null,
+      modeloPlano: null,
       pendenciasPlanoTrabalho: [],
     };
 

@@ -19,6 +19,7 @@ import { Stepper, type Etapa } from "@/components/e360/stepper";
 import { Tag360, tomDoStatus } from "@/components/e360/tag360";
 import { Avatar360 } from "@/components/e360/avatar";
 import { cn } from "@/lib/utils";
+import { SemEmendasNoExercicio } from "@/components/sem-emendas";
 
 export default async function TramitacaoPage() {
   const ano = await getAnoAtivo();
@@ -26,6 +27,20 @@ export default async function TramitacaoPage() {
     getDados360(ano),
     getInstrumentoBaseAberto(ano),
   ]);
+
+  // O funil das seis etapas com zero em todas não informa nada — e o stepper
+  // ainda desenha as duas primeiras como concluídas, sugerindo andamento.
+  if (c.qtd === 0) {
+    return (
+      <div>
+        <SecTitle titulo={`Tramitação — exercício ${ano ?? ""}`} />
+        <SemEmendasNoExercicio
+          ano={ano}
+          descricao="O projeto de lei está em tramitação e o período de emendas, aberto. A primeira emenda apresentada aparece aqui."
+        />
+      </div>
+    );
+  }
 
   const qtd = (s: string) => porStatus.find((x) => x.status === s)?.qtd ?? 0;
   const valor = (s: string) => porStatus.find((x) => x.status === s)?.valor ?? 0;

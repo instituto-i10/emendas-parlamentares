@@ -163,9 +163,15 @@ describe("Vereador (gabinete)", () => {
 
   it("enxerga os itens de consulta do seu Poder", () => {
     const vistas = vistasVisiveis(A.vereador).map((v) => v.id);
-    expect(vistas).toContain("painel");
     expect(vistas).toContain("vereador360");
     expect(vistas).toContain("placar");
+  });
+
+  it("não vê 'Painel' no menu — a rota o devolveria ao Vereador 360", () => {
+    // Item de menu que empurra para outro lugar é ruído: ele clicaria em
+    // "Painel", chegaria em "Vereador 360" e concluiria que o sistema errou.
+    const vistas = vistasVisiveis(A.vereador).map((v) => v.id);
+    expect(vistas).not.toContain("painel");
   });
 
   it("cai no Vereador 360 após o login", () => {
@@ -327,5 +333,49 @@ describe("salvaguardas de atribuição de perfil", () => {
     const transversal = perfil("Auditoria", null, ["gerirTodasEmendas"]);
     expect(podeAtribuirPerfil(A.presidente, transversal)).toBe(false);
     expect(podeAtribuirPerfil(A.adminGeral, transversal)).toBe(true);
+  });
+});
+
+// ============================================================================
+// Menu lateral: a casa do perfil vem primeiro, e nada nele leva a lugar nenhum.
+// ============================================================================
+describe("ordem e composição do menu lateral", () => {
+  const perfis = [A.vereador, A.comissao, A.presidente, A.executivo, A.adminGeral];
+
+  it("a vista inicial é sempre o PRIMEIRO item do menu", () => {
+    // Sem isto, o gabinete aterrissa no Vereador 360 e vê "Painel" no topo —
+    // duas ideias de "onde eu estou" na mesma tela.
+    for (const a of perfis) {
+      const vistas = vistasVisiveis(a);
+      expect(vistas[0]?.href).toBe(vistaInicial(a));
+    }
+  });
+
+  it("nenhum item do menu redireciona para outro item", () => {
+    for (const a of perfis) {
+      const vistas = vistasVisiveis(a);
+      // "Painel" redireciona quem não aterrissa nele; só pode estar no menu de
+      // quem aterrissa.
+      const temPainel = vistas.some((v) => v.id === "painel");
+      expect(temPainel).toBe(vistaInicial(a) === "/painel");
+    }
+  });
+
+  it("'Ferramentas' saiu do menu — virou seção na tela inicial", () => {
+    for (const a of perfis) {
+      expect(vistasVisiveis(a).map((v) => v.id)).not.toContain("ferramentas");
+    }
+  });
+
+  it("os atalhos da tela inicial não repetem rota do menu lateral", () => {
+    // A comparação é por ROTA, sem query: /config e /config?aba=usuarios são o
+    // mesmo destino, e mostrar os dois na mesma tela cria dúvida em vez de
+    // atalho.
+    const semQuery = (h: string) => h.split("?")[0];
+    for (const a of perfis) {
+      const noMenu = new Set(vistasVisiveis(a).map((v) => semQuery(v.href)));
+      const atalhos = modulosVisiveis(a).filter((m) => !noMenu.has(semQuery(m.href)));
+      for (const at of atalhos) expect(noMenu.has(semQuery(at.href))).toBe(false);
+    }
   });
 });

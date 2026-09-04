@@ -91,6 +91,10 @@ export type DotacaoOpcao = {
   naturezaNome: string;
   /** Grupo da natureza ("1" = pessoal e encargos — vedado à parcela da saúde). */
   naturezaGrupo: string;
+  /** "50" = transferência a instituição privada sem fins lucrativos. */
+  naturezaModalidade: string;
+  /** "51" = obras · "52" = equipamentos · "43" = subvenções… */
+  naturezaElemento: string;
   fonteCodigo: string;
   fonteNome: string;
   orgaoCodigo: string;
@@ -126,7 +130,13 @@ export async function listarDotacoesBase(filtros: {
         },
         include: {
           naturezaDespesa: {
-            select: { codigo: true, elemento: true, nome: true, grupo: true },
+            select: {
+              codigo: true,
+              elemento: true,
+              nome: true,
+              grupo: true,
+              modalidadeAplicacao: true,
+            },
           },
           fonteRecurso: { select: { codigo: true, nome: true } },
           orgao: { select: { codigo: true, nome: true } },
@@ -148,6 +158,11 @@ export async function listarDotacoesBase(filtros: {
     // melhor repetir o código do que mostrar campo vazio.
     naturezaNome: d.naturezaDespesa.nome ?? d.naturezaDespesa.elemento,
     naturezaGrupo: d.naturezaDespesa.grupo,
+    // Modalidade e elemento vão para a tela porque é deles que sai o MODELO do
+    // plano de trabalho — ver `derivarModeloPlano`. Sem eles, o bloco 3 não
+    // saberia qual formulário mostrar.
+    naturezaModalidade: d.naturezaDespesa.modalidadeAplicacao,
+    naturezaElemento: d.naturezaDespesa.elemento,
     fonteCodigo: d.fonteRecurso.codigo,
     fonteNome: d.fonteRecurso.nome,
     orgaoCodigo: d.orgao.codigo,

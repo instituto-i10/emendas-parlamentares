@@ -113,9 +113,13 @@ function ConteudoNav({
   const [saindo, iniciarSaida] = useTransition();
   const grupos = agrupar(vistas);
 
+  // A marca leva à casa do perfil, que é a primeira vista do menu. Apontar
+  // para /painel fixo mandava o gabinete a uma rota que o redireciona de volta.
+  const inicial = vistas[0]?.href ?? "/painel";
+
   // Classes que mudam entre o trilho estreito e a versão com rótulo.
   const cls = {
-    marca: expandido ? "px-5" : "px-3 xl:px-5",
+    marca: expandido ? "px-5" : "justify-center px-3 xl:justify-start xl:px-5",
     nav: expandido ? "px-3" : "px-2.5 xl:px-3",
     tituloGrupo: expandido ? "block" : "hidden xl:block",
     separador: expandido ? "hidden" : "xl:hidden",
@@ -126,6 +130,9 @@ function ConteudoNav({
     ponto: expandido ? "hidden" : "xl:hidden",
     conta: expandido ? "p-3" : "p-2.5 xl:p-3",
     identidade: expandido ? "block" : "hidden xl:block",
+    // O wordmark segue a mesma regra dos rótulos do menu: no trilho estreito
+    // fica só o ícone.
+    marcaTexto: expandido ? "flex" : "hidden xl:flex",
     sairLinha: expandido ? "grid" : "hidden xl:grid",
     sairBloco: expandido ? "hidden" : "xl:hidden",
   };
@@ -139,8 +146,12 @@ function ConteudoNav({
           cls.marca
         )}
       >
-        <Link href="/painel" className="flex items-center" onClick={aoNavegar}>
-          <LogoEmendas360 compacta tamanho={30} />
+        <Link
+          href={inicial}
+          className="flex min-w-0 items-center"
+          onClick={aoNavegar}
+        >
+          <LogoEmendas360 compacta tamanho={30} classeTexto={cls.marcaTexto} />
         </Link>
       </div>
 

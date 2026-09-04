@@ -20,6 +20,7 @@
     "db:2027": "tsx prisma/seed-2027.ts",
     "db:2027:emendas": "tsx prisma/seed-2027-emendas.ts",
     "db:limpar-beneficiarios": "tsx prisma/limpar-beneficiarios.ts",
+    "db:limpar-2027": "tsx prisma/limpar-2027.ts",
     "db:deploy": "tsx prisma/seed.ts && tsx prisma/seed-2027.ts && tsx prisma/seed-2027-emendas.ts"
   },
   "dependencies": {

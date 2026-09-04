@@ -67,9 +67,10 @@ export type ContextoEmenda = {
   modoReservaSaude: "BLOQUEANTE" | "ALERTA" | null;
   emendaEhSaude: boolean;
   somaAutorDemaisExistente: number;
-  // Plano de trabalho simplificado. `null` na categoria = beneficiário final
-  // ainda não informado; as pendências vêm apuradas de lib/plano-trabalho.
-  beneficiarioCategoria: string | null;
+  // Plano de trabalho. `null` no modelo = dotação ainda não escolhida, e é ela
+  // que decide qual dos quatro formulários vale. As pendências vêm apuradas de
+  // lib/plano-trabalho.
+  modeloPlano: string | null;
   pendenciasPlanoTrabalho: string[];
 };
 
@@ -371,16 +372,16 @@ export function avaliarEmenda(ctx: ContextoEmenda): ResultadoMotor {
   }
 
   // 12) PLANO_TRABALHO
-  // O plano é requisito da REMESSA, não do rascunho. O que ele pede depende da
-  // categoria do beneficiário: terceiro setor leva justificativa, objetivo,
-  // declaração e planilha; administração direta e indireta, só a justificativa.
+  // O plano é requisito da REMESSA, não do rascunho. Os quatro modelos pedem o
+  // mesmo núcleo — metas, memória de cálculo e cronograma —; o terceiro setor
+  // pede ainda entidade, declarações e assinatura, e quem preenche é ela.
   {
-    if (!ctx.beneficiarioCategoria) {
+    if (!ctx.modeloPlano) {
       add(
         "PLANO_TRABALHO",
         "Plano de trabalho",
         "ALERTA",
-        "Beneficiário final não informado — sem ele não dá para saber o que o plano de trabalho precisa conter."
+        "Dotação não escolhida — é ela que define qual dos quatro modelos de plano de trabalho vale."
       );
     } else if (ctx.pendenciasPlanoTrabalho.length > 0) {
       add(

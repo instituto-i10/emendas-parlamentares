@@ -115,6 +115,16 @@ enum TipoBeneficiario {
   TERCEIRO_SETOR
 }
 
+// Qual dos quatro formulários oficiais de plano de trabalho vale para a emenda.
+// Não é escolha do autor: sai da natureza da despesa da dotação e da categoria
+// do beneficiário. A regra vive em `src/lib/plano-modelo.ts`.
+enum ModeloPlanoTrabalho {
+  CUSTEIO // Modelo I   — despesa corrente executada pelo Município
+  OBRAS // Modelo II  — obras e serviços de engenharia
+  TERCEIRO_SETOR // Modelo III — repasse a entidade sem fins lucrativos
+  EQUIPAMENTOS // Modelo IV  — bem permanente
+}
+
 // Tipo de emenda parlamentar.
 enum TipoEmenda {
   ACRESCIMO
@@ -759,37 +769,115 @@ model PlanoTrabalho {
   id       String @id @default(cuid())
   emendaId String @unique
 
-  justificativa    String  @default("")
-  objetivo         String  @default("")
-  // Declaração de que a entidade atende aos requisitos para receber repasse
-  // público. Só se aplica ao terceiro setor.
-  declaracaoAceita Boolean @default(false)
+  // O modelo é GRAVADO, não só derivado na leitura: trocar a dotação troca o
+  // formulário, e é preciso saber sob qual rito o que está aqui foi preenchido.
+  modelo ModeloPlanoTrabalho?
 
-  // Preenchimento pela própria entidade, sem conta no sistema: o vereador gera
-  // um link e envia. Token nulo = nunca foi compartilhado.
+  // --- terceiro setor: quem recebe o repasse -------------------------------
+  // Só o Modelo III preenche. O CNPJ não é FK para Beneficiario de propósito:
+  // aqui é o que a ENTIDADE declarou de si, e divergir do cadastro é um dado,
+  // não um erro a ser silenciado.
+  entidadeRazaoSocial String?
+  entidadeCnpj        String?
+  // Mínimo de 1 ano para receber repasse — art. 33, V, "a", da Lei 13.019/2014.
+  entidadeAnos        Int?
+  orgaoRepassador     String?
+
+  // --- link de preenchimento pela entidade ---------------------------------
+  // Existe só no Modelo III: nos demais quem executa é o Município e o autor
+  // preenche na própria tela.
   token         String?   @unique
   tokenExpiraEm DateTime?
   preenchidoPor String?
   preenchidoEm  DateTime?
 
+  // --- declarações obrigatórias da OSC (Modelo III) ------------------------
+  declIdentificacao    Boolean @default(false)
+  declConstituicao     Boolean @default(false)
+  declAdimplencia      Boolean @default(false)
+  declParentesco       Boolean @default(false)
+  declSancoes          Boolean @default(false)
+  declFichaLimpa       Boolean @default(false)
+  declResponsabilidade Boolean @default(false)
+
+  // --- assinatura eletrônica simples ---------------------------------------
+  // Lei 14.063/2020, art. 4º, I: identificar o signatário e associar a
+  // assinatura ao documento. A identificação são os campos abaixo; a
+  // associação é o hash.
+  assinanteNome    String?
+  assinanteCpf     String?
+  assinanteCargo   String?
+  assinanteEmail   String?
+  assinadoEm       DateTime?
+  assinaturaIp     String?
+  assinaturaAgente String?
+  // SHA-256 do conteúdo assinado. É ele que amarra a assinatura AO QUE se
+  // assinou: editado o plano, o hash deixa de conferir e a assinatura cai.
+  assinaturaHash   String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  emenda Emenda              @relation(fields: [emendaId], references: [id], onDelete: Cascade)
-  itens  ItemPlanoTrabalho[]
+  emenda   Emenda                 @relation(fields: [emendaId], references: [id], onDelete: Cascade)
+  metas    MetaPlanoTrabalho[]
+  itens    ItemPlanoTrabalho[]
+  parcelas ParcelaPlanoTrabalho[]
 
   @@index([token])
 }
 
-// Linha da planilha orçamentária. O total é derivado (quantidade × unitário) —
+// Meta física: o que será entregue, em número, e como se comprova. Exigida nos
+// quatro modelos — sem quantidade e sem forma de comprovação a linha não serve
+// para prestar contas.
+model MetaPlanoTrabalho {
+  id            String  @id @default(cuid())
+  planoId       String
+  ordem         Int     @default(0)
+  beneficiarios String
+  unidade       String
+  metaFisica    Decimal @db.Decimal(18, 4)
+  comprovacao   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plano PlanoTrabalho @relation(fields: [planoId], references: [id], onDelete: Cascade)
+
+  @@index([planoId])
+}
+
+// Parcela do cronograma de desembolso PREVISTO. Só ordem e valor: prever o mês
+// na apresentação da emenda seria precisão fingida — a data se define na
+// execução orçamentária.
+model ParcelaPlanoTrabalho {
+  id      String  @id @default(cuid())
+  planoId String
+  ordem   Int     @default(0)
+  valor   Decimal @db.Decimal(18, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plano PlanoTrabalho @relation(fields: [planoId], references: [id], onDelete: Cascade)
+
+  @@index([planoId])
+}
+
+// Linha da MEMÓRIA DE CÁLCULO. O total é derivado (meta física × unitário) —
 // guardar o produto seria abrir espaço para os dois discordarem.
+//
+// Fala o mesmo vocabulário das metas (`beneficiarios`, `metaFisica`) porque é a
+// mesma entrega, agora precificada: cada linha daqui corresponde a uma de lá.
 model ItemPlanoTrabalho {
   id            String  @id @default(cuid())
   planoId       String
   ordem         Int     @default(0)
-  descricao     String
-  quantidade    Decimal @db.Decimal(18, 4)
+  beneficiarios String
+  metaFisica    Decimal @db.Decimal(18, 4)
   valorUnitario Decimal @db.Decimal(18, 2)
+  // De onde veio o preço: ata de registro, banco de preços, SINAPI/CPOS, PNCP
+  // ou orçamento de fornecedor. É o que o Executivo mais devolve quando falta.
+  origemPreco   String  @default("")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

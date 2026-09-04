@@ -1,341 +1,444 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Plus, Sparkles, Trash2 } from "lucide-react";
-import { toast } from "sonner";
-import { Label } from "@/components/ui/label";
+import { Plus, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import type { CampoRedacao, SugestaoResult } from "@/lib/actions/redacao";
+import { CampoMoeda } from "@/components/ui/campo-moeda";
+import { Obrigatorio } from "@/components/ui/obrigatorio";
+import { PesquisaPreco } from "./pesquisa-preco";
 import {
-  TEXTO_DECLARACAO,
-  exigenciasDoPlano,
-  reusaJustificativaDaEmenda,
+  totalCronograma,
   totalItem,
-  totalPlanilha,
-  type CategoriaBeneficiario,
-  type ItemPlanilha,
+  totalMemoria,
+  type DadosPlano,
+  type ItemMemoria,
+  type Meta,
 } from "@/lib/plano-trabalho";
 
 // ---------------------------------------------------------------------------
-// Campos do plano de trabalho simplificado — CONTROLADOS.
+// O NÚCLEO do plano de trabalho — metas, memória de cálculo e cronograma.
 //
-// O estado vive fora porque o plano tem duas casas: a página própria (onde ele
-// se salva sozinho, com botão) e o bloco 3 do formulário da emenda (onde ele é
-// salvo junto com o rascunho). Os campos são os mesmos; quem guarda é que muda.
+// Os quatro modelos pedem estas três seções, e por isso elas moram aqui, num
+// componente só. O que varia entre eles — entidade, declarações e assinatura do
+// Modelo III — vive em componentes próprios, montados ao redor destes campos.
+//
+// CONTROLADO: o estado vive fora porque o plano tem duas casas. Nos modelos I,
+// II e IV ele é preenchido pelo autor, na tela da emenda; no III, pela própria
+// entidade, pelo link. Os campos são os mesmos; quem guarda é que muda.
+//
+// A memória de cálculo fala o MESMO VOCABULÁRIO das metas — beneficiários e
+// meta física — porque é a mesma entrega, agora precificada: cada linha daqui
+// corresponde a uma linha de lá.
 // ---------------------------------------------------------------------------
-
-const controle =
-  "flex w-full rounded-[10px] border border-input bg-card px-3 py-2 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50";
 
 const brl = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-/** Contexto que a IA recebe para redigir. Sem ele o botão não aparece. */
-export type ContextoRedacaoForm = {
-  objeto: string;
-  beneficiario: string | null;
-  sugerir: (campo: CampoRedacao, textoAtual: string) => Promise<SugestaoResult>;
-};
+const TITULO_COLUNA =
+  "px-2 pb-2 text-left text-[10.5px] font-bold uppercase tracking-[1.1px] text-muted-foreground whitespace-nowrap";
 
-export type ValoresPlano = {
-  justificativa: string;
-  objetivo: string;
-  declaracaoAceita: boolean;
-  itens: ItemPlanilha[];
-};
+// Coluna sem `texto` é a do botão de remover, que não tem rótulo visível. O `*`
+// marca só o que se PREENCHE: "Parcela" e "Valor total" são derivados — a ordem
+// da linha e a multiplicação — e marcá-los pediria à pessoa algo que ela não
+// pode dar.
+type Coluna = { texto?: string; obrigatorio?: boolean; direita?: boolean };
 
-export const PLANO_VAZIO: ValoresPlano = {
-  justificativa: "",
-  objetivo: "",
-  declaracaoAceita: false,
-  itens: [{ descricao: "", quantidade: 1, valorUnitario: 0 }],
-};
-
-// Botão de apoio à redação. Nunca sobrescreve calado: o texto sugerido entra
-// numa área de revisão e só vai para o campo se o autor mandar.
-function BotaoRedacao({
-  campo,
-  textoAtual,
-  ctx,
-  onAplicar,
-}: {
-  campo: CampoRedacao;
-  textoAtual: string;
-  ctx: ContextoRedacaoForm;
-  onAplicar: (texto: string) => void;
-}) {
-  const [pending, start] = useTransition();
-  const [sugestao, setSugestao] = useState<string | null>(null);
-
-  function pedir() {
-    start(async () => {
-      const r = await ctx.sugerir(campo, textoAtual);
-      if (r.ok) setSugestao(r.texto);
-      else toast.error(r.error);
-    });
-  }
-
+function Cabecalho({ colunas }: { colunas: Coluna[] }) {
   return (
-    <div className="space-y-2">
-      <Button variant="outline" size="sm" onClick={pedir} disabled={pending}>
-        <Sparkles className="size-4" aria-hidden />
-        {pending
-          ? "Escrevendo…"
-          : textoAtual.trim()
-            ? "Melhorar a redação"
-            : "Sugerir um texto"}
-      </Button>
-      {sugestao ? (
-        <div className="space-y-2 rounded-xl border bg-secondary/40 p-3.5">
-          <p className="text-[11px] font-bold uppercase tracking-[1.1px] text-muted-foreground">
-            Sugestão — revise antes de usar
-          </p>
-          <p className="text-[13px] leading-relaxed">{sugestao}</p>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              onClick={() => {
-                onAplicar(sugestao);
-                setSugestao(null);
-                toast.success("Texto aplicado. Edite à vontade.");
-              }}
-            >
-              Usar este texto
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setSugestao(null)}>
-              Descartar
-            </Button>
-          </div>
-        </div>
-      ) : null}
-    </div>
+    <thead>
+      <tr>
+        {colunas.map((c, i) => (
+          <th
+            key={i}
+            className={TITULO_COLUNA + (c.direita ? " text-right" : "")}
+            scope="col"
+          >
+            {c.texto ?? <span className="sr-only">Remover</span>}
+            {c.obrigatorio ? <Obrigatorio /> : null}
+          </th>
+        ))}
+      </tr>
+    </thead>
+  );
+}
+
+function BotaoRemover({
+  onClick,
+  desabilitado,
+  rotulo,
+}: {
+  onClick: () => void;
+  desabilitado: boolean;
+  rotulo: string;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      type="button"
+      aria-label={rotulo}
+      disabled={desabilitado}
+      onClick={onClick}
+    >
+      <Trash2 className="size-4" aria-hidden />
+    </Button>
+  );
+}
+
+// A soma e o "fecha / não fecha" andam juntos: o número sozinho obriga a pessoa
+// a fazer a subtração de cabeça para saber se está certo.
+function Fecho({
+  rotulo,
+  total,
+  valorEmenda,
+  quandoFecha,
+  quandoNaoFecha,
+}: {
+  rotulo: string;
+  total: number;
+  valorEmenda: number;
+  quandoFecha: string;
+  quandoNaoFecha: (diferenca: number) => string;
+}) {
+  const diferenca = total - valorEmenda;
+  const fecha = Math.abs(diferenca) <= 0.01;
+  return (
+    <>
+      <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2 border-t pt-3">
+        <span className="text-sm font-semibold">{rotulo}</span>
+        <span className="text-base font-extrabold tabular-nums">{brl(total)}</span>
+      </div>
+      <p
+        className={`mt-2 text-[12.5px] font-medium ${
+          valorEmenda <= 0
+            ? "text-muted-foreground"
+            : fecha
+              ? "text-[var(--on-ok)]"
+              : "text-destructive"
+        }`}
+      >
+        {valorEmenda <= 0
+          ? "Informe o valor da emenda para conferir."
+          : fecha
+            ? quandoFecha
+            : quandoNaoFecha(diferenca)}
+      </p>
+    </>
   );
 }
 
 export function PlanoTrabalhoCampos({
-  categoria,
-  valorEmenda,
   valores,
   onChange,
-  redacao,
-  justificativaDaEmenda,
+  valorEmenda,
+  engenharia = false,
+  desabilitado = false,
 }: {
-  categoria: CategoriaBeneficiario | null;
+  valores: DadosPlano;
+  onChange: (v: DadosPlano) => void;
   valorEmenda: number;
-  valores: ValoresPlano;
-  onChange: (v: ValoresPlano) => void;
-  /** Ausente = sem apoio de redação (o campo continua livre para digitar). */
-  redacao?: ContextoRedacaoForm;
-  /**
-   * Justificativa da emenda. Fora do terceiro setor é ELA que vale como
-   * justificativa do plano — o campo separado não aparece. Ausente só onde a
-   * tela não conhece a emenda.
-   */
-  justificativaDaEmenda?: string;
+  /** Plano de obra: a pesquisa de preço prioriza composições por m². */
+  engenharia?: boolean;
+  desabilitado?: boolean;
 }) {
-  const exige = exigenciasDoPlano(categoria);
-  const reusa =
-    justificativaDaEmenda !== undefined && reusaJustificativaDaEmenda(categoria);
-  const { justificativa, objetivo, declaracaoAceita, itens } = valores;
-  const total = totalPlanilha(itens.filter((i) => i.descricao.trim()));
-  const diferenca = valorEmenda > 0 ? total - valorEmenda : 0;
+  const { metas, itens, parcelas } = valores;
+  const alterar = (parcial: Partial<DadosPlano>) => onChange({ ...valores, ...parcial });
 
-  const alterar = (parcial: Partial<ValoresPlano>) =>
-    onChange({ ...valores, ...parcial });
+  const trocarMeta = (i: number, campo: keyof Meta, v: string | number) =>
+    alterar({ metas: metas.map((m, k) => (k === i ? { ...m, [campo]: v } : m)) });
 
-  function alterarItem(i: number, campo: keyof ItemPlanilha, valor: string) {
-    alterar({
-      itens: itens.map((x, k) => {
-        if (k !== i) return x;
-        if (campo === "descricao") return { ...x, descricao: valor };
-        const n = Number(valor.replace(/\./g, "").replace(",", "."));
-        return { ...x, [campo]: Number.isFinite(n) ? n : 0 };
-      }),
-    });
-  }
+  const trocarItem = (i: number, campo: keyof ItemMemoria, v: string | number) =>
+    alterar({ itens: itens.map((x, k) => (k === i ? { ...x, [campo]: v } : x)) });
+
+  // Meta física aceita fracionário (4.250 m², 1,5 tonelada) — por isso não é
+  // um `type=number` com passo inteiro.
+  const numero = (v: string) => {
+    const n = Number(v.replace(/\./g, "").replace(",", "."));
+    return Number.isFinite(n) ? n : 0;
+  };
 
   return (
-    <div className="grid gap-5">
-      <p className="rounded-lg bg-secondary p-3 text-[12.5px] leading-relaxed text-muted-foreground">
-        {categoria === null ? (
-          <>
-            Escolha o <b>tipo de destino</b> do beneficiário para o plano mostrar
-            o que aquela categoria exige. Para órgão público o plano é a própria
-            justificativa da emenda; para entidade do terceiro setor ele pede
-            também objetivo, declaração e planilha.
-          </>
-        ) : exige.planilha ? (
-          <>
-            O beneficiário é uma <b>entidade do terceiro setor</b>: além da
-            justificativa, o plano pede o objetivo, a declaração e a planilha
-            orçamentária. Aqui a justificativa é a da <b>entidade</b>, separada
-            da justificativa da emenda — quem escreve é ela.
-          </>
-        ) : (
-          <>
-            O beneficiário é da <b>administração pública</b>: o plano é a própria
-            justificativa da emenda. Não há entidade externa para preencher nada,
-            e o mesmo texto não é pedido duas vezes.
-          </>
-        )}{" "}
-        Este é o plano <b>simplificado</b> da apresentação da emenda. O plano de
-        trabalho completo, quando houver repasse, é elaborado na execução
-        orçamentária.
-      </p>
-
-      {reusa ? (
-        <div className="space-y-1.5">
-          <span className="text-sm font-medium">Justificativa</span>
-          <div className="rounded-[10px] border bg-secondary/40 p-3 text-[13px] leading-relaxed">
-            {justificativaDaEmenda!.trim() || (
-              <span className="text-muted-foreground">
-                Ainda não escrita — a justificativa da emenda é que vale aqui.
-              </span>
-            )}
-          </div>
-          <p className="text-[12px] leading-relaxed text-muted-foreground">
-            Esta é a justificativa da emenda. Para órgão público ela vale como a
-            do plano — edite-a no campo <b>Justificativa da emenda</b>.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-1.5">
-          <Label htmlFor="pt-justificativa">Justificativa do plano</Label>
-          <textarea
-            id="pt-justificativa"
-            className={`${controle} min-h-28`}
-            value={justificativa}
-            onChange={(e) => alterar({ justificativa: e.target.value })}
-            placeholder="Por que o recurso é necessário e como será aplicado."
-          />
-          {redacao ? (
-            <BotaoRedacao
-              campo="justificativa"
-              textoAtual={justificativa}
-              ctx={redacao}
-              onAplicar={(t) => alterar({ justificativa: t })}
+    <div className="grid min-w-0 gap-7">
+      {/* ------------------------------------------------------------ metas */}
+      <section className="min-w-0">
+        <h3 className="text-base font-medium">Metas</h3>
+        <p className="mb-3 mt-1 text-[12px] leading-relaxed text-muted-foreground">
+          Quem será atendido e quanto será entregue. Sem meta física e sem forma
+          de comprovação a linha não serve para prestar contas.
+        </p>
+        <div className="-mx-1 overflow-x-auto px-1">
+          <table className="w-full min-w-[640px] border-collapse">
+            <Cabecalho
+              colunas={[
+                { texto: "Beneficiários", obrigatorio: true },
+                { texto: "Unidade", obrigatorio: true },
+                { texto: "Meta física", obrigatorio: true, direita: true },
+                { texto: "Como será comprovada", obrigatorio: true },
+                {},
+              ]}
             />
-          ) : null}
+            <tbody>
+              {metas.map((m, i) => (
+                <tr key={i}>
+                  <td className="px-2 py-1">
+                    <Input
+                      aria-label={`Beneficiários da meta ${i + 1}`}
+                      placeholder="Quem será atendido"
+                      disabled={desabilitado}
+                      value={m.beneficiarios}
+                      onChange={(e) => trocarMeta(i, "beneficiarios", e.target.value)}
+                    />
+                  </td>
+                  <td className="px-2 py-1">
+                    <Input
+                      aria-label={`Unidade da meta ${i + 1}`}
+                      placeholder="unidade"
+                      disabled={desabilitado}
+                      value={m.unidade}
+                      onChange={(e) => trocarMeta(i, "unidade", e.target.value)}
+                    />
+                  </td>
+                  <td className="px-2 py-1">
+                    <Input
+                      aria-label={`Meta física da meta ${i + 1}`}
+                      inputMode="decimal"
+                      className="text-right tabular-nums"
+                      disabled={desabilitado}
+                      value={String(m.metaFisica)}
+                      onChange={(e) => trocarMeta(i, "metaFisica", numero(e.target.value))}
+                    />
+                  </td>
+                  <td className="px-2 py-1">
+                    <Input
+                      aria-label={`Comprovação da meta ${i + 1}`}
+                      placeholder="Como será comprovada"
+                      disabled={desabilitado}
+                      value={m.comprovacao}
+                      onChange={(e) => trocarMeta(i, "comprovacao", e.target.value)}
+                    />
+                  </td>
+                  <td className="px-2 py-1">
+                    <BotaoRemover
+                      rotulo={`Remover meta ${i + 1}`}
+                      desabilitado={desabilitado || metas.length === 1}
+                      onClick={() => alterar({ metas: metas.filter((_, k) => k !== i) })}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
+        <Button
+          variant="outline"
+          size="sm"
+          type="button"
+          disabled={desabilitado}
+          onClick={() =>
+            alterar({
+              metas: [...metas, { beneficiarios: "", unidade: "", metaFisica: 0, comprovacao: "" }],
+            })
+          }
+        >
+          <Plus className="size-4" aria-hidden /> Adicionar linha
+        </Button>
+      </section>
 
-      {exige.objetivo ? (
-        <div className="space-y-1.5">
-          <Label htmlFor="pt-objetivo">Objetivo</Label>
-          <textarea
-            id="pt-objetivo"
-            className={`${controle} min-h-24`}
-            value={objetivo}
-            onChange={(e) => alterar({ objetivo: e.target.value })}
-            placeholder="O que se pretende alcançar com o recurso."
-          />
-          {redacao ? (
-            <BotaoRedacao
-              campo="objetivo"
-              textoAtual={objetivo}
-              ctx={redacao}
-              onAplicar={(t) => alterar({ objetivo: t })}
-            />
-          ) : null}
-        </div>
-      ) : null}
+      {/* ------------------------------------------------ memória de cálculo */}
+      <section className="min-w-0 border-t pt-6">
+        <h3 className="text-base font-medium">Memória de cálculo</h3>
+        <p className="mb-3 mt-1 text-[12px] leading-relaxed text-muted-foreground">
+          As mesmas linhas das metas, agora com preço. Toda linha precisa apontar
+          de onde veio o valor — ata de registro, banco de preços, tabela oficial
+          ou orçamento de fornecedor.
+        </p>
 
-      {exige.declaracao ? (
-        <label className="flex cursor-pointer items-start gap-3 rounded-xl border p-3.5">
-          <input
-            type="checkbox"
-            className="mt-0.5 size-4 shrink-0"
-            checked={declaracaoAceita}
-            onChange={(e) => alterar({ declaracaoAceita: e.target.checked })}
-          />
-          <span className="text-[12.5px] leading-relaxed">{TEXTO_DECLARACAO}</span>
-        </label>
-      ) : null}
-
-      {exige.planilha ? (
-        <div className="space-y-3 border-t pt-5">
-          <h3 className="text-base font-medium">Planilha orçamentária</h3>
-          <div className="hidden gap-2 text-[11px] font-bold uppercase tracking-[1.1px] text-muted-foreground sm:grid sm:grid-cols-[1fr_88px_136px_136px_40px]">
-            <span>Item</span>
-            <span>Qtd.</span>
-            <span>Valor unitário</span>
-            <span className="text-right">Total</span>
-            <span />
-          </div>
-          {itens.map((it, i) => (
-            <div
-              key={i}
-              className="grid gap-2 sm:grid-cols-[1fr_88px_136px_136px_40px] sm:items-center"
-            >
-              <Input
-                aria-label={`Descrição do item ${i + 1}`}
-                value={it.descricao}
-                onChange={(e) => alterarItem(i, "descricao", e.target.value)}
-                placeholder="Descrição do item"
-              />
-              <Input
-                aria-label={`Quantidade do item ${i + 1}`}
-                inputMode="decimal"
-                value={String(it.quantidade)}
-                onChange={(e) => alterarItem(i, "quantidade", e.target.value)}
-              />
-              <Input
-                aria-label={`Valor unitário do item ${i + 1}`}
-                inputMode="decimal"
-                value={String(it.valorUnitario)}
-                onChange={(e) => alterarItem(i, "valorUnitario", e.target.value)}
-              />
-              <span className="text-right text-sm font-semibold tabular-nums">
-                {brl(totalItem(it))}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Remover item ${i + 1}`}
-                disabled={itens.length === 1}
-                onClick={() => alterar({ itens: itens.filter((_, k) => k !== i) })}
-              >
-                <Trash2 className="size-4" aria-hidden />
-              </Button>
-            </div>
-          ))}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
+        {/* A pesquisa fica ANTES da tabela porque é por onde a linha nasce
+            quando existe preço público — e depois de nascer ela é editável
+            como qualquer outra. Quem já sabe o preço ignora e digita. */}
+        <div className="mb-4">
+          <PesquisaPreco
+            engenharia={engenharia}
+            desabilitado={desabilitado}
+            onAdicionar={(linha) =>
               alterar({
-                itens: [...itens, { descricao: "", quantidade: 1, valorUnitario: 0 }],
+                // Substitui a primeira linha se ela ainda estiver em branco: a
+                // tabela abre com uma linha vazia, e empurrá-la para baixo
+                // deixaria um buraco no meio da memória de cálculo.
+                itens:
+                  itens.length === 1 && !itens[0].beneficiarios.trim()
+                    ? [linha]
+                    : [...itens, linha],
               })
             }
-          >
-            <Plus className="size-4" aria-hidden /> Adicionar item
-          </Button>
-
-          <div className="flex flex-wrap items-baseline justify-between gap-2 border-t pt-3">
-            <span className="text-sm font-semibold">Total da planilha</span>
-            <span className="text-base font-extrabold tabular-nums">{brl(total)}</span>
-          </div>
-          {valorEmenda > 0 ? (
-            <p
-              className={`text-[12.5px] font-medium ${
-                Math.abs(diferenca) <= 0.01 ? "text-muted-foreground" : "text-destructive"
-              }`}
-            >
-              {Math.abs(diferenca) <= 0.01
-                ? `Fecha com o valor da emenda (${brl(valorEmenda)}).`
-                : `A emenda é de ${brl(valorEmenda)} — ${
-                    diferenca > 0 ? "sobram" : "faltam"
-                  } ${brl(Math.abs(diferenca))} para fechar.`}
-            </p>
-          ) : (
-            <p className="text-[12.5px] font-medium text-muted-foreground">
-              Informe o valor da emenda para conferir se a planilha fecha com ele.
-            </p>
-          )}
+          />
         </div>
-      ) : null}
+        <div className="-mx-1 overflow-x-auto px-1">
+          <table className="w-full min-w-[720px] border-collapse">
+            <Cabecalho
+              colunas={[
+                { texto: "Beneficiários", obrigatorio: true },
+                { texto: "Meta física", obrigatorio: true, direita: true },
+                { texto: "Valor unitário", obrigatorio: true, direita: true },
+                { texto: "Valor total", direita: true },
+                { texto: "Origem do preço", obrigatorio: true },
+                {},
+              ]}
+            />
+            <tbody>
+              {itens.map((it, i) => (
+                <tr key={i}>
+                  <td className="px-2 py-1">
+                    <Input
+                      aria-label={`Beneficiários do item ${i + 1}`}
+                      placeholder="Quem será atendido"
+                      disabled={desabilitado}
+                      value={it.beneficiarios}
+                      onChange={(e) => trocarItem(i, "beneficiarios", e.target.value)}
+                    />
+                  </td>
+                  <td className="px-2 py-1">
+                    <Input
+                      aria-label={`Meta física do item ${i + 1}`}
+                      inputMode="decimal"
+                      className="text-right tabular-nums"
+                      disabled={desabilitado}
+                      value={String(it.metaFisica)}
+                      onChange={(e) => trocarItem(i, "metaFisica", numero(e.target.value))}
+                    />
+                  </td>
+                  <td className="px-2 py-1">
+                    <CampoMoeda
+                      aria-label={`Valor unitário do item ${i + 1}`}
+                      disabled={desabilitado}
+                      value={it.valorUnitario}
+                      onChange={(v) => trocarItem(i, "valorUnitario", v)}
+                    />
+                  </td>
+                  <td className="whitespace-nowrap px-2 py-1 text-right text-sm font-semibold tabular-nums">
+                    {brl(totalItem(it))}
+                  </td>
+                  <td className="px-2 py-1">
+                    <Input
+                      aria-label={`Origem do preço do item ${i + 1}`}
+                      placeholder="Ata, banco de preços, SINAPI…"
+                      disabled={desabilitado}
+                      value={it.origemPreco}
+                      onChange={(e) => trocarItem(i, "origemPreco", e.target.value)}
+                    />
+                  </td>
+                  <td className="px-2 py-1">
+                    <BotaoRemover
+                      rotulo={`Remover item ${i + 1}`}
+                      desabilitado={desabilitado || itens.length === 1}
+                      onClick={() => alterar({ itens: itens.filter((_, k) => k !== i) })}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          type="button"
+          disabled={desabilitado}
+          onClick={() =>
+            alterar({
+              itens: [
+                ...itens,
+                { beneficiarios: "", metaFisica: 1, valorUnitario: 0, origemPreco: "" },
+              ],
+            })
+          }
+        >
+          <Plus className="size-4" aria-hidden /> Adicionar linha
+        </Button>
+
+        <Fecho
+          rotulo="Total da memória de cálculo"
+          total={totalMemoria(itens.filter((i) => i.beneficiarios.trim()))}
+          valorEmenda={valorEmenda}
+          quandoFecha={`Fecha com o valor da emenda (${brl(valorEmenda)}).`}
+          quandoNaoFecha={(d) =>
+            `A emenda é de ${brl(valorEmenda)} — ${d > 0 ? "sobram" : "faltam"} ${brl(
+              Math.abs(d)
+            )} para fechar.`
+          }
+        />
+      </section>
+
+      {/* ------------------------------------------------------- cronograma */}
+      <section className="min-w-0 border-t pt-6">
+        <h3 className="text-base font-medium">Cronograma de desembolso previsto</h3>
+        <p className="mb-3 mt-1 text-[12px] leading-relaxed text-muted-foreground">
+          Previsão de pagamento, em parcelas. A soma tem de bater com o valor da
+          emenda. As datas se definem na execução, não aqui.
+        </p>
+        <div className="-mx-1 overflow-x-auto px-1">
+          <table className="w-full min-w-[380px] border-collapse">
+            <Cabecalho
+              colunas={[
+                { texto: "Parcela" },
+                { texto: "Valor final", obrigatorio: true, direita: true },
+                {},
+              ]}
+            />
+            <tbody>
+              {parcelas.map((p, i) => (
+                <tr key={i}>
+                  <td className="whitespace-nowrap px-2 py-1 text-sm font-bold">
+                    {i + 1}ª parcela
+                  </td>
+                  <td className="px-2 py-1">
+                    <CampoMoeda
+                      aria-label={`Valor final da parcela ${i + 1}`}
+                      disabled={desabilitado}
+                      value={p.valor}
+                      onChange={(v) =>
+                        alterar({
+                          parcelas: parcelas.map((x, k) => (k === i ? { valor: v } : x)),
+                        })
+                      }
+                    />
+                  </td>
+                  <td className="px-2 py-1">
+                    <BotaoRemover
+                      rotulo={`Remover parcela ${i + 1}`}
+                      desabilitado={desabilitado || parcelas.length === 1}
+                      onClick={() =>
+                        alterar({ parcelas: parcelas.filter((_, k) => k !== i) })
+                      }
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          type="button"
+          disabled={desabilitado}
+          onClick={() => alterar({ parcelas: [...parcelas, { valor: 0 }] })}
+        >
+          <Plus className="size-4" aria-hidden /> Adicionar parcela
+        </Button>
+
+        <Fecho
+          rotulo="Total do cronograma"
+          total={totalCronograma(parcelas)}
+          valorEmenda={valorEmenda}
+          quandoFecha="As parcelas somam o valor da emenda."
+          quandoNaoFecha={(d) =>
+            `As parcelas somam ${brl(totalCronograma(parcelas))} — ${
+              d > 0 ? "excedem" : "faltam"
+            } ${brl(Math.abs(d))}.`
+          }
+        />
+      </section>
     </div>
   );
 }

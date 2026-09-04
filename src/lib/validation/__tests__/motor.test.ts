@@ -43,7 +43,7 @@ function ctxValido(over: Partial<ContextoEmenda> = {}): ContextoEmenda {
     modoReservaSaude: null,
     emendaEhSaude: false,
     somaAutorDemaisExistente: 0,
-    beneficiarioCategoria: "ADMINISTRACAO_DIRETA",
+    modeloPlano: "CUSTEIO",
     pendenciasPlanoTrabalho: [],
   };
   return { ...base, ...over };

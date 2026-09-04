@@ -12,6 +12,7 @@ import { Banner } from "@/components/e360/banner";
 import { Subtabs } from "@/components/e360/subtabs";
 import { Tag360 } from "@/components/e360/tag360";
 import { ClipboardList } from "lucide-react";
+import { SemEmendasNoExercicio } from "@/components/sem-emendas";
 
 const ABAS = [
   { id: "vereador", titulo: "Por autor" },
@@ -35,6 +36,15 @@ export default async function EmendasVistaPage({
     porDestino,
     porStatus,
   } = await getDados360(ano);
+
+  if (c.qtd === 0) {
+    return (
+      <div>
+        <SecTitle titulo="Emendas & Beneficiários" />
+        <SemEmendasNoExercicio ano={ano} />
+      </div>
+    );
+  }
 
   const podeApresentar = podeCriarEmenda(user);
 

@@ -1,153 +1,224 @@
 // ---------------------------------------------------------------------------
-// Plano de trabalho SIMPLIFICADO — regras puras (servidor e cliente).
+// Plano de trabalho da EMENDA — regras puras (servidor e cliente).
 //
-// Não confundir com o plano de trabalho do MROSC (Lei 13.019/2014). Aquele,
-// com metas no formato Audesp, matriz de indicadores, memória de cálculo de RH,
-// rateio de custos indiretos e cronograma de desembolso, é elaborado na
-// EXECUÇÃO ORÇAMENTÁRIA, quando o município for repassar o recurso.
+// Não confundir com o plano de trabalho da PARCERIA (art. 22 da Lei
+// 13.019/2014). Aquele, com metodologia, equipe e prestação de contas, é
+// elaborado depois, na celebração do termo de fomento ou colaboração, pela
+// própria entidade. Aqui é o que o vereador apresenta junto da emenda.
 //
-// Aqui, na apresentação da emenda, vale o mínimo definido pelo jurídico do
-// cliente — e a categoria do beneficiário é que decide o quê:
+// Os quatro modelos pedem o MESMO NÚCLEO — metas físicas, memória de cálculo
+// com origem do preço e cronograma de desembolso previsto. O que separa o
+// Modelo III é o rito: entidade identificada, sete declarações e assinatura, e
+// o preenchimento feito por ELA, pelo link, porque meta física e preço
+// praticado são informação que só ela tem.
 //
-//   terceiro setor          → justificativa + objetivo + declaração + planilha
-//   administração direta    → só a justificativa
-//   administração indireta  → só a justificativa
-//
-// E "só a justificativa", na administração pública, é A JUSTIFICATIVA DA
-// EMENDA — não uma segunda. Ver `reusaJustificativaDaEmenda` abaixo.
+// Qual modelo vale sai da dotação — ver `plano-modelo.ts`.
 // ---------------------------------------------------------------------------
 
-export type CategoriaBeneficiario =
-  | "ADMINISTRACAO_DIRETA"
-  | "ADMINISTRACAO_INDIRETA"
-  | "TERCEIRO_SETOR";
+import {
+  exigenciasDoModelo,
+  type ModeloPlano,
+} from "./plano-modelo";
 
-export type ExigenciasPlano = {
-  /** A justificativa é exigida em todas as categorias. */
-  objetivo: boolean;
-  declaracao: boolean;
-  planilha: boolean;
+/** Linha das metas: o que será entregue, em número, e como se comprova. */
+export type Meta = {
+  beneficiarios: string;
+  unidade: string;
+  metaFisica: number;
+  comprovacao: string;
 };
 
-export function exigenciasDoPlano(
-  categoria: CategoriaBeneficiario | null
-): ExigenciasPlano {
-  const terceiroSetor = categoria === "TERCEIRO_SETOR";
-  return { objetivo: terceiroSetor, declaracao: terceiroSetor, planilha: terceiroSetor };
-}
+/** Linha da memória de cálculo: a mesma entrega das metas, com preço. */
+export type ItemMemoria = {
+  beneficiarios: string;
+  metaFisica: number;
+  valorUnitario: number;
+  origemPreco: string;
+};
 
-export const TEXTO_DECLARACAO =
-  "Declaro, sob as penas da lei, que a entidade atende a todos os requisitos " +
-  "exigidos para o recebimento de repasse de recursos do poder público, que se " +
-  "encontra regularmente constituída e em funcionamento, e que os recursos " +
-  "serão aplicados exclusivamente no objeto desta emenda.";
+/** Parcela do desembolso previsto. A ordem é a própria posição na lista. */
+export type Parcela = { valor: number };
+
+export const DECLARACOES = [
+  "declIdentificacao",
+  "declConstituicao",
+  "declAdimplencia",
+  "declParentesco",
+  "declSancoes",
+  "declFichaLimpa",
+  "declResponsabilidade",
+] as const;
+
+export type DeclaracaoChave = (typeof DECLARACOES)[number];
 
 /**
- * A justificativa do plano é a própria justificativa da emenda, exceto no
- * terceiro setor.
- *
- * Motivo: no terceiro setor quem escreve é a ENTIDADE, pelo link, e o texto
- * dela não pode sobrescrever o do vereador — são duas vozes. Na administração
- * pública não há entidade externa nenhuma: é o mesmo vereador, na mesma tela,
- * e pedir o mesmo texto duas vezes é atrito puro. A diretriz do jurídico do
- * cliente é "tudo tem que ser o mais simples possível".
- *
- * Categoria ainda não escolhida entra aqui também: duas das três categorias
- * reutilizam, e o campo separado só aparece quando o terceiro setor é
- * escolhido.
+ * Os itens obrigatórios da declaração da OSC, em resumo. O texto integral é do
+ * documento assinado; aqui vale o rótulo que a pessoa lê na tela antes de
+ * marcar.
  */
-export function reusaJustificativaDaEmenda(
-  categoria: CategoriaBeneficiario | null
-): boolean {
-  return categoria !== "TERCEIRO_SETOR";
-}
+export const ROTULO_DECLARACAO: Record<DeclaracaoChave, string> = {
+  declIdentificacao: "Identificação completa",
+  declConstituicao: "Regularidade de constituição",
+  declAdimplencia: "Adimplência em prestações de contas",
+  declParentesco: "Ausência de parentesco e conflito de interesses",
+  declSancoes: "Inexistência de sanções ativas",
+  declFichaLimpa: "Ficha limpa dos dirigentes",
+  declResponsabilidade: "Cláusula de responsabilidade",
+};
 
-export type ItemPlanilha = {
-  descricao: string;
-  quantidade: number;
-  valorUnitario: number;
+export const AJUDA_DECLARACAO: Record<DeclaracaoChave, string> = {
+  declIdentificacao: "Razão social, CNPJ, endereço e representante legal.",
+  declConstituicao: "A entidade está regularmente constituída.",
+  declAdimplencia: "Nenhuma parceria anterior com contas em aberto.",
+  declParentesco:
+    "Nenhum dirigente é agente público do órgão celebrante, nem parente até o 2º grau.",
+  declSancoes: "Sem suspensão nem declaração de inidoneidade.",
+  declFichaLimpa: "Sem contas rejeitadas nos últimos 8 anos nem improbidade.",
+  declResponsabilidade: "Declaramos sob as penas da lei.",
+};
+
+/** Identificação de quem assinou — Lei 14.063/2020, art. 4º, I. */
+export type Assinatura = {
+  nome: string;
+  cpf: string;
+  cargo: string;
+  email: string;
 };
 
 export type DadosPlano = {
-  justificativa: string;
-  objetivo: string;
-  declaracaoAceita: boolean;
-  itens: ItemPlanilha[];
+  metas: Meta[];
+  itens: ItemMemoria[];
+  parcelas: Parcela[];
+  // Só o Modelo III preenche daqui para baixo.
+  entidadeRazaoSocial: string;
+  entidadeCnpj: string;
+  entidadeAnos: number | null;
+  orgaoRepassador: string;
+  declaracoes: Record<DeclaracaoChave, boolean>;
+  /** `null` enquanto não assinado. */
+  assinatura: Assinatura | null;
 };
 
-/**
- * O plano como ele vale para a conferência: na administração pública, com a
- * justificativa da emenda no lugar da do plano.
- *
- * Aplicado no MOTOR, não só na tela — assim uma emenda de administração direta
- * sem linha de `PlanoTrabalho` no banco não é pendência, porque não há nada a
- * preencher além do que já está na emenda.
- */
-export function planoEfetivo(
-  plano: DadosPlano | null,
-  categoria: CategoriaBeneficiario | null,
-  justificativaDaEmenda: string
-): DadosPlano | null {
-  if (!reusaJustificativaDaEmenda(categoria)) return plano;
-  return {
-    justificativa: justificativaDaEmenda,
-    objetivo: plano?.objetivo ?? "",
-    declaracaoAceita: plano?.declaracaoAceita ?? false,
-    itens: plano?.itens ?? [],
-  };
-}
+export const PLANO_VAZIO: DadosPlano = {
+  metas: [{ beneficiarios: "", unidade: "", metaFisica: 0, comprovacao: "" }],
+  itens: [{ beneficiarios: "", metaFisica: 1, valorUnitario: 0, origemPreco: "" }],
+  parcelas: [{ valor: 0 }],
+  entidadeRazaoSocial: "",
+  entidadeCnpj: "",
+  entidadeAnos: null,
+  orgaoRepassador: "",
+  declaracoes: Object.fromEntries(DECLARACOES.map((d) => [d, false])) as Record<
+    DeclaracaoChave,
+    boolean
+  >,
+  assinatura: null,
+};
 
-export function totalItem(i: ItemPlanilha): number {
-  return i.quantidade * i.valorUnitario;
-}
+export const totalItem = (i: ItemMemoria): number => i.metaFisica * i.valorUnitario;
 
-export function totalPlanilha(itens: ItemPlanilha[]): number {
-  return itens.reduce((soma, i) => soma + totalItem(i), 0);
-}
+export const totalMemoria = (itens: ItemMemoria[]): number =>
+  itens.reduce((soma, i) => soma + totalItem(i), 0);
 
-// Um centavo de folga: a planilha é digitada em reais e o arredondamento de
-// quantidade × unitário não pode reprovar um plano correto.
+export const totalCronograma = (parcelas: Parcela[]): number =>
+  parcelas.reduce((soma, p) => soma + p.valor, 0);
+
+// Um centavo de folga: os valores são digitados em reais e o arredondamento de
+// meta física × unitário não pode reprovar um plano correto.
 const TOLERANCIA = 0.01;
 
 const brl = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+const soDigitos = (s: string) => s.replace(/\D/g, "");
+
+/** Linhas que de fato foram preenchidas — a linha em branco do formulário não conta. */
+const metasPreenchidas = (metas: Meta[]) => metas.filter((m) => m.beneficiarios.trim());
+const itensPreenchidos = (itens: ItemMemoria[]) =>
+  itens.filter((i) => i.beneficiarios.trim());
+const parcelasPreenchidas = (parcelas: Parcela[]) => parcelas.filter((p) => p.valor > 0);
+
 /**
  * O que ainda falta no plano. Lista vazia = pronto para seguir.
- * `valorEmenda` entra só para conferir o fechamento da planilha; passe 0 para
- * pular essa conferência (rascunho sem valor definido).
+ *
+ * `valorEmenda` entra para conferir o fechamento da memória e do cronograma;
+ * passe 0 para pular essa conferência (rascunho sem valor definido).
  */
 export function pendenciasDoPlano(
   plano: DadosPlano | null,
-  categoria: CategoriaBeneficiario | null,
+  modelo: ModeloPlano | null,
   valorEmenda: number
 ): string[] {
+  if (!modelo) return ["escolher a dotação — é ela que define o plano de trabalho"];
   if (!plano) return ["preencher o plano de trabalho"];
 
-  const exige = exigenciasDoPlano(categoria);
+  const exige = exigenciasDoModelo(modelo);
   const faltando: string[] = [];
 
-  if (!plano.justificativa.trim())
-    faltando.push(
-      reusaJustificativaDaEmenda(categoria)
-        ? "justificativa da emenda"
-        : "justificativa do plano"
-    );
-  if (exige.objetivo && !plano.objetivo.trim()) faltando.push("objetivo");
-  if (exige.declaracao && !plano.declaracaoAceita) faltando.push("declaração da entidade");
+  // ------------------------------------------------------ núcleo comum ----
+  const metas = metasPreenchidas(plano.metas);
+  if (metas.length === 0) {
+    faltando.push("informar ao menos uma meta");
+  } else if (
+    metas.some((m) => !(m.metaFisica > 0) || !m.comprovacao.trim() || !m.unidade.trim())
+  ) {
+    faltando.push("completar as metas: toda linha precisa de unidade, meta física e forma de comprovação");
+  }
 
-  if (exige.planilha) {
-    const itens = plano.itens.filter((i) => i.descricao.trim());
-    if (itens.length === 0) {
-      faltando.push("planilha orçamentária");
-    } else {
-      const total = totalPlanilha(itens);
-      if (valorEmenda > 0 && Math.abs(total - valorEmenda) > TOLERANCIA) {
-        faltando.push(
-          `fechar a planilha: ela soma ${brl(total)} e a emenda é de ${brl(valorEmenda)}`
-        );
-      }
+  const itens = itensPreenchidos(plano.itens);
+  if (itens.length === 0) {
+    faltando.push("lançar a memória de cálculo");
+  } else {
+    if (itens.some((i) => !i.origemPreco.trim())) {
+      faltando.push("informar a origem do preço em toda linha da memória de cálculo");
     }
+    const total = totalMemoria(itens);
+    if (valorEmenda > 0 && Math.abs(total - valorEmenda) > TOLERANCIA) {
+      faltando.push(
+        `fechar a memória de cálculo: ela soma ${brl(total)} e a emenda é de ${brl(valorEmenda)}`
+      );
+    }
+  }
+
+  const parcelas = parcelasPreenchidas(plano.parcelas);
+  if (parcelas.length === 0) {
+    faltando.push("informar o cronograma de desembolso previsto");
+  } else {
+    const total = totalCronograma(parcelas);
+    if (valorEmenda > 0 && Math.abs(total - valorEmenda) > TOLERANCIA) {
+      faltando.push(
+        `fechar o cronograma: as parcelas somam ${brl(total)} e a emenda é de ${brl(valorEmenda)}`
+      );
+    }
+  }
+
+  // --------------------------------------------------- rito do Modelo III --
+  if (exige.entidade) {
+    if (!plano.entidadeRazaoSocial.trim()) faltando.push("a razão social da entidade");
+    if (soDigitos(plano.entidadeCnpj).length !== 14) faltando.push("o CNPJ da entidade");
+    // Art. 33, V, "a", da Lei 13.019/2014: mínimo de 1 ano de existência.
+    if (plano.entidadeAnos == null) {
+      faltando.push("o tempo de existência da entidade");
+    } else if (plano.entidadeAnos < 1) {
+      faltando.push(
+        "atender ao mínimo de 1 ano de existência da entidade (art. 33 da Lei 13.019/2014)"
+      );
+    }
+    if (!plano.orgaoRepassador.trim()) faltando.push("o órgão repassador");
+  }
+
+  if (exige.declaracoes) {
+    const naoAssinadas = DECLARACOES.filter((d) => !plano.declaracoes[d]).length;
+    if (naoAssinadas > 0) {
+      faltando.push(
+        naoAssinadas === 1
+          ? "assinar 1 declaração da entidade"
+          : `assinar ${naoAssinadas} declarações da entidade`
+      );
+    }
+  }
+
+  if (exige.assinatura && !plano.assinatura) {
+    faltando.push("a assinatura do representante legal da entidade");
   }
 
   return faltando;

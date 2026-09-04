@@ -178,23 +178,86 @@ const numeroPlanilha = z.preprocess((v) => {
   return Number.isFinite(n) ? n : NaN;
 }, z.number({ message: "Valor inválido." }).min(0, "Não pode ser negativo."));
 
+// Plano de trabalho nos quatro modelos. O núcleo — metas, memória de cálculo e
+// cronograma — é comum; os campos do terceiro setor chegam vazios nos demais
+// modelos e são gravados vazios, sem erro: quem esconde os campos é o
+// formulário, e o schema não precisa saber de qual modelo veio a submissão.
 export const planoTrabalhoSchema = z.object({
-  justificativa: z.string().trim().max(5000).default(""),
-  objetivo: z.string().trim().max(5000).default(""),
-  declaracaoAceita: z.coerce.boolean().default(false),
+  metas: z
+    .array(
+      z.object({
+        beneficiarios: z.string().trim().max(300).default(""),
+        unidade: z.string().trim().max(60).default(""),
+        metaFisica: numeroPlanilha,
+        comprovacao: z.string().trim().max(300).default(""),
+      })
+    )
+    .max(50, "No máximo 50 metas.")
+    .default([]),
+
   itens: z
     .array(
       z.object({
-        descricao: z.string().trim().max(300).default(""),
-        quantidade: numeroPlanilha,
+        beneficiarios: z.string().trim().max(300).default(""),
+        metaFisica: numeroPlanilha,
         valorUnitario: numeroPlanilha,
+        origemPreco: z.string().trim().max(300).default(""),
       })
     )
-    .max(50, "No máximo 50 linhas na planilha.")
+    .max(50, "No máximo 50 linhas na memória de cálculo.")
     .default([]),
+
+  parcelas: z
+    .array(z.object({ valor: numeroPlanilha }))
+    .max(36, "No máximo 36 parcelas.")
+    .default([]),
+
+  entidadeRazaoSocial: z.string().trim().max(300).default(""),
+  entidadeCnpj: z.string().trim().max(20).default(""),
+  entidadeAnos: z.coerce.number().int().min(0).max(500).nullable().default(null),
+  orgaoRepassador: z.string().trim().max(300).default(""),
+
+  // Escritas uma a uma, e não geradas da constante: o schema é o contrato de
+  // entrada, e um contrato que se lê inteiro vale mais do que um gerado.
+  declaracoes: z
+    .object({
+      declIdentificacao: z.coerce.boolean().default(false),
+      declConstituicao: z.coerce.boolean().default(false),
+      declAdimplencia: z.coerce.boolean().default(false),
+      declParentesco: z.coerce.boolean().default(false),
+      declSancoes: z.coerce.boolean().default(false),
+      declFichaLimpa: z.coerce.boolean().default(false),
+      declResponsabilidade: z.coerce.boolean().default(false),
+    })
+    .default({
+      declIdentificacao: false,
+      declConstituicao: false,
+      declAdimplencia: false,
+      declParentesco: false,
+      declSancoes: false,
+      declFichaLimpa: false,
+      declResponsabilidade: false,
+    }),
+
+  // A assinatura NÃO entra por aqui: tem action própria, porque depende do hash
+  // do conteúdo e da trilha (IP, agente, hora do servidor) — coisas que só o
+  // servidor produz com honestidade.
 });
 
 export type PlanoTrabalhoInput = z.input<typeof planoTrabalhoSchema>;
+
+// Identificação de quem assina — Lei 14.063/2020, art. 4º, I.
+export const assinaturaSchema = z.object({
+  nome: z.string().trim().min(3, "Informe o nome completo de quem assina."),
+  cpf: z
+    .string()
+    .transform((v) => v.replace(/\D/g, ""))
+    .refine((v) => v.length === 11, "CPF incompleto."),
+  cargo: z.string().trim().min(2, "Informe o cargo na entidade."),
+  email: z.email("E-mail inválido."),
+});
+
+export type AssinaturaInput = z.input<typeof assinaturaSchema>;
 
 export const parecerSchema = z.object({
   parecer: z.string().trim().min(1, "Informe o parecer."),

@@ -4,9 +4,10 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { LegendaObrigatorios, Obrigatorio } from "@/components/ui/obrigatorio";
+import { CampoMoeda } from "@/components/ui/campo-moeda";
 import {
   Card,
   CardAction,
@@ -19,7 +20,7 @@ import {
   CampoBeneficiario,
   type BeneficiarioOpcao,
 } from "./campo-beneficiario";
-import { PlanoTrabalhoCampos, PLANO_VAZIO, type ValoresPlano } from "@/components/plano-trabalho/campos";
+import { PlanoTrabalhoCampos } from "@/components/plano-trabalho/campos";
 import { LinkEntidade } from "@/components/plano-trabalho/link-entidade";
 import { ROTULO_TIPO_EMENDA, ROTULO_TIPO_INSTRUMENTO, opcoes } from "@/lib/rotulos";
 import {
@@ -37,12 +38,12 @@ import {
   validarEmendaAction,
 } from "@/lib/actions/emendas";
 import { salvarPlanoTrabalho } from "@/lib/actions/plano-trabalho";
-import { sugerirRedacao } from "@/lib/actions/redacao";
 import {
+  PLANO_VAZIO,
   pendenciasDoPlano,
-  planoEfetivo,
-  type CategoriaBeneficiario,
+  type DadosPlano,
 } from "@/lib/plano-trabalho";
+import { derivarModeloPlano } from "@/lib/plano-modelo";
 import type { DotacaoOpcao } from "@/lib/queries-orcamento";
 import type { ResultadoMotor } from "@/lib/validation/motor";
 
@@ -65,13 +66,6 @@ const idDoRotulo = (label: string) =>
 
 const brl = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-
-// O valor é digitado em reais ("150.000,00"). A planilha do plano precisa dele
-// como número para conferir se fecha.
-function valorNumerico(v: string): number {
-  const n = Number(v.replace(/\./g, "").replace(",", "."));
-  return Number.isFinite(n) ? n : 0;
-}
 
 // A dotação é a linha do orçamento onde o dinheiro entra. O vereador não a
 // reconhece pelo código — apontamento do jurídico do cliente —, então o cartão
@@ -128,6 +122,7 @@ function Selecao({
   options,
   disabled,
   placeholder = "Selecione…",
+  obrigatorio,
 }: {
   label: string;
   value: string;
@@ -135,16 +130,23 @@ function Selecao({
   options: Opt[];
   disabled?: boolean;
   placeholder?: string;
+  obrigatorio?: boolean;
 }) {
   const id = idDoRotulo(label);
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id}>
+        <span>
+          {label}
+          {obrigatorio ? <Obrigatorio /> : null}
+        </span>
+      </Label>
       <select
         id={id}
         className={`${controle} campo-select pl-3 pr-9`}
         value={value}
         disabled={disabled}
+        aria-required={obrigatorio}
         onChange={(e) => onChange(e.target.value)}
       >
         <option value="">{placeholder}</option>
@@ -219,7 +221,7 @@ export function NovaEmendaForm({
   const [tipo, setTipo] = useState("ACRESCIMO");
   const [objeto, setObjeto] = useState("");
   const [justificativa, setJustificativa] = useState("");
-  const [valor, setValor] = useState("");
+  const [valor, setValor] = useState(0);
 
   // Beneficiário final em duas perguntas (rastreabilidade — STF/TCE). O cadastro
   // cresce com o uso: o que for criado aqui entra na lista sem recarregar.
@@ -228,7 +230,7 @@ export function NovaEmendaForm({
   const [cadastro, setCadastro] = useState<BeneficiarioOpcao[]>(beneficiarios);
 
   // Plano de trabalho — bloco 3. Vive aqui porque é salvo junto com o rascunho.
-  const [plano, setPlano] = useState<ValoresPlano>(PLANO_VAZIO);
+  const [plano, setPlano] = useState<DadosPlano>(PLANO_VAZIO);
   const [planoSujo, setPlanoSujo] = useState(false);
 
   // Remanejamento
@@ -285,20 +287,30 @@ export function NovaEmendaForm({
   }
 
   const dotacaoSel = dotacoes.find((d) => d.id === dotacaoId);
-  const valorEmenda = valorNumerico(valor);
+  const valorEmenda = valor;
 
-  // A categoria escolhida no bloco 2 é o que decide o rito do bloco 3 — mesmo
-  // antes de o destino ter sido escolhido ou cadastrado.
-  const categoriaPlano = (categoria || null) as CategoriaBeneficiario | null;
-  // Na administração pública a justificativa da emenda É a do plano — a regra
-  // vive em `planoEfetivo`, e o motor aplica a mesma na hora de validar.
-  const planoParaGravar = useMemo(
-    () => planoEfetivo(plano, categoriaPlano, justificativa)!,
-    [plano, categoriaPlano, justificativa]
+  // É a DOTAÇÃO que escolhe o modelo do plano, não o autor: trocar a dotação no
+  // bloco 1 troca o formulário do bloco 3. A categoria do beneficiário entra
+  // porque terceiro setor vence a natureza da despesa — nele, quem preenche é a
+  // entidade, e isso muda mais do que o formulário.
+  const modeloPlano = useMemo(
+    () =>
+      derivarModeloPlano(
+        dotacaoSel
+          ? {
+              grupo: dotacaoSel.naturezaGrupo,
+              modalidadeAplicacao: dotacaoSel.naturezaModalidade,
+              elemento: dotacaoSel.naturezaElemento,
+            }
+          : null,
+        categoria || null
+      ),
+    [dotacaoSel, categoria]
   );
+  const planoParaGravar = plano;
   const pendenciasPlano = useMemo(
-    () => pendenciasDoPlano(planoParaGravar, categoriaPlano, valorEmenda),
-    [planoParaGravar, categoriaPlano, valorEmenda]
+    () => pendenciasDoPlano(plano, modeloPlano, valorEmenda),
+    [plano, modeloPlano, valorEmenda]
   );
 
   // Rascunho salva com o que houver: só a dotação é exigida, porque é ela que
@@ -312,7 +324,7 @@ export function NovaEmendaForm({
   const faltando = [
     !objeto.trim() && "objeto",
     !justificativa.trim() && "justificativa",
-    !valor.trim() && "valor",
+    !(valor > 0) && "valor",
   ].filter((x): x is string => !!x);
 
   function montarInput() {
@@ -416,12 +428,13 @@ export function NovaEmendaForm({
         {/* ------------------------------------------------------ bloco 1 */}
         <Bloco numero={1} titulo="Onde o dinheiro entra">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Selecao label="Órgão" value={orgaoId} onChange={trocaOrgao} options={orgaos} />
-            <Selecao label="Unidade orçamentária" value={unidadeId} onChange={trocaUnidade} options={unidades} disabled={!orgaoId} />
-            <Selecao label="Programa" value={programaId} onChange={trocaPrograma} options={programas} disabled={!unidadeId} />
-            <Selecao label="Ação" value={acaoId} onChange={trocaAcao} options={acoes} disabled={!programaId} />
+            <Selecao obrigatorio label="Órgão" value={orgaoId} onChange={trocaOrgao} options={orgaos} />
+            <Selecao obrigatorio label="Unidade orçamentária" value={unidadeId} onChange={trocaUnidade} options={unidades} disabled={!orgaoId} />
+            <Selecao obrigatorio label="Programa" value={programaId} onChange={trocaPrograma} options={programas} disabled={!unidadeId} />
+            <Selecao obrigatorio label="Ação" value={acaoId} onChange={trocaAcao} options={acoes} disabled={!programaId} />
             <div className="sm:col-span-2">
               <Selecao
+                obrigatorio
                 label="Dotação"
                 value={dotacaoId}
                 onChange={(v) => { setDotacaoId(v); sujar(); }}
@@ -459,19 +472,33 @@ export function NovaEmendaForm({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="valor">Valor</Label>
-              <Input id="valor" inputMode="decimal" placeholder="150000,00" value={valor} onChange={(e) => { setValor(e.target.value); sujar(); }} />
+              <Label htmlFor="valor">
+                <span>
+                  Valor
+                  <Obrigatorio />
+                </span>
+              </Label>
+              <CampoMoeda
+                id="valor"
+                value={valor}
+                onChange={(v) => {
+                  setValor(v);
+                  sujar();
+                }}
+              />
             </div>
 
             {tipo === "REMANEJAMENTO" ? (
               <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
                 <Selecao
+                  obrigatorio
                   label="Dotação de origem"
                   value={origemId}
                   onChange={(v) => { setOrigemId(v); sujar(); }}
                   options={todasDotacoes.map((d) => ({ id: d.id, codigo: d.naturezaCodigo, nome: `Fonte ${d.fonteCodigo} · ${brl(d.valorAtual)}` }))}
                 />
                 <Selecao
+                  obrigatorio
                   label="Dotação de destino"
                   value={destinoId}
                   onChange={(v) => { setDestinoId(v); sujar(); }}
@@ -494,22 +521,36 @@ export function NovaEmendaForm({
             </div>
 
             <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
-              <Label htmlFor="objeto">Objeto</Label>
-              <textarea id="objeto" className={`${controle} min-h-20 py-2`} value={objeto} onChange={(e) => { setObjeto(e.target.value); sujar(); }} placeholder="Descrição narrativa do objeto da emenda" />
+              <Label htmlFor="objeto">
+                <span>
+                  Objeto
+                  <Obrigatorio />
+                </span>
+              </Label>
+              <textarea id="objeto" aria-required className={`${controle} min-h-20 py-2`} value={objeto} onChange={(e) => { setObjeto(e.target.value); sujar(); }} placeholder="Descrição narrativa do objeto da emenda" />
             </div>
             <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
-              <Label htmlFor="justificativa">Justificativa da emenda</Label>
-              <textarea id="justificativa" className={`${controle} min-h-20 py-2`} value={justificativa} onChange={(e) => { setJustificativa(e.target.value); sujar(); }} />
+              <Label htmlFor="justificativa">
+                <span>
+                  Justificativa da emenda
+                  <Obrigatorio />
+                </span>
+              </Label>
+              <textarea id="justificativa" aria-required className={`${controle} min-h-20 py-2`} value={justificativa} onChange={(e) => { setJustificativa(e.target.value); sujar(); }} />
             </div>
           </div>
         </Bloco>
 
         {/* ------------------------------------------------------ bloco 3 */}
+        {/* O formulário do plano MUDA conforme a dotação escolhida no bloco 1 —
+            são quatro modelos oficiais, e o autor não escolhe entre eles. No
+            terceiro setor ele não preenche nada: o plano vive no link enviado à
+            entidade, que é quem tem meta física e preço praticado. */}
         <Bloco
           numero={3}
           titulo="Plano de trabalho"
           estado={
-            pendenciasPlano.length === 0 ? (
+            !modeloPlano ? null : pendenciasPlano.length === 0 ? (
               <span className="text-[12px] font-semibold text-[var(--on-ok)]">
                 Completo
               </span>
@@ -523,55 +564,60 @@ export function NovaEmendaForm({
           }
         >
           <div className="grid gap-5">
-            <PlanoTrabalhoCampos
-              categoria={categoriaPlano}
-              valorEmenda={valorEmenda}
-              valores={plano}
-              onChange={(v) => { setPlano(v); setPlanoSujo(true); sujar(); }}
-              justificativaDaEmenda={justificativa}
-              redacao={{
-                objeto,
-                beneficiario: beneficiario?.nome ?? null,
-                sugerir: (campo, textoAtual) =>
-                  sugerirRedacao({
-                    campo,
-                    objeto,
-                    valor: valorEmenda,
-                    beneficiario: beneficiario?.nome ?? null,
-                    terceiroSetor: categoria === "TERCEIRO_SETOR",
-                    textoAtual,
-                  }),
-              }}
-            />
-
-            {pendenciasPlano.length > 0 ? (
-              <p className="text-[12px] font-medium leading-relaxed text-muted-foreground">
-                O plano é salvo junto com o rascunho, mesmo pela metade. Para a
-                emenda poder ser remetida, falta {pendenciasPlano.join("; ")}.
+            {!modeloPlano ? (
+              <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+                Escolha a dotação no bloco 1. É ela que define o que o plano de
+                trabalho precisa conter.
               </p>
-            ) : null}
-
-            <div className="border-t pt-4">
-              <h3 className="mb-2 text-[13px] font-semibold">
-                Preenchimento pela entidade
-              </h3>
-              {podeSalvar || emendaId ? (
-                <LinkEntidade
-                  tokenAtual={null}
-                  linkExpiraEm={null}
-                  preenchidoPor={null}
-                  garantirEmenda={salvarTudo}
-                />
-              ) : (
+            ) : modeloPlano === "TERCEIRO_SETOR" ? (
+              <>
                 <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-                  Escolha a dotação no bloco 1 para poder gerar o link que a
-                  entidade usa para preencher este plano sem ter conta no
-                  sistema.
+                  O recurso é repassado a uma <b>entidade do terceiro setor</b>.
+                  Meta física, preço praticado e forma de comprovação são
+                  informação que só ela tem — por isso estes campos <b>não ficam
+                  nesta tela</b>: eles vivem no link que você envia.
                 </p>
-              )}
-            </div>
+                {podeSalvar || emendaId ? (
+                  <LinkEntidade
+                    tokenAtual={null}
+                    linkExpiraEm={null}
+                    preenchidoPor={null}
+                    garantirEmenda={salvarTudo}
+                  />
+                ) : (
+                  <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+                    Escolha a dotação no bloco 1 para poder gerar o link.
+                  </p>
+                )}
+                <p className="text-[12px] font-medium leading-relaxed text-muted-foreground">
+                  A emenda só pode ser remetida depois de a entidade preencher e
+                  assinar. Você acompanha o que voltar na página da emenda.
+                </p>
+              </>
+            ) : (
+              <>
+                <PlanoTrabalhoCampos
+                  valorEmenda={valorEmenda}
+                  engenharia={modeloPlano === "OBRAS"}
+                  valores={plano}
+                  onChange={(v) => {
+                    setPlano(v);
+                    setPlanoSujo(true);
+                    sujar();
+                  }}
+                />
+                {pendenciasPlano.length > 0 ? (
+                  <p className="text-[12px] font-medium leading-relaxed text-muted-foreground">
+                    O plano é salvo junto com o rascunho, mesmo pela metade. Para
+                    a emenda poder ser remetida, falta {pendenciasPlano.join("; ")}.
+                  </p>
+                ) : null}
+              </>
+            )}
           </div>
         </Bloco>
+
+        <LegendaObrigatorios />
 
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={salvar} disabled={pending || !podeSalvar}>

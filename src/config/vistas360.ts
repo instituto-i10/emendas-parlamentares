@@ -108,13 +108,6 @@ export const VISTAS360: Vista360[] = [
   },
 ];
 
-export function vistasVisiveis(u: Ator): Vista360[] {
-  return VISTAS360.filter((v) => {
-    if (v.adminGeralApenas && !ehAdminGeral(u)) return false;
-    return podeAcessar(u, { poder: v.poder, permissoes: v.permissoes });
-  });
-}
-
 // Vista inicial após o login. O perfil de gabinete — apresenta as próprias
 // emendas e não gere as dos outros — cai direto na sua cota; os demais no
 // Painel. É comportamento derivado das permissões, não de um nome de perfil.
@@ -123,4 +116,30 @@ export function vistaInicial(u: Ator): string {
     temPermissao(u, "apresentarEmendas") &&
     !temPermissao(u, "gerirTodasEmendas", "tramitarEmendas");
   return soGabinete ? "/vereador360" : "/painel";
+}
+
+export function vistasVisiveis(u: Ator): Vista360[] {
+  const inicial = vistaInicial(u);
+
+  const visiveis = VISTAS360.filter((v) => {
+    if (v.adminGeralApenas && !ehAdminGeral(u)) return false;
+    // "Painel" só existe para quem de fato cai nele. Para o gabinete, a rota
+    // /painel redireciona para /vereador360 — e um item de menu que empurra o
+    // usuário para outro lugar é ruído: ele clica em "Painel", chega em
+    // "Vereador 360" e conclui que o sistema errou.
+    if (v.id === "painel" && inicial !== v.href) return false;
+    // As Ferramentas viraram a seção "Atalhos para acesso rápido" na tela
+    // inicial de cada perfil. Manter o item no menu duplicaria o que já está
+    // um nível acima. A rota /hub continua de pé — é para onde a negativa de
+    // acesso manda.
+    if (v.id === "ferramentas") return false;
+    return podeAcessar(u, { poder: v.poder, permissoes: v.permissoes });
+  });
+
+  // A tela em que o perfil aterrissa é a PRIMEIRA do menu, com o nome que ela
+  // já tem. Para o gabinete isso é "Vereador 360": ela é o painel dele, e
+  // rebatizá-la de "Painel" só criaria dois nomes para a mesma coisa.
+  const casa = visiveis.filter((v) => v.href === inicial);
+  const resto = visiveis.filter((v) => v.href !== inicial);
+  return [...casa, ...resto];
 }

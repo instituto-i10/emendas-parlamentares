@@ -22,10 +22,17 @@ export function LogoEmendas360({
   tamanho = 30,
   compacta = false,
   className,
+  classeTexto,
 }: {
   tamanho?: number;
   compacta?: boolean;
   className?: string;
+  /**
+   * Classes do WORDMARK. Serve para escondê-lo por breakpoint sem transformar
+   * isto em duas marcas diferentes: no trilho estreito do menu sobra espaço
+   * para o ícone e mais nada, e o texto vazava por cima do conteúdo.
+   */
+  classeTexto?: string;
 }) {
   return (
     <span className={cn("flex items-center gap-2.5", className)}>
@@ -39,6 +46,7 @@ export function LogoEmendas360({
       )}
       <svg
         viewBox="0 0 48 48"
+        className="shrink-0"
         style={{ width: tamanho, height: tamanho }}
         aria-label="Emendas 360"
       >
@@ -47,7 +55,7 @@ export function LogoEmendas360({
         <rect x="20" y="19.5" width="8" height="19.5" rx="2.6" fill="#00CFC2" />
         <rect x="30.5" y="10" width="8" height="29" rx="2.6" fill="#00E5A0" />
       </svg>
-      <span className="flex flex-col gap-0.5 leading-none">
+      <span className={cn("flex flex-col gap-0.5 leading-none", classeTexto)}>
         <span className="text-[19px] font-extrabold tracking-[-.02em]">
           <span className="text-brand-cyan">Emendas</span>
           <span className="text-brand-mint">360</span>

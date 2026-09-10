@@ -231,8 +231,8 @@ async function main() {
     ],
     include: {
       funcao: { select: { codigo: true } },
-      acao: { select: { programaId: true } },
-      naturezaDespesa: { select: { grupo: true } },
+      acao: { select: { programaId: true, tipo: true } },
+      naturezaDespesa: { select: { grupo: true, modalidadeAplicacao: true, elemento: true } },
     },
   });
   const saude = dotacoes.filter((d) => d.funcao.codigo === "10");
@@ -324,6 +324,9 @@ async function main() {
         valorAtual: Number(dot.valorAtual),
         acaoProgramaId: dot.acao?.programaId ?? dot.programaId,
         naturezaGrupo: dot.naturezaDespesa.grupo,
+        naturezaModalidade: dot.naturezaDespesa.modalidadeAplicacao,
+        naturezaElemento: dot.naturezaDespesa.elemento,
+        acaoTipo: dot.acao?.tipo ?? null,
       };
 
       const ctx: ContextoEmenda = {
@@ -352,6 +355,7 @@ async function main() {
         // resultado da emenda não muda — ver motor.ts, item PLANO_TRABALHO.
         modeloPlano: null,
         pendenciasPlanoTrabalho: [],
+      beneficiarioTipo: null,
       };
 
       const resultado = avaliarEmenda(ctx);
@@ -450,6 +454,9 @@ async function main() {
         valorAtual: Number(dot.valorAtual),
         acaoProgramaId: dot.acao?.programaId ?? dot.programaId,
         naturezaGrupo: dot.naturezaDespesa.grupo,
+        naturezaModalidade: dot.naturezaDespesa.modalidadeAplicacao,
+        naturezaElemento: dot.naturezaDespesa.elemento,
+        acaoTipo: dot.acao?.tipo ?? null,
       },
       dotacaoOrigem: null, dotacaoDestino: null,
       ppaCadastrado: !!ppa, programasNoPPA, prioridadesPrograma, prioridadesAcao,
@@ -459,6 +466,7 @@ async function main() {
       emendaEhSaude: false, somaAutorDemaisExistente: 0,
       modeloPlano: null,
       pendenciasPlanoTrabalho: [],
+      beneficiarioTipo: null,
     });
 
     await prisma.validacaoEmenda.create({

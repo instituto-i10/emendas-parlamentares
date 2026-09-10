@@ -25,7 +25,16 @@ import { Obrigatorio } from "@/components/ui/obrigatorio";
 // que o TCE cobra não se perder no meio das variantes.
 // ---------------------------------------------------------------------------
 
-export type BeneficiarioOpcao = { id: string; nome: string; tipo: string };
+export type BeneficiarioOpcao = {
+  id: string;
+  nome: string;
+  tipo: string;
+  // Quem responde pelo destino e assina o plano. Vem do cadastro; só o terceiro
+  // setor o exige, e é para este e-mail que sai o link de preenchimento.
+  responsavelNome?: string | null;
+  responsavelCargo?: string | null;
+  responsavelEmail?: string | null;
+};
 
 const CATEGORIAS = [
   { valor: "ADMINISTRACAO_DIRETA", Icone: Landmark },

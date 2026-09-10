@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "./prisma";
 import { safe } from "./queries";
+import { elegivel, type Finalidade } from "./finalidade";
 
 // ============================================================================
 // Cascata de seleção assistida (sempre restrita ao instrumento base). Nenhum
@@ -97,6 +98,8 @@ export type DotacaoOpcao = {
   naturezaElemento: string;
   fonteCodigo: string;
   fonteNome: string;
+  /** Id do órgão — o filtro de órgão da lista elegível trabalha por id. */
+  orgaoId: string;
   orgaoCodigo: string;
   orgaoNome: string;
   unidadeCodigo: string;
@@ -109,6 +112,8 @@ export type DotacaoOpcao = {
   programaNome: string;
   acaoCodigo: string;
   acaoNome: string;
+  /** PROJETO · ATIVIDADE · OPERACAO_ESPECIAL — entra na regra do discricionário. */
+  acaoTipo: string;
 };
 
 export async function listarDotacoesBase(filtros: {
@@ -144,7 +149,7 @@ export async function listarDotacoesBase(filtros: {
           funcao: { select: { codigo: true, nome: true } },
           subfuncao: { select: { codigo: true, nome: true } },
           programa: { select: { codigo: true, nome: true } },
-          acao: { select: { codigo: true, nome: true } },
+          acao: { select: { codigo: true, nome: true, tipo: true } },
         },
         orderBy: { createdAt: "asc" },
       }),
@@ -165,6 +170,7 @@ export async function listarDotacoesBase(filtros: {
     naturezaElemento: d.naturezaDespesa.elemento,
     fonteCodigo: d.fonteRecurso.codigo,
     fonteNome: d.fonteRecurso.nome,
+    orgaoId: d.orgaoId,
     orgaoCodigo: d.orgao.codigo,
     orgaoNome: d.orgao.nome,
     unidadeCodigo: d.unidadeOrcamentaria.codigo,
@@ -177,7 +183,117 @@ export async function listarDotacoesBase(filtros: {
     programaNome: d.programa.nome,
     acaoCodigo: d.acao.codigo,
     acaoNome: d.acao.nome,
+    acaoTipo: d.acao.tipo,
   }));
+}
+
+// ============================================================================
+// DOTAÇÕES ELEGÍVEIS — a lista já filtrada por quem recebe e para que serve.
+//
+// A cascata de cinco níveis saiu do caminho: em vez de o vereador montar a
+// classificação orçamentária e descobrir na análise que a combinação não existe,
+// o sistema lista só o que aceita as duas escolhas que ele já fez. A regra é
+// pura e mora em lib/finalidade.ts; aqui só se aplica sobre a base.
+//
+// O filtro roda em JavaScript, não em SQL, por dois motivos: a natureza precisa
+// ser lida por partes (com tolerância a zero à esquerda) e a busca por texto
+// precisa ignorar acento — "saude" tem de achar "Saúde". Uma LOA municipal tem
+// alguns milhares de dotações; é uma consulta só, e o que volta para o
+// navegador é a página, não a base.
+// ============================================================================
+
+const normalizar = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+export type ResultadoElegiveis = {
+  /** A página de resultados — no máximo `limite` linhas. */
+  dotacoes: DotacaoOpcao[];
+  /** Quantas atendem à combinação, antes do corte da página. */
+  total: number;
+  /** Quantas a combinação deixou de fora, com o motivo agrupado. */
+  excluidas: number;
+  motivos: { motivo: string; qtd: number }[];
+  /** Só os órgãos que têm dotação elegível — o filtro não oferece beco sem saída. */
+  orgaos: { id: string; codigo: string; nome: string; qtd: number }[];
+};
+
+// Doze linhas cabem numa tela sem rolagem. A lista não é para ser percorrida
+// inteira: ela é a prova de que o filtro funcionou, e quem procura uma dotação
+// específica chega nela pela busca, não descendo a página.
+const LIMITE_PAGINA = 12;
+
+export async function listarDotacoesElegiveis(filtros: {
+  instrumentoId: string;
+  tipoBeneficiario: string;
+  finalidade: Finalidade | null;
+  orgaoId?: string;
+  busca?: string;
+  limite?: number;
+}): Promise<ResultadoElegiveis> {
+  const todas = await listarDotacoesBase({ instrumentoId: filtros.instrumentoId });
+
+  const motivos = new Map<string, number>();
+  const elegiveis: DotacaoOpcao[] = [];
+
+  for (const d of todas) {
+    const r = elegivel(
+      {
+        grupo: d.naturezaGrupo,
+        modalidadeAplicacao: d.naturezaModalidade,
+        elemento: d.naturezaElemento,
+        tipoAcao: d.acaoTipo,
+      },
+      filtros.tipoBeneficiario,
+      filtros.finalidade
+    );
+    if (r.ok) elegiveis.push(d);
+    else motivos.set(r.motivo, (motivos.get(r.motivo) ?? 0) + 1);
+  }
+
+  // Os órgãos saem da lista elegível INTEIRA, não da página: o filtro precisa
+  // enxergar o que existe além das quarenta primeiras linhas.
+  const porOrgao = new Map<string, { id: string; codigo: string; nome: string; qtd: number }>();
+  for (const d of elegiveis) {
+    const atual = porOrgao.get(d.orgaoId);
+    if (atual) atual.qtd += 1;
+    else
+      porOrgao.set(d.orgaoId, {
+        id: d.orgaoId,
+        codigo: d.orgaoCodigo,
+        nome: d.orgaoNome,
+        qtd: 1,
+      });
+  }
+
+  const busca = normalizar(filtros.busca ?? "");
+  const termos = busca ? busca.split(/\s+/) : [];
+  const achados = elegiveis.filter((d) => {
+    if (filtros.orgaoId && d.orgaoId !== filtros.orgaoId) return false;
+    if (termos.length === 0) return true;
+    const alvo = normalizar(
+      [d.orgaoNome, d.unidadeNome, d.programaNome, d.acaoNome, d.naturezaNome, d.funcaoNome]
+        .join(" ")
+    );
+    return termos.every((t) => alvo.includes(t));
+  });
+
+  // Maior saldo primeiro: com saldo curto a emenda nasce condenada ao
+  // remanejamento, e essa é a informação que decide a escolha.
+  achados.sort((a, b) => b.valorAtual - a.valorAtual);
+
+  return {
+    dotacoes: achados.slice(0, filtros.limite ?? LIMITE_PAGINA),
+    total: achados.length,
+    excluidas: todas.length - elegiveis.length,
+    motivos: [...motivos.entries()]
+      .map(([motivo, qtd]) => ({ motivo, qtd }))
+      .sort((a, b) => b.qtd - a.qtd),
+    orgaos: [...porOrgao.values()].sort((a, b) => a.codigo.localeCompare(b.codigo, "pt-BR")),
+  };
 }
 
 // PROJETO_LEI aberto para emendas no exercício (status EM_TRAMITACAO).

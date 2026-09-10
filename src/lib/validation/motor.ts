@@ -2,6 +2,8 @@
 // Sem I/O: recebe todo o contexto já carregado e decide. Testável isoladamente.
 // A camada com banco (validarEmenda) vive em motorEmenda.ts.
 
+import { compatibilidade, motivoNaoDiscricionaria } from "@/lib/finalidade";
+
 export type StatusItem = "OK" | "FALHA" | "ALERTA";
 
 export type ItemValidacao = {
@@ -33,6 +35,13 @@ export type DotacaoCtx = {
   acaoProgramaId: string; // programaId ao qual a ação pertence
   // Grupo da natureza da despesa: "1" = Pessoal e Encargos Sociais.
   naturezaGrupo: string;
+  // Modalidade e elemento entram para as duas checagens novas: emenda
+  // impositiva só em despesa discricionária, e destino compatível com a
+  // dotação. Lidos por partes, como em lib/finalidade.ts.
+  naturezaModalidade: string;
+  naturezaElemento: string;
+  /** PROJETO · ATIVIDADE · OPERACAO_ESPECIAL. */
+  acaoTipo: string | null;
 };
 
 export type ContextoEmenda = {
@@ -72,6 +81,8 @@ export type ContextoEmenda = {
   // lib/plano-trabalho.
   modeloPlano: string | null;
   pendenciasPlanoTrabalho: string[];
+  /** Categoria do beneficiário final; `null` enquanto ele não foi indicado. */
+  beneficiarioTipo: string | null;
 };
 
 const STATUS_BASE_ABERTO = new Set(["EM_TRAMITACAO"]);
@@ -371,7 +382,78 @@ export function avaliarEmenda(ctx: ContextoEmenda): ResultadoMotor {
     }
   }
 
-  // 12) PLANO_TRABALHO
+  // 12) DOTACAO_DISCRICIONARIA — pedido do cliente: emenda impositiva não entra
+  // em dotação que não seja discricionária. A despesa que o município é
+  // OBRIGADO a pagar — folha, dívida, sentença, precatório — não sobra para a
+  // emenda escolher, e emendá-la só produz uma emenda impossível de executar.
+  //
+  // A regra vale para a IMPOSITIVA. Os outros tipos de emenda mexem no
+  // orçamento por outro caminho e não são o objeto desta trava.
+  {
+    if (ctx.emenda.tipo !== "IMPOSITIVA") {
+      add(
+        "DOTACAO_DISCRICIONARIA",
+        "Dotação aceita emenda impositiva",
+        "OK",
+        "A emenda não é impositiva — a trava não se aplica."
+      );
+    } else if (!d) {
+      add("DOTACAO_DISCRICIONARIA", "Dotação aceita emenda impositiva", "FALHA", "Sem dotação.");
+    } else {
+      const impedimento = motivoNaoDiscricionaria({
+        grupo: d.naturezaGrupo,
+        modalidadeAplicacao: d.naturezaModalidade,
+        elemento: d.naturezaElemento,
+        tipoAcao: d.acaoTipo,
+      });
+      add(
+        "DOTACAO_DISCRICIONARIA",
+        "Dotação aceita emenda impositiva",
+        impedimento ? "FALHA" : "OK",
+        impedimento
+          ? `A dotação escolhida ${impedimento} — é despesa obrigatória, e emenda impositiva só entra em despesa discricionária.`
+          : "Despesa discricionária: a emenda pode ser destinada a esta dotação."
+      );
+    }
+  }
+
+  // 13) DOTACAO_X_BENEFICIARIO — quem recebe define a modalidade de aplicação.
+  // Entidade sem fins lucrativos recebe por transferência; o que o próprio
+  // município executa sai por aplicação direta. A tela nova já filtra a lista,
+  // mas a trava vive aqui: a lista é conveniência, a regra é servidor.
+  {
+    if (!ctx.beneficiarioTipo) {
+      add(
+        "DOTACAO_X_BENEFICIARIO",
+        "Dotação compatível com o destino",
+        "ALERTA",
+        "Beneficiário final não indicado — sem ele não dá para conferir a modalidade de aplicação."
+      );
+    } else if (!d) {
+      add("DOTACAO_X_BENEFICIARIO", "Dotação compatível com o destino", "FALHA", "Sem dotação.");
+    } else {
+      const r = compatibilidade(
+        {
+          grupo: d.naturezaGrupo,
+          modalidadeAplicacao: d.naturezaModalidade,
+          elemento: d.naturezaElemento,
+          tipoAcao: d.acaoTipo,
+        },
+        ctx.beneficiarioTipo,
+        // A finalidade não é gravada na emenda: ela escolhe a dotação e, feito
+        // isso, quem guarda a coerência é o modelo do plano de trabalho.
+        null
+      );
+      add(
+        "DOTACAO_X_BENEFICIARIO",
+        "Dotação compatível com o destino",
+        r.ok ? "OK" : "FALHA",
+        r.ok ? "A dotação aceita o tipo de destino escolhido." : r.motivo
+      );
+    }
+  }
+
+  // 14) PLANO_TRABALHO
   // O plano é requisito da REMESSA, não do rascunho. Os quatro modelos pedem o
   // mesmo núcleo — metas, memória de cálculo e cronograma —; o terceiro setor
   // pede ainda entidade, declarações e assinatura, e quem preenche é ela.

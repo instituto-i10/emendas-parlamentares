@@ -124,10 +124,27 @@ export async function listarBeneficiariosOpcoes() {
   return safe(
     () =>
       prisma.beneficiario.findMany({
-        select: { id: true, nome: true, tipo: true },
+        // O responsável vem junto: no terceiro setor a tela do passo 1 precisa
+        // mostrar quem assina assim que o destino é escolhido, sem outra volta
+        // ao servidor.
+        select: {
+          id: true,
+          nome: true,
+          tipo: true,
+          responsavelNome: true,
+          responsavelCargo: true,
+          responsavelEmail: true,
+        },
         orderBy: { nome: "asc" },
       }),
-    [] as { id: string; nome: string; tipo: string }[]
+    [] as {
+      id: string;
+      nome: string;
+      tipo: string;
+      responsavelNome: string | null;
+      responsavelCargo: string | null;
+      responsavelEmail: string | null;
+    }[]
   );
 }
 

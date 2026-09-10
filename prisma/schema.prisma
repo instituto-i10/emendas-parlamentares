@@ -490,6 +490,16 @@ model Beneficiario {
   tipo       TipoBeneficiario @default(ADMINISTRACAO_DIRETA)
   cnpj       String?
   observacao String?
+
+  // Quem responde pelo destino e assina o plano de trabalho. Fica no CADASTRO,
+  // não na emenda: o representante legal é o mesmo em toda emenda destinada
+  // àquela entidade, e pedi-lo de novo a cada emenda seria redigitar o que o
+  // sistema já sabe. É por este e-mail que sai o link de preenchimento no
+  // Modelo III.
+  responsavelNome  String?
+  responsavelCargo String?
+  responsavelEmail String?
+
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
 

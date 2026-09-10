@@ -6,11 +6,14 @@ import { vistasVisiveis } from "@/config/vistas360";
 // ---------------------------------------------------------------------------
 // "Atalhos para acesso rápido" — no alto da tela inicial de cada perfil.
 //
-// Antes eram cards com descrição, no rodapé. Duas mudanças: subiram para a
-// primeira dobra, porque atalho que exige rolar não é atalho; e perderam a
-// descrição, porque na tela inicial eles competem com o conteúdo — quem chega
-// aqui já sabe o que é "Emendas", e a frase explicativa só ocupava a altura que
-// empurrava o painel para baixo.
+// Eles já foram cartões com descrição no rodapé, depois viraram fichas
+// pequenas na primeira dobra. Agora são cartões grandes, a pedido do cliente:
+// atalho pequeno é uma linha de texto disputando atenção com o painel inteiro,
+// e quem chega aqui todo dia precisa de um alvo óbvio, não de um discreto.
+//
+// A descrição voltou junto com o tamanho. Ela cabe agora porque o cartão é
+// largo — e sem ela "Tramitação & Acompanhamento" e "Acompanhamento" ficam
+// dois nomes parecidos sem nada que os distinga.
 //
 // O que NÃO entra: módulo cuja rota já é item do menu lateral. Repetir o mesmo
 // destino em dois lugares da mesma tela não dá duas maneiras de chegar lá — dá
@@ -32,25 +35,32 @@ export async function AtalhosRapidos() {
 
   return (
     <section aria-label="Atalhos para acesso rápido" className="mb-6">
-      <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[1.4px] text-muted-foreground">
+      <p className="mb-2.5 text-[10.5px] font-bold uppercase tracking-[1.4px] text-muted-foreground">
         Atalhos para acesso rápido
       </p>
-      {/* Uma linha só. `flex-wrap` em vez de rolagem horizontal: com quatro
-          atalhos eles cabem em qualquer tela de trabalho, e numa estreita
-          quebrar é mais usável do que esconder o que sobrou fora da borda. */}
-      <div className="flex flex-wrap gap-2">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {atalhos.map((m) => {
           const Icon = m.icon;
           return (
             <Link
               key={m.id}
               href={m.href}
-              className="group flex min-w-0 items-center gap-2.5 rounded-[10px] bg-card px-3.5 py-2.5 shadow-card transition-colors hover:bg-accent"
+              className="group flex min-w-0 items-start gap-3.5 rounded-xl bg-card p-4 shadow-card transition-colors hover:bg-accent"
             >
-              <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-secondary transition-colors group-hover:bg-card">
-                <Icon className="size-4 text-accent-foreground" aria-hidden />
+              <span className="grid size-11 shrink-0 place-items-center rounded-[10px] bg-secondary transition-colors group-hover:bg-card">
+                <Icon className="size-5 text-accent-foreground" aria-hidden />
               </span>
-              <span className="truncate text-[13px] font-semibold">{m.titulo}</span>
+              {/* O título QUEBRA em vez de truncar: "Tramitação & Ac…" e
+                  "Planejamento & …" não dizem para onde levam, e um atalho que
+                  esconde o próprio nome deixou de ser atalho. */}
+              <span className="min-w-0 flex-1">
+                <span className="block text-[14px] font-bold leading-tight">
+                  {m.titulo}
+                </span>
+                <span className="mt-1.5 block text-[12px] leading-relaxed text-muted-foreground">
+                  {m.descricao}
+                </span>
+              </span>
             </Link>
           );
         })}

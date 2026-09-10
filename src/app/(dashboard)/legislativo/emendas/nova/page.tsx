@@ -5,10 +5,9 @@ import { podeCriarEmenda } from "@/lib/authz";
 import { getAnoAtivo } from "@/lib/exercicio";
 import { getInstrumentoBaseAberto } from "@/lib/queries-orcamento";
 import { listarBeneficiariosOpcoes } from "@/lib/queries";
-import { NovaEmendaForm } from "@/components/emendas/nova-emenda-form";
+import { NovaEmendaFluxo } from "@/components/emendas/nova-emenda-fluxo";
 
 const crumbs = [
-  { titulo: "Hub", href: "/hub" },
   { titulo: "Emendas", href: "/legislativo/emendas" },
   { titulo: "Nova emenda" },
 ];
@@ -41,9 +40,9 @@ export default async function NovaEmendaPage() {
         crumbs={crumbs}
       />
       {base ? (
-        <NovaEmendaForm
+        <NovaEmendaFluxo
           base={{ id: base.id, numero: base.numero, tipo: base.tipo, ano: base.exercicio.ano }}
-          beneficiarios={beneficiarios.map((b) => ({ id: b.id, nome: b.nome, tipo: b.tipo }))}
+          beneficiarios={beneficiarios}
         />
       ) : (
         <EmptyState

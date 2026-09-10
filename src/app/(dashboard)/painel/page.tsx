@@ -186,31 +186,6 @@ export default async function PainelPage() {
       : null,
   ].filter((x) => x !== null);
 
-  const fechar = [
-    invalidas
-      ? {
-          n: "1",
-          t: `Sanear ${invalidas.qtd} emenda(s)`,
-          s: "reprovadas pelo motor",
-          href: "/analise",
-        }
-      : null,
-    submetidas
-      ? {
-          n: "2",
-          t: `Dar parecer em ${submetidas.qtd} emenda(s)`,
-          s: "aguardando decisão",
-          href: "/analise",
-        }
-      : null,
-    {
-      n: "3",
-      t: "Conferir os destinos mais indicados",
-      s: porDestino.slice(0, 3).map((d) => d.nome).join(", "),
-      href: "/emendas?aba=destino",
-    },
-  ].filter(Boolean);
-
   return (
     <div className="flex flex-col gap-4">
       <AtalhosRapidos />
@@ -250,7 +225,7 @@ export default async function PainelPage() {
         />
       </Hero>
 
-      <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[1.75fr_1fr]">
         <Card360>
           <div className="mb-3 flex items-baseline justify-between gap-3">
             <h3 className="text-[15.5px] font-bold tracking-[-.015em]">
@@ -263,57 +238,30 @@ export default async function PainelPage() {
           <Farol itens={farol} />
         </Card360>
 
-        <div className="flex min-w-0 flex-col gap-4">
-          <Card360>
-            <Eyebrow>Uso do teto</Eyebrow>
-            <Gauge
-              pct={pctTeto}
-              valor={`${pctTeto}%`}
-              rotulo="do teto impositivo"
-              sub={
-                c.tetoGlobal != null
-                  ? `${brlCompacto(c.valor)} de ${brlCompacto(c.tetoGlobal)}`
-                  : undefined
-              }
-              alerta={pctTeto > 100}
-            />
-            <dl className="mt-1 flex flex-col gap-2 border-t pt-3.5">
-              {baseDoCalculo.map(({ rotulo, valor }) => (
-                  <div key={rotulo} className="flex items-baseline justify-between gap-3">
-                    <dt className="text-[11.5px] font-medium text-muted-foreground">
-                      {rotulo}
-                    </dt>
-                    <dd className="text-[12.5px] font-bold tabular-nums">
-                      {valor}
-                    </dd>
-                  </div>
-                ))}
-            </dl>
-          </Card360>
-
-          <Card360 variante="dark">
-            <Eyebrow escuro>O que precisa fechar</Eyebrow>
-            <div className="flex flex-col gap-2">
-              {fechar.map((a) => (
-                <Link
-                  key={a!.n}
-                  href={a!.href}
-                  className="flex items-center gap-3 rounded-[10px] bg-white/10 px-3 py-2.5 transition-colors hover:bg-white/15"
-                >
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand-cyan text-xs font-extrabold text-white">
-                    {a!.n}
-                  </span>
-                  <span className="min-w-0">
-                    <b className="block text-[13px] text-white">{a!.t}</b>
-                    <span className="block truncate text-[11.5px] text-white/60">
-                      {a!.s}
-                    </span>
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </Card360>
-        </div>
+        <Card360>
+          <Eyebrow>Uso do teto</Eyebrow>
+          <Gauge
+            pct={pctTeto}
+            valor={`${pctTeto}%`}
+            rotulo="do teto impositivo"
+            sub={
+              c.tetoGlobal != null
+                ? `${brlCompacto(c.valor)} de ${brlCompacto(c.tetoGlobal)}`
+                : undefined
+            }
+            alerta={pctTeto > 100}
+          />
+          <dl className="mt-1 flex flex-col gap-2 border-t pt-3.5">
+            {baseDoCalculo.map(({ rotulo, valor }) => (
+              <div key={rotulo} className="flex items-baseline justify-between gap-3">
+                <dt className="text-[11.5px] font-medium text-muted-foreground">
+                  {rotulo}
+                </dt>
+                <dd className="text-[12.5px] font-bold tabular-nums">{valor}</dd>
+              </div>
+            ))}
+          </dl>
+        </Card360>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">

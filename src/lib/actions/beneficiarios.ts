@@ -268,3 +268,66 @@ export async function derivarBeneficiarios(): Promise<ActionResult> {
     return { ok: false, error: "Falha ao derivar beneficiários." };
   }
 }
+
+// ---------------------------------------------------------------------------
+// QUEM ASSINA — pedido do cliente na reunião: "já colocar os dados do terceiro
+// setor, quem assina".
+//
+// O dado é do CADASTRO, não da emenda: o representante legal da entidade é o
+// mesmo em toda emenda destinada a ela. Quem apresenta emenda pode gravá-lo,
+// porque é no meio do preenchimento que se descobre que falta — mandar a pessoa
+// a Configurações no meio da emenda é o atrito que se quer tirar.
+// ---------------------------------------------------------------------------
+export type ResponsavelResult =
+  | { ok: true; nome: string; cargo: string; email: string }
+  | { ok: false; error: string };
+
+export async function salvarResponsavelDestino(
+  beneficiarioId: string,
+  dados: { nome: string; cargo: string; email: string }
+): Promise<ResponsavelResult> {
+  const u = await getCurrentUser();
+  if (!podeCriarEmenda(u) && !temPermissao(u, "administrarConfiguracoes"))
+    return { ok: false, error: "Seu perfil não pode alterar o cadastro do destino." };
+
+  const nome = dados.nome.trim();
+  const cargo = dados.cargo.trim();
+  const email = dados.email.trim();
+
+  if (nome.length < 3)
+    return { ok: false, error: "Informe o nome de quem assina." };
+  // Validação frouxa de propósito: aqui não se autentica ninguém, só se guarda
+  // o endereço para onde o link vai. Recusar um e-mail válido por excesso de
+  // rigor custa mais do que aceitar um errado, que a pessoa corrige.
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return { ok: false, error: "O e-mail não parece válido." };
+
+  try {
+    const antes = await prisma.beneficiario.findUnique({
+      where: { id: beneficiarioId },
+      select: { responsavelNome: true, responsavelCargo: true, responsavelEmail: true },
+    });
+    if (!antes) return { ok: false, error: "Destino não encontrado." };
+
+    await prisma.beneficiario.update({
+      where: { id: beneficiarioId },
+      data: {
+        responsavelNome: nome,
+        responsavelCargo: cargo || null,
+        responsavelEmail: email || null,
+      },
+    });
+    await registrarAuditoria({
+      usuarioId: audUser(u.id),
+      entidade: "Beneficiario",
+      entidadeId: beneficiarioId,
+      acao: "ATUALIZAR_RESPONSAVEL",
+      dadosAntes: antes,
+      dadosDepois: { responsavelNome: nome, responsavelCargo: cargo, responsavelEmail: email },
+    });
+    revalidatePath("/config");
+    return { ok: true, nome, cargo, email };
+  } catch {
+    return { ok: false, error: "Não foi possível salvar quem assina." };
+  }
+}

@@ -29,8 +29,12 @@ test.describe("visibilidade por perfil", () => {
     await entrarComo(page, "vereador");
     const abas = await abasVisiveis(page);
     expect(abas).toEqual(
-      expect.arrayContaining(["Emendas & Beneficiários", "Vereador 360", "Painel"])
+      expect.arrayContaining(["Emendas & Beneficiários", "Vereador 360"])
     );
+    // "Painel" NÃO está na lista de propósito: para o gabinete a rota /painel
+    // redireciona para o Vereador 360, e um item de menu que empurra a pessoa
+    // para outro lugar é ruído. Ver `vistasVisiveis`.
+    expect(abas).not.toContain("Painel");
     expect(abas).not.toContain("Análise Técnica");
     expect(abas).not.toContain("Pitch");
   });
@@ -108,7 +112,7 @@ test.describe("ações restritas", () => {
     const semPermissao = page.getByText("Sem permissão");
     const redirecionou = page.url().includes("acesso-negado");
     if (!redirecionou) await expect(semPermissao).toBeVisible();
-    await expect(page.getByLabel("Órgão")).toHaveCount(0);
+    await expect(page.getByLabel("Para onde vai")).toHaveCount(0);
   });
 });
 

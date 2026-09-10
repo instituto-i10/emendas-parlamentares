@@ -133,6 +133,7 @@ export function PlanoTrabalhoCampos({
   valorEmenda,
   engenharia = false,
   desabilitado = false,
+  valorDaMemoria = false,
 }: {
   valores: DadosPlano;
   onChange: (v: DadosPlano) => void;
@@ -140,6 +141,14 @@ export function PlanoTrabalhoCampos({
   /** Plano de obra: a pesquisa de preço prioriza composições por m². */
   engenharia?: boolean;
   desabilitado?: boolean;
+  /**
+   * O valor da emenda É esta soma — não há um valor digitado à parte para ela
+   * fechar. Quando é assim, conferir o fechamento seria comparar o número com
+   * ele mesmo: a seção mostra o total e pronto. No terceiro setor continua
+   * falso, porque lá o vereador declara o teto do repasse e a entidade preenche
+   * a memória depois, pelo link — aí há dois números, e eles precisam fechar.
+   */
+  valorDaMemoria?: boolean;
 }) {
   const { metas, itens, parcelas } = valores;
   const alterar = (parcial: Partial<DadosPlano>) => onChange({ ...valores, ...parcial });
@@ -356,17 +365,34 @@ export function PlanoTrabalhoCampos({
           <Plus className="size-4" aria-hidden /> Adicionar linha
         </Button>
 
-        <Fecho
-          rotulo="Total da memória de cálculo"
-          total={totalMemoria(itens.filter((i) => i.beneficiarios.trim()))}
-          valorEmenda={valorEmenda}
-          quandoFecha={`Fecha com o valor da emenda (${brl(valorEmenda)}).`}
-          quandoNaoFecha={(d) =>
-            `A emenda é de ${brl(valorEmenda)} — ${d > 0 ? "sobram" : "faltam"} ${brl(
-              Math.abs(d)
-            )} para fechar.`
-          }
-        />
+        {valorDaMemoria ? (
+          <>
+            <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2 border-t pt-3">
+              <span className="text-sm font-semibold">
+                Valor da emenda — soma da memória de cálculo
+              </span>
+              <span className="text-base font-extrabold tabular-nums">
+                {brl(totalMemoria(itens.filter((i) => i.beneficiarios.trim())))}
+              </span>
+            </div>
+            <p className="mt-2 text-[12.5px] font-medium text-muted-foreground">
+              É esta soma que vira o valor da emenda — não há valor digitado à
+              parte.
+            </p>
+          </>
+        ) : (
+          <Fecho
+            rotulo="Total da memória de cálculo"
+            total={totalMemoria(itens.filter((i) => i.beneficiarios.trim()))}
+            valorEmenda={valorEmenda}
+            quandoFecha={`Fecha com o valor da emenda (${brl(valorEmenda)}).`}
+            quandoNaoFecha={(d) =>
+              `A emenda é de ${brl(valorEmenda)} — ${d > 0 ? "sobram" : "faltam"} ${brl(
+                Math.abs(d)
+              )} para fechar.`
+            }
+          />
+        )}
       </section>
 
       {/* ------------------------------------------------------- cronograma */}

@@ -29,6 +29,9 @@ function ctxValido(over: Partial<ContextoEmenda> = {}): ContextoEmenda {
       valorAtual: 5000,
       acaoProgramaId: "prog1",
       naturezaGrupo: "3",
+      naturezaModalidade: "90",
+      naturezaElemento: "30",
+      acaoTipo: "ATIVIDADE",
     },
     dotacaoOrigem: null,
     dotacaoDestino: null,
@@ -45,6 +48,7 @@ function ctxValido(over: Partial<ContextoEmenda> = {}): ContextoEmenda {
     somaAutorDemaisExistente: 0,
     modeloPlano: "CUSTEIO",
     pendenciasPlanoTrabalho: [],
+    beneficiarioTipo: "ADMINISTRACAO_DIRETA",
   };
   return { ...base, ...over };
 }

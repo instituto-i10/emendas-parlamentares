@@ -26,8 +26,12 @@ type DotacaoDb = {
   naturezaDespesaId: string;
   fonteRecursoId: string;
   valorAtual: Prisma.Decimal;
-  acao: { programaId: string } | null;
-  naturezaDespesa: { grupo: string } | null;
+  acao: { programaId: string; tipo?: string } | null;
+  naturezaDespesa: {
+    grupo: string;
+    modalidadeAplicacao?: string;
+    elemento?: string;
+  } | null;
 };
 
 function toCtx(d: DotacaoDb | null): DotacaoCtx | null {
@@ -50,6 +54,9 @@ function toCtx(d: DotacaoDb | null): DotacaoCtx | null {
     // "1", então a checagem passa — e a dotação sem natureza já cai antes, em
     // CLASSIFICACAO_COMPLETA.
     naturezaGrupo: d.naturezaDespesa?.grupo ?? "",
+    naturezaModalidade: d.naturezaDespesa?.modalidadeAplicacao ?? "",
+    naturezaElemento: d.naturezaDespesa?.elemento ?? "",
+    acaoTipo: d.acao?.tipo ?? null,
   };
 }
 
@@ -63,7 +70,9 @@ export async function validarEmenda(emendaId: string): Promise<ResultadoMotor> {
       instrumentoBase: { select: { status: true } },
       dotacao: {
         include: {
-          acao: { select: { programaId: true } },
+          // `tipo` da ação entra na trava do discricionário: operação especial
+          // é dívida, precatório e transferência obrigatória.
+          acao: { select: { programaId: true, tipo: true } },
           funcao: { select: { codigo: true } },
           // `modalidadeAplicacao` e `elemento` entram porque é deles que sai o
           // modelo do plano — ver `derivarModeloPlano`.
@@ -235,6 +244,7 @@ export async function validarEmenda(emendaId: string): Promise<ResultadoMotor> {
     somaAutorDemaisExistente,
     modeloPlano,
     pendenciasPlanoTrabalho,
+    beneficiarioTipo: emenda.beneficiario?.tipo ?? null,
   };
 
   const resultado = avaliarEmenda(ctx);

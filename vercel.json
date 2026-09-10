@@ -3,10 +3,5 @@
   "regions": [
     "gru1"
   ],
-  "buildCommand": "prisma generate && if [ -n \"$Emendas_POSTGRES_URL_NON_POOLING\" ] || [ -n \"$DIRECT_URL\" ]; then prisma migrate deploy; fi && next build",
-  "git": {
-    "deploymentEnabled": {
-      "main": false
-    }
-  }
+  "buildCommand": "prisma generate && if [ -n \"$Emendas_POSTGRES_URL_NON_POOLING\" ] || [ -n \"$DIRECT_URL\" ]; then prisma migrate deploy; fi && next build"
 }
